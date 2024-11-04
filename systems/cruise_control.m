@@ -1,3 +1,5 @@
+%% CRUISE CONTROL: CONSTANT SPEED
+
 % Parameters
 m = 1000; % Vehicle mass [kg]
 b = 50; % Damping coefficient [N*s/m]
@@ -30,6 +32,12 @@ mpc_controller.MV.Max = 5000; % Maximim force
 mpc_controller.Weights.ManipulatedVariablesRate = 0; % Penalize changes in input
 mpc_controller.Weights.OutputVariables = 1; % Penalize deviations from desired speed
 mpc_controller.Weights.ManipulatedVariables = 0; % No direct penalty on input values
+
+% DeePC parameters
+T_ini = 5; % Past horizon length
+N = 10; % Prediction horizon
+data_length = 50; % Length of the data sequence for training
+scaling_factor = data_length^2;
 
 % Simulation parameters
 t_final = 20; % Total simulation time [s]
