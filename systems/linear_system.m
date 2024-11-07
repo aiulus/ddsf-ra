@@ -14,6 +14,7 @@ function sys = linear_system(system_description)
             dt = 0.1; % Time step for discretization
             u_min = -1000; % Minimum force
             u_max = 1000; % Maximum force
+            ref_velocity = 20; % [m/s]
 
             % State-Space Matrices
             A = 1 - (b * dt) / m;
@@ -32,6 +33,33 @@ function sys = linear_system(system_description)
 
             % Constraints
             sys.constraints.U = [u_min, u_max]; % Force limits for the car
+            sys.constraints.Y = [-inf, inf];
+
+            % Desired output value
+            sys.target = ref_velocity; 
+        
+        case 'simple_integrator' % Position fixer
+            ref_position = 10; % Desired position
+            u_min = -1; % Minimum velocity
+            u_max = 1; % Maximum velocity
+
+            % State-space matrices for a simple integrator system
+            A = 1;
+            B = 1;
+            C = 1;
+            D = 0;
+
+            sys.A = A;
+            sys.B = B;
+            sys.C = C;
+            sys.D = D;
+
+            % Constraints
+            sys.constraints.U = [u_min, u_max]; % Velocity limits
+            sys.constraints.Y = [-inf, inf];    % No position constraints
+
+            % Desired output
+            sys.target = ref_position; % Target position
 
         case 'acc' % Adaptive Cruise Control (ACC) with time delay
            % Parameters
@@ -66,7 +94,11 @@ function sys = linear_system(system_description)
             sys.parameters.sampling_time = T_s;
 
             % Constraints
-            sys.constraints = [u_min, u_max];
+            sys.constraints.U = [u_min, u_max];
+            sys.constraints.Y = [-inf, inf];
+
+            % Desired output
+            sys.ref = 20; % [m]
         otherwise
             error('System type "%s" not recognized.', system_description);
     end

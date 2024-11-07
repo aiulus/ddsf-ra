@@ -12,8 +12,8 @@ function sys = linear_system(system_description)
             m = 1000; % Vehicle mass [kg]
             b = 50; % Damping coefficient [N*s/m]
             dt = 0.1; % Time step for discretization
-            u_min = -1000; % Maximum force
-            u_max = 1000;
+            u_min = -1000; % Minimum force
+            u_max = 1000; % Maximum force
 
             % State-Space Matrices
             A = 1 - (b * dt) / m;
@@ -31,7 +31,9 @@ function sys = linear_system(system_description)
             sys.D = D;
 
             % Constraints
-            sys.constraints.U = [-1000, 1000]; % Force limits for the car
+            sys.constraints.U = [u_min, u_max]; % Force limits for the car
+
+            sys.deepc.re
 
         case 'acc' % Adaptive Cruise Control (ACC) with time delay
            % Parameters
@@ -68,6 +70,6 @@ function sys = linear_system(system_description)
             % Constraints
             sys.constraints = [u_min, u_max];
         otherwise
-            error('System type not recognized.')
+            error('System type "%s" not recognized.', system_description);
     end
 end
