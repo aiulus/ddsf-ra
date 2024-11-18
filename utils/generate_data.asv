@@ -8,8 +8,6 @@ function [u_d, y_d] = generate_data(A, B, C, D, T, x_ini)
     %   u_d - input data
     %   y_d - output data
 
-    fprintf("DATA GENERATOR running..."); % DEBUG STATEMENT
-
     % Set default values for SISO systems
     if nargin < 4 || isempty(C), C = 1; end
     if nargin < 5 || isempty(D), D = 0; end
@@ -32,9 +30,8 @@ function [u_d, y_d] = generate_data(A, B, C, D, T, x_ini)
         u_d(:, i) = PE_input(:, i);
         %% TODO: This is computed with x_data = 0 at i=1, instead, 
         %% it must be initialized with the initial state of the system
-        y_d(:, i) = C * x_data(i, 1) + D * u_d(:, i);
-        x_data(i + 1, 1) = A * x_data(i, 1) + B * u_d(:, i);
+        y_d(:, i) = C * x_data + D * u_d(:, i);
+        x_data(i + 1, 1) = A * x_data + B * u_d(:, i);
     end
-    fprintf("x_data = [%s]\n", join(string(x_data), ',')); % DEBUG STATEMENT
 end
 
