@@ -1,5 +1,5 @@
 %% Creates Hankel matrices according to the Data Collection & Setup Process described in DeePC
-function [Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, T_ini, N)
+function [Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, T_ini, N, sys)
     %   u_d: input data - vector/matrix with columns as inputs
     %   y_d: output data - vector/matrix with columns as outputs
     %   T_ini: #rows for past data
@@ -7,6 +7,12 @@ function [Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, T_ini, N)
     
     H_u = custom_hankel(u_d, T_ini + N);
     H_y = custom_hankel(y_d, T_ini + N);
+
+    isPE = PEness_check(H_u, u_d, T_ini, N, sys);
+
+    if ~isPE
+        error('Persistency of excitation check failed. Please provide richer input data or adjust T_ini and N.');
+    end
     
     % Partition the Hankel matrices into past & future components
     Up = H_u(1:T_ini, :); % Past inputs

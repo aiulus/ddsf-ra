@@ -20,9 +20,7 @@ function [u_d, y_d] = generate_data(sys, T)
     if nargin < 5 || isempty(D), D = 0; end
 
     % Generate a persistently exciting, pseudo-random control input
-    % m = L^2;
-    % PE_input = m * (idinput([size(B, 2), L], 'prbs') + 1);
-    % PE_input = idinput([L, size(B,2)], 'prbs', [0, 1], [-1,1]).'; % Generates a pseudo-random binary signal
+    % PE_input = idinput([T, size(B,2)], 'prbs', [0, 1], [-1,1]).'; % Generates a pseudo-random binary signal
     PE_input = idinput([T, size(B,2)], 'rgs', [0, 1], [-1,1]).';
     disp("PE_input: "); disp(PE_input);
 

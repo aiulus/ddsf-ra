@@ -22,12 +22,12 @@ function sys = LTI(system_description)
 
             sys.parameters.state_name = 'Position';
             sys.parameters.input_name = 'Velocity';
-            sys.parameters.sampling_time = 0.1; % Sampling time
+            sys.parameters.dt = 0.1; % Sampling time
 
             sys.constraints.U = [-5,5];
             sys.constraints.Y = [-inf, inf];
 
-            sys.initial_state = 0; % Starting position
+            sys.x_ini = 0; % Starting position
             sys.target = 10; % Desired position
 
         case 'double_integrator'
@@ -42,12 +42,12 @@ function sys = LTI(system_description)
 
             sys.parameters.state_name = {'Position', 'Velocity'};
             sys.parameters.input_name = {'Acceleration'};
-            sys.parameters.sampling_time = 0.1; % Sampling time
+            sys.parameters.dt = 0.1; % Sampling time
 
             sys.constraints.U = [-10,10]; % Acceleration limits
             sys.constraints.Y = [-50, 50]; % Position limits
 
-            sys.initial_state = [0; 0]; % Starting position and velocity
+            sys.x_ini = [0; 0]; % Starting position and velocity
             sys.target = [10; 0]; % Desired position and velocity
             
         case 'mass_spring_dampler'
@@ -69,7 +69,7 @@ function sys = LTI(system_description)
             sys.parameters.mass = m;
             sys.parameters.spring_constant = k;
             sys.parameters.damping = b;
-            sys.parameters.sampling_time = dt; % TODO: not all systems have that - make it consistent
+            sys.parameters.dt = dt; % TODO: not all systems have that - make it consistent
 
             sys.constraints.U = [0; 0.0001]; % Starting position and velocity
             sys.constraints.Y = [1; 0]; % Desired position and velocity
@@ -105,12 +105,12 @@ function sys = LTI(system_description)
             sys.parameters.motor_constant = K;
             sys.parameters.resistance = R;
             sys.parameters.inductance = L;
-            sys.parameters.sampling_time = dt;
+            sys.parameters.dt = dt;
             
             sys.constraints.U = [-10, 10]; % Voltage limits
             sys.constraints.Y = [-inf, inf]; % No speed limits
             
-            sys.initial_state = [0; 0]; % Starting angular position and velocity
+            sys.x_ini = [0; 0]; % Starting angular position and velocity
             sys.target = [10; 0]; % Desired angular position and velocity
 
         otherwise

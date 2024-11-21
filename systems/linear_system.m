@@ -18,7 +18,9 @@ function sys = linear_system(system_description)
                 'u_min', -inf, ... % Minimum force
                 'u_max', inf, ... % Maximum force
                 'target', 20, ... % Reference velocity [m/s]
-                'x_ini', 15); % Initial velocity [m/s]
+                'x_ini', 15, ...
+                'state_name', {"Velocity"}, ...
+                'input_name', {"Force"}); % Initial velocity [m/s]
             
             % State-space matrices
             A = 1 - (params.damping * params.dt) / params.mass;
