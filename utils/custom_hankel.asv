@@ -1,5 +1,6 @@
-function H = custom_hankel(data, order, square=False)
-    % CUSTOM_HANKEL - Constructs a Hankel matrix from input data
+function H = custom_hankel(data, order)
+    % CUSTOM_HANKEL - Constructs a Hankel matrix with shape 
+    %                 [order x (T - order + 1) x m]
     %
     % Inputs:
     %   data - A T x m matrix, where T is #time steps, and m is the input
@@ -8,17 +9,26 @@ function H = custom_hankel(data, order, square=False)
     %
     % Output:
     % 
-    [T, m] = size(data);
-    max_order = floor((1 + T) / 2);
+    % H - A bl. Hankel matrix of size [order x (T - order + 1) x m]
 
-    if order > max_order
-        error("Data matrix must have at least %d rows for order %d " + ...
-            "to be permissable", 2*order - 1, order);
+    [m, T] = size(data);
+
+    % if square
+    %    order = ceil(T/2);
+    % end
+
+    if order > T
+        error("Data matrix has %d rows, but at least %d rows" + ...
+            " are required for order %d", T, order, order);
     end
-    H = zeros(order * m, (T - order + 1));
+    
+    num_columns = T - order + 1; % #columns in the resulting Hankel matrix
+    
+    H = zeros(order, num_columns, m); % Preallocate the Hankel matrix
+
     for l=1:order
-        u = data(l:(l + order - 1), :);
-        H(l, :) = u;
+        u = data(:, l:(l + num_columns - 1));
+        H(l, :, :) = u;
     end
 end
 

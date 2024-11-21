@@ -11,7 +11,11 @@ function H = custom_hankel(data, order)
     % 
     % H - A bl. Hankel matrix of size [order x (T - order + 1) x m]
 
-    [T, m] = size(data);
+    [m, T] = size(data);
+
+    % if square
+    %    order = ceil(T/2);
+    % end
 
     if order > T
         error("Data matrix has %d rows, but at least %d rows" + ...
@@ -23,8 +27,11 @@ function H = custom_hankel(data, order)
     H = zeros(order, num_columns, m); % Preallocate the Hankel matrix
 
     for l=1:order
-        u = data(l:(l + num_columns - 1), :);
+        u = data(:, l:(l + num_columns - 1));
         H(l, :, :) = u;
     end
+     disp("Hankel Matrix H of order: "); % DEBUG STATEMENT
+     fprintf("[%d, %d]", size(H, 1), size(H, 2)); % DEBUG STATEMENT
+     disp(H), % DEBUG STATEMENT
 end
 

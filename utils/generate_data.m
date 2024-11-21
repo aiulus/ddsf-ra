@@ -1,4 +1,4 @@
-function [u_d, y_d] = generate_data(A, B, C, D, T, x_ini)
+function [u_d, y_d] = generate_data(sys, T)
     %   Inputs:
     %   A, B, C, D - System matrices (default: C=1, D=0 for SISO systems)
     %   T - data length
@@ -9,6 +9,11 @@ function [u_d, y_d] = generate_data(A, B, C, D, T, x_ini)
     %   y_d - output data
 
     fprintf("DATA GENERATOR running..."); % DEBUG STATEMENT
+
+    A = sys.A;
+    B = sys.B;
+    C = sys.C;
+    D = sys.D;
 
     % Set default values for SISO systems
     if nargin < 4 || isempty(C), C = 1; end
@@ -24,17 +29,18 @@ function [u_d, y_d] = generate_data(A, B, C, D, T, x_ini)
     % Initialize input-output storage
     u_d = zeros(size(B, 2), T);
     y_d = zeros(size(C, 1), T);
-    x_data = zeros(size(A, 1), 1); % Initial state
-    x_data(1, 1) = x_ini;
+    x_d = zeros((size(A, 1) + 1), 1); % Initial state
 
     % Generate data by simulating the system on random inputs for L steps
     for i = 1:T
         u_d(:, i) = PE_input(:, i);
         %% TODO: This is computed with x_data = 0 at i=1, instead, 
         %% it must be initialized with the initial state of the system
-        y_d(:, i) = C * x_data(i, 1) + D * u_d(:, i);
-        x_data(i + 1, 1) = A * x_data(i, 1) + B * u_d(:, i);
+        y_d(:, i) = C * x_d(i, 1) + D * u_d(:, i);
+        x_d(i + 1, 1) = A * x_d(i, 1) + B * u_d(:, i);
     end
-    fprintf("x_data = [%s]\n", join(string(x_data), ',')); % DEBUG STATEMENT
+    fprintf("u_d = [%s]\n", join(string(u_d), ',')); % DEBUG STATEMENT
+    fprintf("y_d = [%s]\n", join(string(y_d), ',')); % DEBUG STATEMENT
+    fprintf("x_d = [%s]\n", join(string(x_d), ',')); % DEBUG STATEMENT
 end
 

@@ -1,4 +1,10 @@
-function [PE_input, is_PE] = generate_and_check_PE(L, m, desired_order, method)
+%%       Was formerly meant as a centralized way to vary the method of
+%%       generation for random input signals to achieve PE'ness under
+%%       other constraints. Currently not needed -
+%%
+%% TODO: EITHER REMOVE OR IMPROVE !!!
+
+function [PE_input, is_PE] = random_signals(L, m, desired_order, method)
     % Generates a persistently exciting (PE) input signal and checks if it's PE.
     %
     % Inputs:
