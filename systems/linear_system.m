@@ -1,105 +1,97 @@
 function sys = linear_system(system_description)
-    %  INPUT:
-    %  system_description [string] - Type of system (e.g., 'cruise_control')
-    %  OUTPUT:
-    %  sys [struct] - Struct with fields A,B,C,D, constraints, parameters
+    % LINEAR_SYSTEM Encodes state-space LTI systems with parameters.
+    %
+    % INPUT:
+    %    system_description [string] - Type of system (e.g., 'cruise_control')
+    % OUTPUT:
+    %    sys [struct] - Struct with fields A, B, C, D, constraints, parameters.
 
     sys = struct();
 
     switch system_description
-        case 'cruise_control' % Speed-fixing cruise control
+        case 'cruise_control'
             % Parameters
-            m = 1000; % Vehicle mass [kg]
-            b = 50; % Damping coefficient [N*s/m]
-            dt = 0.1; % Time step for discretization
-            u_min = -1000; % Minimum force
-            u_max = 1000; % Maximum force
-            ref_velocity = 20; % [m/s]
-
-            % State-Space Matrices
-            A = 1 - (b * dt) / m;
-            B = dt / m;
+            params = struct( ...
+                'mass', 1000, ... % Vehicle mass [kg]
+                'damping', 50, ... % Damping coefficient [N*s/m]
+                'dt', 0.1, ... % Time step for discretization
+                'u_min', -inf, ... % Minimum force
+                'u_max', inf, ... % Maximum force
+                'target', 20, ... % Reference velocity [m/s]
+                'x_ini', 15); % Initial velocity [m/s]
+            
+            % State-space matrices
+            A = 1 - (params.damping * params.dt) / params.mass;
+            B = params.dt / params.mass;
             C = 1;
             D = 0;
 
-            sys.parameters.vehicle_mass = m; % Vehicle mass [kg]
-            sys.parameters.road_friction = b; % Damping coefficient [N*s/m]
-            sys.parameters.dt = dt; % Time step for discretization
+        case 'simple_integrator'
+            % Parameters
+            params = struct( ...
+                'u_min', -1, ... % Minimum velocity
+                'u_max', 1, ... % Maximum velocity
+                'target', 10); % Reference position
             
-            sys.A = A;
-            sys.B = B;
-            sys.C = C;
-            sys.D = D;
-
-            % Constraints
-            sys.constraints.U = [u_min, u_max]; % Force limits for the car
-            sys.constraints.Y = [-inf, inf];
-
-            % Desired output value
-            sys.target = ref_velocity; 
-        
-        case 'simple_integrator' % Position fixer
-            ref_position = 10; % Desired position
-            u_min = -1; % Minimum velocity
-            u_max = 1; % Maximum velocity
-
-            % State-space matrices for a simple integrator system
+            % State-space matrices
             A = 1;
             B = 1;
             C = 1;
             D = 0;
 
-            sys.A = A;
-            sys.B = B;
-            sys.C = C;
-            sys.D = D;
-
-            % Constraints
-            sys.constraints.U = [u_min, u_max]; % Velocity limits
-            sys.constraints.Y = [-inf, inf];    % No position constraints
-
-            % Desired output
-            sys.target = ref_position; % Target position
-
         case 'acc' % Adaptive Cruise Control (ACC) with time delay
-           % Parameters
-            m_c = 1650; % Mass of the follower car [kg]
-            T_s = 0.2; % Sampling time [s]
-            delay_steps = 3;
-            u_min = -2000; % Minimum control input [N]
-            u_max = 2000; % Maximum control input [N]
-            N_p = 15; % Prediction horizon
+            % Parameters
+            params = struct( ...
+                'mass', 1650, ... % Follower car mass [kg]
+                'sampling_time', 0.2, ... % Sampling time [s]
+                'delay_steps', 3, ... % Delay in steps
+                'u_min', -2000, ... % Minimum control input [N]
+                'u_max', 2000, ... % Maximum control input [N]
+                'target', 20); % Reference position
             
-            % State-space matrices
-            A = [0 1;
-            0 0];
-            B = [0; 1/m_c];
+            % Continuous-time state-space matrices
+            A = [0 1; 0 0];
+            B = [0; 1 / params.mass];
             C = [1 0];
             D = 0;
 
-            sys_cont = ss(A, B, C, D);
-
             % Discretize the system
-            sys_disc = c2d(sys_cont, T_s);
-            [Ad, Bd, Cd, Dd] = ssdata(sys_disc);
+            [A, B, C, D] = discretize_system(A, B, C, D, params.sampling_time);
 
-            sys.A = Ad;
-            sys.B = Bd;
-            sys.C = Cd;
-            sys.D = Dd;
-            
-            % Parameters
-            sys.delay = delay_steps;
-            sys.parameters.mass = m_c;
-            sys.parameters.sampling_time = T_s;
-
-            % Constraints
-            sys.constraints.U = [u_min, u_max];
-            sys.constraints.Y = [-inf, inf];
-
-            % Desired output
-            sys.ref = 20; % [m]
         otherwise
             error('System type "%s" not recognized.', system_description);
     end
+
+    % Populate system struct
+    sys = populate_system_struct(A, B, C, D, params);
+end
+
+
+%% Utility Functions
+function [Ad, Bd, Cd, Dd] = discretize_system(A, B, C, D, Ts)
+    % Discretizes a continuous-time state-space system.
+    sys_cont = ss(A, B, C, D);
+    sys_disc = c2d(sys_cont, Ts);
+    [Ad, Bd, Cd, Dd] = ssdata(sys_disc);
+end
+
+function sys = populate_system_struct(A, B, C, D, params)
+    % Constructs the system struct with matrices, dimensions, and constraints.
+    sys.A = A;
+    sys.B = B;
+    sys.C = C;
+    sys.D = D;
+
+    % Dimensions
+    sys.dims.state = size(A, 1);
+    sys.dims.input = size(B, 2);
+    sys.dims.output = size(C, 1);
+
+    % Constraints
+    sys.constraints.U = [params.u_min, params.u_max];
+    sys.constraints.Y = [-inf, inf];
+
+    % Parameters and target
+    sys.parameters = params;
+    sys.target = params.target;
 end
