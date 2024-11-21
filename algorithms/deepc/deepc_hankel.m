@@ -5,8 +5,8 @@ function [Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, T_ini, N)
     %   T_ini: #rows for past data
     %   N: prediction horizon
     
-    H_u = hankel_matrix(u_d, T_ini + N);
-    H_y = hankel_matrix(y_d, T_ini + N);
+    H_u = custom_hankel(u_d, T_ini + N);
+    H_y = custom_hankel(y_d, T_ini + N);
     
     % Partition the Hankel matrices into past & future components
     Up = H_u(1:T_ini, :); % Past inputs

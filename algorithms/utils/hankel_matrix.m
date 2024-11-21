@@ -1,5 +1,6 @@
-%% Implements sanity checks for the construction of Hankel matrices
+%% TODO: Remove / Obsolete (replaced by utils/PEness_check.m)
 
+% Implements sanity checks for the construction of Hankel matrices
 function H = hankel_matrix(data,L)
     %   Constructs a Hankel matrix (H_L(u)/H_L(y)) from input/output data
     %
