@@ -8,7 +8,9 @@ function [Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, T_ini, N, sys)
     H_u = custom_hankel(u_d, T_ini + N);
     H_y = custom_hankel(y_d, T_ini + N);
 
-    isPE = PEness_check(H_u, u_d, T_ini, N, sys);
+    full_rank = PEness_check(H_u);
+    isPE = deepc_PEness_check(u_d, T_ini, N, sys);
+    isPE = isPE & full_rank;
 
     if ~isPE
         error('Persistency of excitation check failed. Please provide richer input data or adjust T_ini and N.');

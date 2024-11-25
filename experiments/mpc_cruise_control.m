@@ -6,8 +6,8 @@ b = 50; % Damping coefficient [N*s/m]
 dt = 0.1; % Time step for discretization
 
 % State-Space Matrices
-A = 1 - (b * dt) / m;
-B = dt / m;
+A = 1 - b / m;
+B = 1 / m;
 C = 1;
 D = 0;
 
@@ -34,7 +34,7 @@ mpc_controller.MV.Min = -10000; % Minimum force
 mpc_controller.MV.Max = 10000; % Maximim force
 
 % Tuning parameters
-mpc_controller.Weights.ManipulatedVariables = 0; % No direct penalty on input values
+mpc_controller.Weights.ManipulatedVariables = 0.0001; % No direct penalty on input values
 mpc_controller.Weights.ManipulatedVariablesRate = 0; % Penalize changes in input
 mpc_controller.Weights.OutputVariables = 1; % Penalize deviations from desired speed
 

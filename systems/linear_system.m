@@ -17,7 +17,7 @@ function sys = linear_system(system_description)
                 'dt', 0.1, ... % Time step for discretization
                 'u_min', -inf, ... % Minimum force
                 'u_max', inf, ... % Maximum force
-                'target', 20, ... % Reference velocity [m/s]
+                'target', -10, ... % Reference velocity [m/s]
                 'x_ini', 15, ...
                 'state_name', {"Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
@@ -33,7 +33,9 @@ function sys = linear_system(system_description)
             params = struct( ...
                 'u_min', -1, ... % Minimum velocity
                 'u_max', 1, ... % Maximum velocity
-                'target', 10); % Reference position
+                'target', 10, ... % Reference position
+                'dt', 0.1 ... % Time step for discretization
+                 ); 
             
             % State-space matrices
             A = 1;
