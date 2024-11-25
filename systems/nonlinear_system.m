@@ -4,10 +4,9 @@ function sys = nonlinear_system(system_type)
     %  OUTPUT:
     %  sys [struct] - Struct with fields A,B,C,D, constraints, parameters
 
-    sys = struct();
-
     switch system_type
         case 'inverted_pendulum' % Inverted Pendulum on a Cart
+            x_ini = [0; 0; 0; 0];  % [x, x_dot, theta, theta_dot]
             % Parameters
             params = struct( ...
                 'c_mass', 0.5, ... % Mass of the cart [kg]
@@ -20,12 +19,11 @@ function sys = nonlinear_system(system_type)
                 'u_min', -10, ... % Minimum force
                 'u_max', 10, ... % Maximum force
                 'target', -10, ... % Reference velocity [m/s]
-                'x_ini', [0; 0; 0; 0], ... % [x, x_dot, theta, theta_dot]
+                'x_ini', x_ini, ... % [x, x_dot, theta, theta_dot]
                 'p', 2, ... % Output dimension
                 'm', 1, ... % Input dimension
                 'n', 4, ... % State dimension
-                'state_name', {"Linear Position", "Linear Velocity", ...
-                                "Angular Position", "Angular Velocity"}, ...
+                'state_name', {"Linear Position, Linear Velocity, Angular Position, Angular Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
             
             M = params.c_mass;
@@ -126,6 +124,6 @@ function sys = populate_system_struct(A, B, C, D, params)
     sys.constraints.Y = [-inf, inf];
 
     % Parameters and target
-    sys.parameters = params;
+    sys.params = params;
     sys.target = params.target;
 end

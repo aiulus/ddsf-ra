@@ -22,7 +22,7 @@ deepc_alg.params.R = R;
 
 % Fetch system
 sys = linear_system("cruise_control");
-% sys = nonlinear_system("inverted_pendulum");
+%sys = nonlinear_system("inverted_pendulum");
 
 
 %% Step 1: Data collection

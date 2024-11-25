@@ -99,6 +99,6 @@ function sys = populate_system_struct(A, B, C, D, params)
     sys.constraints.Y = [-inf, inf];
 
     % Parameters and target
-    sys.parameters = params;
+    sys.params = params;
     sys.target = params.target;
 end
