@@ -1,15 +1,4 @@
 function [u_d, y_d] = generate_data(sys, T)
-    %   Inputs:
-    %   A, B, C, D - System matrices (default: C=1, D=0 for SISO systems)
-    %   T - data length
-    %   m - scaling factor
-    %
-    %   Outputs:
-    %   u_d - input data
-    %   y_d - output data
-
-    fprintf("DATA GENERATOR running..."); % DEBUG STATEMENT
-
     A = sys.A;
     B = sys.B;
     C = sys.C;

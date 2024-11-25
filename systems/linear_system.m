@@ -19,6 +19,9 @@ function sys = linear_system(system_description)
                 'u_max', inf, ... % Maximum force
                 'target', -10, ... % Reference velocity [m/s]
                 'x_ini', 15, ...
+                'p', 1, ... % Output dimension
+                'm', 1, ... % Input dimension
+                'n', 1, ... % State dimension
                 'state_name', {"Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
             

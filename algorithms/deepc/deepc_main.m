@@ -22,6 +22,7 @@ deepc_alg.params.R = R;
 
 % Fetch system
 sys = linear_system("cruise_control");
+% sys = nonlinear_system("inverted_pendulum");
 
 
 %% Step 1: Data collection
@@ -61,7 +62,7 @@ for k = 0:max_iter-1
     % Solve the quadratic optimization problem 
     [g_opt, u_opt, y_opt] = deepc_opt(Up, Yp, Uf, Yf, ...
         u_ini, y_ini, ...
-        ref_trajectory, Q, R, sys.constraints.U, sys.constraints.Y, N, T);
+        ref_trajectory, Q, R, sys.constraints.U, sys.constraints.Y, N);
 
     % Apply the first s optimal control inputs
     u_t = value(u_opt);
@@ -74,22 +75,18 @@ for k = 0:max_iter-1
     % y_t = sys.C * y_seq(max(t - 1, 1)) + sys.D * u_t; % already returned
     % by _opt
     %y_seq(:,t) = y_t; % Store the output
-
-    % Update the initial trajectory / slide the window by s
-    u_ini = [u_ini((s + 1):end, :); u_t(1:s)];
-    y_ini = [y_ini((s + 1):end, :); y_t(1:s)];
+    
 
     debug_log(t, log_interval, debug_mode, save_to_file, ...
         'u_ini', u_ini, 'y_ini', y_ini, 'u_t', u_t, 'y_t', y_t, ...
          'ref_trajectory', ref_trajectory);
 
-    % DEBUG STATEMENTS
-    % fprintf('Iteration %d:', t);
-    % fprintf('Control Input of shape (%s): u_t = [%s]\n', join(string(size(u_t)), ','), join(string(u_t), ','));
-    % fprintf('Output of shape (%s): y_t = [%s]\n', join(string(size(y_t)), ','), join(string(y_t), ','));
-    % fprintf('Initial output trajectory of shape (%s): y_ini = [%s]\n', join(string(size(y_ini)), ','), join(string(y_ini), ','));
-    % fprintf('Initial control trajectory of shape (%s): u_ini = [%s]\n', join(string(size(u_ini)), ','), join(string(u_ini), ','));
+    % Update the initial trajectory / slide the window by s
+    u_ini = [u_ini((s + 1):end, :); u_t(1:s)];
+    y_ini = [y_ini((s + 1):end, :); y_t(1:s)];
 end
+
+debug_log(max_iter, 1, debug_mode, save_to_file, 'u_hist', u_hist, 'y_hist', y_hist); 
 
 %% Final Output
 % Display the applied control inputs and resulting system outputs
@@ -100,11 +97,11 @@ title('Control Inputs');
 xlabel('Time'); ylabel('Control Input');
 
 subplot(2,1,2);
+hold on;
 plot(y_hist, 'b');
+plot(1:max_iter, ref_trajectory(1)*ones(1, max_iter), 'r--', 'LineWidth', 1.5);
 title('System Outputs');
-%hold on;
-%plot(sys.parameters.target, 'r');
-%xlabel('Time'); ylabel('Control Input');
-%hold off;
+xlabel('Time'); ylabel('Output');
+hold off;
 
 

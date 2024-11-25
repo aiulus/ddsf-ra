@@ -1,7 +1,6 @@
 %% Defines and solves an optimization problem as described in DeePC
 
-function [g_opt, u_opt, y_opt] = deepc_opt(Up, Yp, Uf, Yf, u_ini, y_ini, r, Q, R, U, Y, N, T)
-    T_ini = max(size(u_ini));
+function [g_opt, u_opt, y_opt] = deepc_opt(Up, Yp, Uf, Yf, u_ini, y_ini, r, Q, R, U, Y, N)
     g = sdpvar(size(Uf, 2), 1); % Canocical ptimization variable € R^{(T - T_{ini} - N + 1) x 1}
 
     % disp("Size of g: "); 
