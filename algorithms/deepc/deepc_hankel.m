@@ -5,8 +5,8 @@ function [Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, T_ini, N, sys)
     %   T_ini: #rows for past data
     %   N: prediction horizon
     
-    H_u = custom_hankel(u_d, T_ini + N);
-    H_y = custom_hankel(y_d, T_ini + N);
+    [~, H_u] = construct_hankel(u_d, T_ini + N);
+    [~, H_y] = construct_hankel(y_d, T_ini + N);
 
     full_rank = PEness_check(H_u);
     isPE = deepc_PEness_check(u_d, T_ini, N, sys);

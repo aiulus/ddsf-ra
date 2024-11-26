@@ -100,10 +100,10 @@ end
 
 
 %% Utility Functions
-function [Ad, Bd, Cd, Dd] = discretize_system(A, B, C, D, Ts)
+function [Ad, Bd, Cd, Dd] = discretize_system(A, B, C, D, dt)
     % Discretizes a continuous-time state-space system.
     sys_cont = ss(A, B, C, D);
-    sys_disc = c2d(sys_cont, Ts);
+    sys_disc = c2d(sys_cont, dt);
     [Ad, Bd, Cd, Dd] = ssdata(sys_disc);
 end
 
@@ -126,4 +126,10 @@ function sys = populate_system_struct(A, B, C, D, params)
     % Parameters and target
     sys.params = params;
     sys.target = params.target;
+
+    [Ad, Bd, Cd, Dd] = discretize_system(A, B, C, D, params.dt);
+    sys.Ad = Ad;
+    sys.Bd = Bd;
+    sys.Cd = Cd;
+    sys.Dd = Dd;
 end
