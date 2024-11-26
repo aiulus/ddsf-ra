@@ -3,26 +3,20 @@ debug_mode = true; % Toggle debug mode
 save_to_file = true; % Set to true if log file desired
 log_interval = 1; % Log every <log_interval> iterations
 
-%% Step 0: Define global parameters
-deepc_alg = struct();
-   
-T = 31; % Window length (must be at least N + T_ini!!)
-T_ini = 5; % Length of initial trajectory
-N = 10; % Prediction horizon
-s = 2; % Sliding length, must be between 1 and T_ini
-Q = 150000; % Output cost matrix (in R^pxp; p: output dim.)
-R = 0.1; % Control cost matrix (in R^mxm; m: input dim.)
-
-deepc_alg.params.t = T;
-deepc_alg.params.tini = T_ini;
-deepc_alg.params.tp = N;
-deepc_alg.params.s = s;
-deepc_alg.params.Q = Q;
-deepc_alg.params.R = R;
-
+%% Step 0: Define global parameters, fetch system
 % Fetch system
-sys = linear_system("cruise_control");
-% sys = nonlinear_system("inverted_pendulum");
+%sys = linear_system("cruise_control");
+sys = nonlinear_system("inverted_pendulum");
+   
+% Access DeePC configuration parameters from the system struct
+deepc_config = sys.deepc_config;
+
+T = deepc_config.T; % Window length
+T_ini = deepc_config.T_ini; % Length of initial trajectory
+N = deepc_config.N; % Prediction horizon
+s = deepc_config.s; % Sliding length
+Q = deepc_config.Q * eye(sys.params.p); % Output cost matrix
+R = deepc_config.R * eye(sys.params.p); % Control cost matrix
 
 %% Step 1: Data collection
 [u_d, y_d] = generate_data(sys, T); % Simulate the system
@@ -49,7 +43,7 @@ max_iter = 50; % Simulation steps
 u_hist = zeros(N, size(sys.C, 1)); % For later storage of applied inputs
 y_hist = zeros(N, size(sys.B, 2)); % For later storage of resulting outputs
 
-ref_trajectory = sys.target * ones(N, 1);
+ref_trajectory = sys.target .* ones(N, 1);
 
 for k = 0:max_iter-1
     t = k * s + 1; % Calculate the current time step

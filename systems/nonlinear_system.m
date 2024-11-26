@@ -6,7 +6,6 @@ function sys = nonlinear_system(system_type)
 
     switch system_type
         case 'inverted_pendulum' % Inverted Pendulum on a Cart
-            x_ini = [0; 0; 0; 0];  % [x, x_dot, theta, theta_dot]
             % Parameters
             params = struct( ...
                 'c_mass', 0.5, ... % Mass of the cart [kg]
@@ -16,15 +15,27 @@ function sys = nonlinear_system(system_type)
                 'g', 9.81, ... % Gravity constant [m/s^2]
                 'b', 0.1, ... % Friction [N*s/m]
                 'dt', 0.1, ... % Time step for discretization
+                'y_min', -inf, ... % Positional constraint
+                'y_max', inf, ... % Positional constraint
                 'u_min', -10, ... % Minimum force
                 'u_max', 10, ... % Maximum force
-                'target', -10, ... % Reference velocity [m/s]
-                'x_ini', x_ini, ... % [x, x_dot, theta, theta_dot]
+                'target', [0.2, 0, 0, 0], ... % Desired state
+                'x_ini', [0; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
                 'p', 2, ... % Output dimension
                 'm', 1, ... % Input dimension
                 'n', 4, ... % State dimension
                 'state_name', {"Linear Position, Linear Velocity, Angular Position, Angular Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
+
+            % DeePC configuration
+            deepc_config = struct( ...
+                'T', 37, ... % Window length
+                'T_ini', 10, ... % Initial trajectory length
+                'N', 5, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'Q', 1, ... % Output cost matrix
+                'R', 0.1 ... % Control cost matrix
+            );
             
             M = params.c_mass;
             m = params.p_mass;
@@ -95,7 +106,13 @@ function sys = nonlinear_system(system_type)
             % Error for unrecognized system type
             error('System type "%s" not recognized. Please choose a valid system type.', system_type);
     end
+
     sys = populate_system_struct(A, B, C, D, params); % Assign the parameters to struct object
+
+        % Add DeePC configuration if defined
+    if exist('deepc_config', 'var')
+        sys.deepc_config = deepc_config;
+    end
 end
 
 
@@ -109,10 +126,10 @@ end
 
 function sys = populate_system_struct(A, B, C, D, params)
     % Constructs the system struct with matrices, dimensions, and constraints.
-    sys.A = A;
-    sys.B = B;
-    sys.C = C;
-    sys.D = D;
+    sys.Ac = A;
+    sys.Bc = B;
+    sys.Cc = C;
+    sys.Dc = D;
 
     % Dimensions
     sys.dims.state = size(A, 1);
@@ -128,8 +145,10 @@ function sys = populate_system_struct(A, B, C, D, params)
     sys.target = params.target;
 
     [Ad, Bd, Cd, Dd] = discretize_system(A, B, C, D, params.dt);
-    sys.Ad = Ad;
-    sys.Bd = Bd;
-    sys.Cd = Cd;
-    sys.Dd = Dd;
+
+    %% Store the discretized system as (A, B, C, D)
+    sys.A = Ad;
+    sys.B = Bd;
+    sys.C = Cd;
+    sys.D = Dd;
 end

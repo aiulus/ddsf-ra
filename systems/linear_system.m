@@ -6,8 +6,6 @@ function sys = linear_system(system_description)
     % OUTPUT:
     %    sys [struct] - Struct with fields A, B, C, D, constraints, parameters.
 
-    sys = struct();
-
     switch system_description
         case 'cruise_control'
             % Parameters
@@ -24,6 +22,16 @@ function sys = linear_system(system_description)
                 'n', 1, ... % State dimension
                 'state_name', {"Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
+
+            % DeePC configuration
+            deepc_config = struct( ...
+                'T', 31, ... % Window length
+                'T_ini', 5, ... % Initial trajectory length
+                'N', 10, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'Q', 150000, ... % Output cost matrix
+                'R', 0.1 ... % Control cost matrix
+            );
             
             % State-space matrices
             A = 1 - (params.damping * params.dt) / params.mass;
@@ -71,6 +79,11 @@ function sys = linear_system(system_description)
 
     % Populate system struct
     sys = populate_system_struct(A, B, C, D, params);
+
+    % Add DeePC configuration if defined
+    if exist('deepc_config', 'var')
+        sys.deepc_config = deepc_config;
+    end
 end
 
 
