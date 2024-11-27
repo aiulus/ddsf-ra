@@ -5,32 +5,38 @@ log_interval = 1; % Log every <log_interval> iterations
 
 %% Step 0: Define global parameters, fetch system
 % Fetch system
-%sys = linear_system("cruise_control");
-sys = nonlinear_system("inverted_pendulum");
+sys = linear_system("cruise_control");
+%sys = nonlinear_system("inverted_pendulum");
    
 % Access DeePC configuration parameters from the system struct
 deepc_config = sys.deepc_config;
 
-T = deepc_config.T; % Window length
+T = deepc_config.T; % # Data points
 T_ini = deepc_config.T_ini; % Length of initial trajectory
 N = deepc_config.N; % Prediction horizon
 s = deepc_config.s; % Sliding length
 Q = deepc_config.Q * eye(sys.params.p); % Output cost matrix
-R = deepc_config.R * eye(sys.params.p); % Control cost matrix
+R = deepc_config.R * eye(sys.params.m); % Control cost matrix
+m = sys.params.m;  % Input dimension
+p = sys.params.p; % Output dimension
+n = sys.params.n; % Dim. of the minimal state-space representation
 
 %% Step 1: Data collection
-[u_d, y_d] = generate_data(sys, T); % Simulate the system
+[u_d, y_d, ~, ~] = generate_data(sys, T); % Simulate the system
 
 %% Step 2: Generate the Hankel matrices
-[Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, T_ini, N, sys);
+[Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, sys);
+%[Up, Yp, Uf, Yf] = deepc_hankel(u.', y.', sys);
 
 %% Step 3: Define Initial Condition
-u_ini = u_d(1:T_ini).'; % Initial input trajectory
-y_ini = y_d(1:T_ini).'; % Initial output trajectory
+u_ini = u_d(:, 1:T_ini).'; % Initial input trajectory
+y_ini = y_d(:, 1:T_ini).'; % Initial output trajectory
+%u_ini = u(1:T_ini); % Initial input trajectory
+%y_ini = y(1:T_ini); % Initial output trajectory
 
 if debug_mode
     disp('--- SYSTEM PARAMETERS ---');
-    disp(deepc_alg.params);
+    disp(sys.deepc_config);
     disp('Initial u_ini:');
     disp(u_ini);
     disp('Initial y_ini:');
@@ -43,7 +49,8 @@ max_iter = 50; % Simulation steps
 u_hist = zeros(N, size(sys.C, 1)); % For later storage of applied inputs
 y_hist = zeros(N, size(sys.B, 2)); % For later storage of resulting outputs
 
-ref_trajectory = sys.target .* ones(N, 1);
+% ref_trajectory = sys.target .* ones(N, 1);
+ref_trajectory = sys.target .* ones(N, numel(sys.target)); % Element-wise scaling with compatible dimensions
 
 for k = 0:max_iter-1
     t = k * s + 1; % Calculate the current time step
@@ -55,7 +62,7 @@ for k = 0:max_iter-1
     % Solve the quadratic optimization problem 
     [g_opt, u_opt, y_opt] = deepc_opt(Up, Yp, Uf, Yf, ...
         u_ini, y_ini, ...
-        ref_trajectory, Q, R, sys.constraints.U, sys.constraints.Y, N);
+        ref_trajectory, sys);
 
     % Apply the first s optimal control inputs
     u_t = value(u_opt);
@@ -69,7 +76,6 @@ for k = 0:max_iter-1
     % by _opt
     %y_seq(:,t) = y_t; % Store the output
     
-
     debug_log(t, log_interval, debug_mode, save_to_file, ...
         'u_ini', u_ini, 'y_ini', y_ini, 'u_t', u_t, 'y_t', y_t, ...
          'ref_trajectory', ref_trajectory);

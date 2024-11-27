@@ -15,11 +15,11 @@ function sys = nonlinear_system(system_type)
                 'g', 9.81, ... % Gravity constant [m/s^2]
                 'b', 0.1, ... % Friction [N*s/m]
                 'dt', 0.1, ... % Time step for discretization
-                'y_min', -inf, ... % Positional constraint
-                'y_max', inf, ... % Positional constraint
+                'y_min', [-inf,-180], ... % Positional constraint
+                'y_max', [inf,180], ... % Positional constraint
                 'u_min', -10, ... % Minimum force
                 'u_max', 10, ... % Maximum force
-                'target', [0.2, 0, 0, 0], ... % Desired state
+                'target', [0.2, 0], ... % Desired output
                 'x_ini', [0; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
                 'p', 2, ... % Output dimension
                 'm', 1, ... % Input dimension
@@ -33,7 +33,7 @@ function sys = nonlinear_system(system_type)
                 'T_ini', 10, ... % Initial trajectory length
                 'N', 5, ... % Prediction horizon
                 's', 2, ... % Sliding length
-                'Q', 1, ... % Output cost matrix
+                'Q', 100, ... % Output cost matrix
                 'R', 0.1 ... % Control cost matrix
             );
             
@@ -138,7 +138,7 @@ function sys = populate_system_struct(A, B, C, D, params)
 
     % Constraints
     sys.constraints.U = [params.u_min, params.u_max];
-    sys.constraints.Y = [-inf, inf];
+    sys.constraints.Y = [params.y_min, params.y_max];
 
     % Parameters and target
     sys.params = params;

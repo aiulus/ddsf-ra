@@ -1,6 +1,5 @@
 function isPE = PEness_check(H)
 %   PEness_check Verifies if the Hankel matrix H has full rank
-    disp('RECEIVED HANKEL MATRIX H = '); disp(H);
     r = rank(H);
     % r = page_rank(H);
     d = min(size(H));

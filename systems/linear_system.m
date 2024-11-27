@@ -15,6 +15,8 @@ function sys = linear_system(system_description)
                 'dt', 0.1, ... % Time step for discretization
                 'u_min', -inf, ... % Minimum force
                 'u_max', inf, ... % Maximum force
+                'y_min', -inf, ... % Output constraint
+                'y_max', inf, ... % Output constraint
                 'target', -10, ... % Reference velocity [m/s]
                 'x_ini', 15, ...
                 'p', 1, ... % Output dimension
@@ -44,6 +46,8 @@ function sys = linear_system(system_description)
             params = struct( ...
                 'u_min', -1, ... % Minimum velocity
                 'u_max', 1, ... % Maximum velocity
+                'y_min', -inf, ... % Output constraint
+                'y_max', inf, ... % Output constraint
                 'target', 10, ... % Reference position
                 'dt', 0.1 ... % Time step for discretization
                  ); 
@@ -62,6 +66,8 @@ function sys = linear_system(system_description)
                 'delay_steps', 3, ... % Delay in steps
                 'u_min', -2000, ... % Minimum control input [N]
                 'u_max', 2000, ... % Maximum control input [N]
+                'y_min', -inf, ... % Output constraint
+                'y_max', inf, ... % Output constraint
                 'target', 20); % Reference position
             
             % Continuous-time state-space matrices
@@ -109,7 +115,7 @@ function sys = populate_system_struct(A, B, C, D, params)
 
     % Constraints
     sys.constraints.U = [params.u_min, params.u_max];
-    sys.constraints.Y = [-inf, inf];
+    sys.constraints.Y = [params.y_min, params.y_max];
 
     % Parameters and target
     sys.params = params;
