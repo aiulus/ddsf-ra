@@ -33,7 +33,7 @@ function sys = nonlinear_system(system_type)
                 'T_ini', 10, ... % Initial trajectory length
                 'N', 5, ... % Prediction horizon
                 's', 2, ... % Sliding length
-                'Q', 100, ... % Output cost matrix
+                'Q', 100000, ... % Output cost matrix
                 'R', 0.1 ... % Control cost matrix
             );
             
@@ -85,8 +85,8 @@ function sys = nonlinear_system(system_type)
                 'T', 214, ... % Window length
                 'T_ini', 1, ... % Initial trajectory length
                 'N', 30, ... % Prediction horizon
-                's', 2, ... % Sliding length
-                'Q', 150000, ... % Output cost matrix
+                's', 1, ... % Sliding length
+                'Q', 1500, ... % Output cost matrix
                 'R', 0.1 ... % Control cost matrix
             );
 

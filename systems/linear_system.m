@@ -17,8 +17,8 @@ function sys = linear_system(system_description)
                 'u_max', inf, ... % Maximum force
                 'y_min', -inf, ... % Output constraint
                 'y_max', inf, ... % Output constraint
-                'target', -10, ... % Reference velocity [m/s]
-                'x_ini', 15, ...
+                'target', 20, ... % Reference velocity [m/s]
+                'x_ini', 0, ...
                 'p', 1, ... % Output dimension
                 'm', 1, ... % Input dimension
                 'n', 1, ... % State dimension
@@ -27,11 +27,11 @@ function sys = linear_system(system_description)
 
             % DeePC configuration
             deepc_config = struct( ...
-                'T', 31, ... % Window length
+                'T', 41, ... % Window length
                 'T_ini', 5, ... % Initial trajectory length
-                'N', 10, ... % Prediction horizon
+                'N', 15, ... % Prediction horizon
                 's', 2, ... % Sliding length
-                'Q', 150000, ... % Output cost matrix
+                'Q', 1, ... % Output cost matrix
                 'R', 0.1 ... % Control cost matrix
             );
             

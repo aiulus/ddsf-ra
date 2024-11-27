@@ -7,9 +7,6 @@ function [g_opt, u_opt, y_opt] = deepc_opt(Up, Yp, Uf, Yf, u_ini, y_ini, r, sys)
     U = sys.constraints.U;
     Y = sys.constraints.Y;
 
-    disp("r = "); disp(r); disp(" of shape: "); disp(size(r));
-    disp("r(1, :)");disp(r(1, :));
-
     g = sdpvar(size(Uf, 2), 1); % Canocical optimization variable € R^{(T - T_{ini} - N + 1) x 1}
 
     u = Uf * g; % Predicted inputs (Nm x 1)
@@ -62,7 +59,9 @@ function [g_opt, u_opt, y_opt] = deepc_opt(Up, Yp, Uf, Yf, u_ini, y_ini, r, sys)
             error('Optimization problem is infeasible even with fmincon!');
         end
     end
-
+    disp("OPTIMAL VALUE g: "); disp(g_opt);
+    disp("OPTIMAL VALUE u: "); disp(u_opt);
+    disp("OPTIMAL VALUE y: "); disp(y_opt);
 end
 
  

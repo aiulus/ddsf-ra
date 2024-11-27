@@ -24,10 +24,17 @@ function [u_d, y_d, u, y] = generate_data(sys, T)
         u_d(:, i) = PE_input(:, i);
         %% TODO: This is computed with x_data = 0 at i=1, instead, 
         %% it must be initialized with the initial state of the system
-        disp("A of size: "); disp(size(A));
-        disp("B of size: "); disp(size(B));
-        
+       % disp("x_d(:, i) of size: "); disp(size(x_d(:, i)));
+       % disp("A of size: "); disp(size(A));
+       % disp("x_d(:, i) of size: "); disp(size(x_d(:, i)));
+       % disp("B of size: "); disp(size(B));
+       % disp("u_d(:, i) of size: "); disp(size(u_d(:, i)));
         x_d(:, i + 1) = A * x_d(:, i) + B * u_d(:, i);
+        %disp("y_d(:, i) of size: "); disp(size(y_d(:, i)));
+        %disp("C of size: "); disp(size(C));
+        %disp("x_d(:, i) of size: "); disp(size(x_d(:, i)));
+        %disp("D of size: "); disp(size(D));
+        %disp("u_d(:, i) of size: "); disp(size(u_d(:, i)));
         y_d(:, i) = C * x_d(:, i) + D * u_d(:, i);
     end
     % Flatten the control inputs and outputs

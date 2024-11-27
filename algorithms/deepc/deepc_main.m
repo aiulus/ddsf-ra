@@ -5,10 +5,10 @@ log_interval = 1; % Log every <log_interval> iterations
 
 %% Step 0: Define global parameters, fetch system
 % Fetch system
-%sys = linear_system("cruise_control");
+sys = linear_system("cruise_control");
 %sys = nonlinear_system("inverted_pendulum");
 %sys = nonlinear_system("deepc_quadrotor");
-sys = nonlinear_system("ddsf_quadrotor");
+%sys = nonlinear_system("ddsf_quadrotor");
 
    
 % Access DeePC configuration parameters from the system struct
@@ -89,17 +89,20 @@ debug_log(max_iter, 1, debug_mode, save_to_file, 'u_hist', u_hist, 'y_hist', y_h
 %% Final Output
 % Display the applied control inputs and resulting system outputs
 figure;
-subplot(2,1,1);
+subplot(2,1,2);
 plot(u_hist);
 title('Control Inputs');
 xlabel('Time'); ylabel('Control Input');
-
-subplot(2,1,2);
+subplot(2,1,1);
 hold on;
 plot(y_hist, 'b');
 plot(1:max_iter, ref_trajectory(1)*ones(1, max_iter), 'r--', 'LineWidth', 1.5);
 title('System Outputs');
 xlabel('Time'); ylabel('Output');
 hold off;
+
+
+
+
 
 
