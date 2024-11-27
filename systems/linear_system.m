@@ -31,7 +31,7 @@ function sys = linear_system(system_description)
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2, ... % Sliding length
-                'Q', 1, ... % Output cost matrix
+                'Q', 150000, ... % Output cost matrix
                 'R', 0.1 ... % Control cost matrix
             );
             

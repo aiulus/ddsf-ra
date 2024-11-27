@@ -11,109 +11,147 @@ function sys = LTI(system_description)
 
     switch system_description
         case 'single_integrator'
-            sys.A = 1;
-            sys.B = 1;
-            sys.C = 1;
-            sys.D = 0;
-            
-            sys.dims.state = 1; % n - dim(x)
-            sys.dims.input = 1; % m - dim(u)
-            sys.dims.output = 1; % p - dim(y)
+            params = struct( ...
+                'm', 1, ... % Input dimension (Velocity)
+                'p', 1, ... % Output dimension (y = x in this case)
+                'n', 1, ... % System dimension (Position)
+                'dt', 0.1, ... % Sampling time
+                'u_min', -5, ... 
+                'u_max', 5, ...
+                'y_min', -inf, ...
+                'y_max', inf, ...
+                'x_ini', 0, ...
+                'target', 10 ...
+                );
 
-            sys.parameters.state_name = 'Position';
-            sys.parameters.input_name = 'Velocity';
-            sys.parameters.dt = 0.1; % Sampling time
+            deepc_config = struct( ...
+                'T', 20, ... % Window length
+                'T_ini', 5, ... % Initial trajectory length
+                'N', 15, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'Q', 1, ... % Output cost matrix
+                'R', 0.1 ... % Control cost matrix
+            );
 
-            sys.constraints.U = [-5,5];
-            sys.constraints.Y = [-inf, inf];
-
-            sys.x_ini = 0; % Starting position
-            sys.target = 10; % Desired position
+            A = 1;
+            B = 1;
+            C = 1;
+            D = 0;
 
         case 'double_integrator'
-            sys.A = [1 1; 0 1];
-            sys.B = [0; 1];
-            sys.C = [1 0];
-            sys.D = 0;
+            params = struct( ...
+                'm', 1, ... % Input: {'Acceleration'}
+                'p', 1, ... % Output dimension 
+                'n', 2, ... % System states: {'Position', 'Velocity'}
+                'dt', 0.1, ... % Sampling time
+                'u_min', -10, ... 
+                'u_max', 10, ...
+                'y_min', -50, ...
+                'y_max', 50, ...
+                'x_ini', [0; 0], ...
+                'target', [10; 0] ...
+                );
 
-            sys.dims.state = size(sys.A, 1); % n - dim(x)
-            sys.dims.input = size(sys.B, 2); % m - dim(u)
-            sys.dims.output = size(sys.C, 1); % p - dim(y)
+            deepc_config = struct( ...
+                'T', 20, ... % Window length
+                'T_ini', 5, ... % Initial trajectory length
+                'N', 15, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'Q', 1, ... % Output cost matrix
+                'R', 0.1 ... % Control cost matrix
+            );
 
-            sys.parameters.state_name = {'Position', 'Velocity'};
-            sys.parameters.input_name = {'Acceleration'};
-            sys.parameters.dt = 0.1; % Sampling time
-
-            sys.constraints.U = [-10,10]; % Acceleration limits
-            sys.constraints.Y = [-50, 50]; % Position limits
-
-            sys.x_ini = [0; 0]; % Starting position and velocity
-            sys.target = [10; 0]; % Desired position and velocity
+            A = [1 1; 0 1];
+            B = [0; 1];
+            C = [1 0];
+            D = 0;
             
         case 'mass_spring_dampler'
-            m = 1; % Mass
-            k = 1; % Spring constant
-            b = 0.2; % Damping coefficient
-            dt = 0.1; % Sampling time
+            % Parameters        
+            params = struct( ...
+                'm', 1, ... % Input dimension (Velocity)
+                'p', 1, ... % Output dimension (y = x in this case)
+                'n', 1, ... % System dimension (Position)
+                'dt', 0.1, ... % Sampling time
+                'u_min', 0, ... 
+                'u_max', 0.0001, ...
+                'y_min', -inf, ...
+                'y_max', inf, ...
+                'x_ini', 0, ...
+                'target', [1; 0],...
+                'mass', 1, ...
+                'spring_constant', 1, ...
+                'damping_coeff', 0.2 ...
+                );
+
+            deepc_config = struct( ...
+                'T', 20, ... % Window length
+                'T_ini', 5, ... % Initial trajectory length
+                'N', 15, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'Q', 1, ... % Output cost matrix
+                'R', 0.1 ... % Control cost matrix
+            );
+
+            dt = params.dt;
+            m = params.mass;
+            b = params.damping_coeff;
+            k = params.spring_constant;
 
             % State-space matrices
-            sys.A = [1 dt; -k/m*dt 1 - b/m*dt];
-            sys.B = [0; dt/m];
-            sys.C = [1 0];
-            sys.D = 0;    
+            A = [1 dt; -k/m*dt 1 - b/m*dt];
+            B = [0; dt/m];
+            C = [1 0];
+            D = 0;    
 
-            sys.dims.state = size(sys.A, 1); % n - dim(x)
-            sys.dims.input = size(sys.B, 2); % m - dim(u)
-            sys.dims.output = size(sys.C, 1); % p - dim(y)
-
-            sys.parameters.mass = m;
-            sys.parameters.spring_constant = k;
-            sys.parameters.damping = b;
-            sys.parameters.dt = dt; % TODO: not all systems have that - make it consistent
-
-            sys.constraints.U = [0; 0.0001]; % Starting position and velocity
-            sys.constraints.Y = [1; 0]; % Desired position and velocity
         case 'dc_motor'
-            J = 0.01; % Inertia
-            b = 0.1; % Damping coefficient
-            K = 0.01; % Motor constant
-            R = 1; % Resistance
-            L = 0.5; % Inductance
-            dt = 0.1; % Sampling time
-            
-            Ac = [-b/J K/J; -K/L -R/L];
-            Bc = [0; 1/L];
-            Cc = [1 0];
-            Dc = 0;
-            
-            % Discretize the system
-            % sys_cont = ss(Ac, Bc, Cc, Dc);
-            % sys_disc = c2d(sys_cont, dt);
-            % [Ad, Bd, Cd, Dd] = ssdata(sys_disc);
-            
-            sys.A = Ac;
-            sys.B = Bc;
-            sys.C = Cc;
-            sys.D = Dc;
-            
-            sys.dims.state = size(sys.A, 1); % n - dim(x)
-            sys.dims.input = size(sys.B, 2); % m - dim(u)
-            sys.dims.output = size(sys.C, 1); % p - dim(y)
+            % Parameters
+            params = struct( ...
+                'J' , 0.01, ... % Inertia
+                'b', 0.1, ... % Damping coefficient
+                'K', 0.01, ... % Motor constant
+                'R', 1, ... % Resistance
+                'L', 0.5, ... % Inductance
+                'm', 1, ... % Input dimension (Velocity)
+                'p', 1, ... % Output dimension (y = x in this case)
+                'n', 1, ... % System dimension (Position)
+                'dt', 0.1, ... % Sampling time
+                'u_min', -10, ... % Voltage limits
+                'u_max', 10, ... % Voltage limits
+                'y_min', -inf, ... % Speed limits
+                'y_max', inf, ... % Speed limits
+                'x_ini', [0; 0], ...
+                'target', [10; 0] ...
+                );
 
-            sys.parameters.inertia = J;
-            sys.parameters.damping = b;
-            sys.parameters.motor_constant = K;
-            sys.parameters.resistance = R;
-            sys.parameters.inductance = L;
-            sys.parameters.dt = dt;
+            deepc_config = struct( ...
+                'T', 20, ... % Window length
+                'T_ini', 5, ... % Initial trajectory length
+                'N', 15, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'Q', 1, ... % Output cost matrix
+                'R', 0.1 ... % Control cost matrix
+            );
+                        
+            b = params.b;
+            J = params.J;
+            K = params.K;
+            R = params.R;
+            L = params.L;
             
-            sys.constraints.U = [-10, 10]; % Voltage limits
-            sys.constraints.Y = [-inf, inf]; % No speed limits
-            
-            sys.x_ini = [0; 0]; % Starting angular position and velocity
-            sys.target = [10; 0]; % Desired angular position and velocity
-
+            A = [-b/J K/J; -K/L -R/L];
+            B = [0; 1/L];
+            C = [1 0];
+            D = 0;
+         
         otherwise
             error('System type "%s" not recognized.', system_description);
+    end
+    % Populate system struct
+    sys = populate_system_struct(A, B, C, D, params);
+
+    % Add DeePC configuration if defined
+    if exist('deepc_config', 'var')
+        sys.deepc_config = deepc_config;
     end
 end

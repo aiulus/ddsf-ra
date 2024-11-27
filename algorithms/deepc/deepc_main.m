@@ -93,12 +93,14 @@ subplot(2,1,2);
 plot(u_hist);
 title('Control Inputs');
 xlabel('Time'); ylabel('Control Input');
+grid on;
 subplot(2,1,1);
 hold on;
 plot(y_hist, 'b');
 plot(1:max_iter, ref_trajectory(1)*ones(1, max_iter), 'r--', 'LineWidth', 1.5);
 title('System Outputs');
 xlabel('Time'); ylabel('Output');
+grid on;
 hold off;
 
 
