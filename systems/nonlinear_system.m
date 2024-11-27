@@ -61,7 +61,7 @@ function sys = nonlinear_system(system_type)
             D = [0;
                  0];
 
-        case 'quadrotor'
+        case 'ddsf_quadrotor'
             % Parameters
             params = struct( ...
                 'mass', 0.2, ... % Quadrotor mass [kg]
@@ -69,13 +69,11 @@ function sys = nonlinear_system(system_type)
                 'dt', 0.1, ... % Time step for discretization
                 'u_min', -[1; 0.1; 0.1; 0.1], ... % Minimum force
                 'u_max', [1; 0.1; 0.1; 0.1], ... % Maximum force
-                'y_min', -[1; 1; 1; inf; inf; inf; % Output constraints
-                          0.2; 0.2; 0.2; inf; inf; inf], ...
-                'y_max', [1; 1; 1; inf; inf; inf; % Output constraints
-                          0.2; 0.2; 0.2; inf; inf; inf], ...
+                'y_min', -[1; 1; 1; 0.2; 0.2; 0.2], ... % Output constraints
+                'y_max', [1; 1; 1; 0.2; 0.2; 0.2], ...  % Output constraints                          
                 'I', repmat(10^(-3), 3, 1), ... % Moment of inertia in x, y, z
                 'x_ini', zeros(12, 1), ...
-                'target', zeros(6, 1), ... % TODO: Current value is just a placeholder
+                'target', ones(6, 1), ... % TODO: Current value is just a placeholder
                 'p', 6, ... % Output dimension (y € R^p)
                 'm', 4, ... % Input dimension (u € R^m)
                 'n', 12, ... % State dimension (x € R^n)
@@ -84,9 +82,9 @@ function sys = nonlinear_system(system_type)
 
             % DeePC configuration
             deepc_config = struct( ...
-                'T', 134, ... % Window length
-                'T_ini', 5, ... % Initial trajectory length
-                'N', 10, ... % Prediction horizon
+                'T', 214, ... % Window length
+                'T_ini', 1, ... % Initial trajectory length
+                'N', 30, ... % Prediction horizon
                 's', 2, ... % Sliding length
                 'Q', 150000, ... % Output cost matrix
                 'R', 0.1 ... % Control cost matrix
@@ -115,7 +113,61 @@ function sys = nonlinear_system(system_type)
 
             D = zeros(6, 4);
 
+        case 'deepc_quadrotor'
+            % Parameters
+            params = struct( ...
+                'mass', 0.2, ... % Quadrotor mass [kg]
+                'g', 9.81, ... % Gravity constant
+                'dt', 0.1, ... % Time step for discretization
+                'u_min', [0; 0; 0; 0], ... % Minimum force
+                'u_max', [1; 1; 1; 1], ... % Maximum force
+                'y_min', -[3; 3; 3; inf; inf; inf], ... % Output constraints
+                'y_max', [3; 3; 3; inf; inf; inf], ...  % Output constraints                          
+                'I', repmat(10^(-3), 3, 1), ... % Moment of inertia in x, y, z
+                'x_ini', zeros(12, 1), ...
+                'target', -ones(6, 1), ... % TODO: Current value is just a placeholder
+                'p', 6, ... % Output dimension (y € R^p)
+                'm', 4, ... % Input dimension (u € R^m)
+                'n', 12, ... % State dimension (x € R^n)
+                'state_name', {"[linpos, delta-linpos, angpos, delta-angpos]"}, ...
+                'input_name', {"Total force"}); % Initial velocity [m/s]
+
+            % DeePC configuration
+            deepc_config = struct( ...
+                'T', 214, ... % Window length
+                'T_ini', 1, ... % Initial trajectory length
+                'N', 30, ... % Prediction horizon
+                'max_iter', 600, ... % # Simulation steps
+                's', 2, ... % Sliding length
+                'Q', diag([200, 200, 300, 1, 1, 1]), ... % Output cost matrix
+                'R', 1, ... % Control cost matrix
+                'lambda_g', 30, ... % Regularization parameter
+                'lambda_y', (10^5) ... % Regularization parameter
+            );
+
+                        %% State-space Matrices
+
+            % Define state-space matrices as sparse for efficiency
+            A_i = [1, 2, 3, 10, 11, 12];
+            A_j = [4, 5, 6, 7, 8, 9];
+            A_val = ones(6, 1);
+            A = sparse(A_i, A_j, A_val, params.n, params.n);
+
+            B_i = [9, 4, 5, 6];
+            B_j = [1, 2, 3, 4];
+            B_val = [1/params.mass, 1/params.I(1), 1/params.I(2), 1/params.I(3)];
+            B = sparse(B_i, B_j, B_val, params.n, params.m);
+
+            % Output matrices (position and orientation tracking)
+            % Define the indices of x that correspond to y
+            indices = [1, 2, 3, 10, 11, 12]; % Indices for ϕ, θ, ψ, x, y, z in x
             
+            % Create C as a sparse matrix
+            C = sparse(1:length(indices), indices, 1, length(indices), 12);
+
+            D = zeros(6, 4);
+
+         
         otherwise
             % Error for unrecognized system type
             error('System type "%s" not recognized. Please choose a valid system type.', system_type);
