@@ -93,31 +93,4 @@ function sys = linear_system(system_description)
 end
 
 
-%% Utility Functions
-function [Ad, Bd, Cd, Dd] = discretize_system(A, B, C, D, Ts)
-    % Discretizes a continuous-time state-space system.
-    sys_cont = ss(A, B, C, D);
-    sys_disc = c2d(sys_cont, Ts);
-    [Ad, Bd, Cd, Dd] = ssdata(sys_disc);
-end
 
-function sys = populate_system_struct(A, B, C, D, params)
-    % Constructs the system struct with matrices, dimensions, and constraints.
-    sys.A = A;
-    sys.B = B;
-    sys.C = C;
-    sys.D = D;
-
-    % Dimensions
-    sys.dims.state = size(A, 1);
-    sys.dims.input = size(B, 2);
-    sys.dims.output = size(C, 1);
-
-    % Constraints
-    sys.constraints.U = [params.u_min, params.u_max];
-    sys.constraints.Y = [params.y_min, params.y_max];
-
-    % Parameters and target
-    sys.params = params;
-    sys.target = params.target;
-end
