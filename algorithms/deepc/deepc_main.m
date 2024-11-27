@@ -7,6 +7,7 @@ log_interval = 1; % Log every <log_interval> iterations
 % Fetch system
 sys = linear_system("cruise_control");
 %sys = nonlinear_system("inverted_pendulum");
+%sys = nonlinear_system("quadrotor");
    
 % Access DeePC configuration parameters from the system struct
 deepc_config = sys.deepc_config;
@@ -26,13 +27,10 @@ n = sys.params.n; % Dim. of the minimal state-space representation
 
 %% Step 2: Generate the Hankel matrices
 [Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, sys);
-%[Up, Yp, Uf, Yf] = deepc_hankel(u.', y.', sys);
 
 %% Step 3: Define Initial Condition
 u_ini = u_d(:, 1:T_ini).'; % Initial input trajectory
 y_ini = y_d(:, 1:T_ini).'; % Initial output trajectory
-%u_ini = u(1:T_ini); % Initial input trajectory
-%y_ini = y(1:T_ini); % Initial output trajectory
 
 if debug_mode
     disp('--- SYSTEM PARAMETERS ---');
@@ -49,8 +47,7 @@ max_iter = 50; % Simulation steps
 u_hist = zeros(N, size(sys.C, 1)); % For later storage of applied inputs
 y_hist = zeros(N, size(sys.B, 2)); % For later storage of resulting outputs
 
-% ref_trajectory = sys.target .* ones(N, 1);
-ref_trajectory = sys.target .* ones(N, numel(sys.target)); % Element-wise scaling with compatible dimensions
+ref_trajectory = repmat(sys.target.', N, 1);
 
 for k = 0:max_iter-1
     t = k * s + 1; % Calculate the current time step

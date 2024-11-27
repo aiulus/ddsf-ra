@@ -82,6 +82,16 @@ function sys = nonlinear_system(system_type)
                 'state_name', {"[linpos, delta-linpos, angpos, delta-angpos]"}, ...
                 'input_name', {"Total force"}); % Initial velocity [m/s]
 
+            % DeePC configuration
+            deepc_config = struct( ...
+                'T', 134, ... % Window length
+                'T_ini', 5, ... % Initial trajectory length
+                'N', 10, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'Q', 150000, ... % Output cost matrix
+                'R', 0.1 ... % Control cost matrix
+            );
+
             
             %% State-space Matrices
 
@@ -97,9 +107,13 @@ function sys = nonlinear_system(system_type)
             B = sparse(B_i, B_j, B_val, params.n, params.m);
 
             % Output matrices (position and orientation tracking)
-            C = [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0;
-                 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-            D = 0;
+            % Define the indices of x that correspond to y
+            indices = [1, 2, 3, 10, 11, 12]; % Indices for ϕ, θ, ψ, x, y, z in x
+            
+            % Create C as a sparse matrix
+            C = sparse(1:length(indices), indices, 1, length(indices), 12);
+
+            D = zeros(6, 4);
 
             
         otherwise

@@ -7,6 +7,9 @@ function [g_opt, u_opt, y_opt] = deepc_opt(Up, Yp, Uf, Yf, u_ini, y_ini, r, sys)
     U = sys.constraints.U;
     Y = sys.constraints.Y;
 
+    disp("r = "); disp(r); disp(" of shape: "); disp(size(r));
+    disp("r(1, :)");disp(r(1, :));
+
     g = sdpvar(size(Uf, 2), 1); % Canocical optimization variable € R^{(T - T_{ini} - N + 1) x 1}
 
     u = Uf * g; % Predicted inputs (Nm x 1)
@@ -17,14 +20,6 @@ function [g_opt, u_opt, y_opt] = deepc_opt(Up, Yp, Uf, Yf, u_ini, y_ini, r, sys)
     % Define the cost function
     cost = 0;
     for k = 1:N
-        disp("y of size: "); disp(size(y));
-        disp("y(k) of size: "); disp(size(y(k)));
-        disp("r of size: "); disp(size(r));
-        disp("r(k, :) of size: "); disp(size(r(k, :)));
-        disp("Q of size: "); disp(size(Q));
-        disp("R of size: "); disp(size(R));
-        disp("u of size: "); disp(size(u));
-        disp("u(k) of size: "); disp(size(u(k)));
         % cost = cost + (y(k) - r(k, :)).' * Q * (y(k) - r(k, :)) + u(k).' * R * u(k);
         cost = cost + (y(k) - r(k, :)) * Q * (y(k) - r(k, :)).' + u(k) * R * u(k);
     end
@@ -42,17 +37,32 @@ function [g_opt, u_opt, y_opt] = deepc_opt(Up, Yp, Uf, Yf, u_ini, y_ini, r, sys)
     % problematic for other instances
 
 
-    % Solve optimization problem
-    options = sdpsettings('verbose', 0, 'solver', 'quadprog');  
-    diagnostics = optimize(constraints, cost, options); 
-
+    % Solve optimization problem using quadprog
+    options_quadprog = sdpsettings('verbose', 0, 'solver', 'quadprog');  
+    diagnostics = optimize(constraints, cost, options_quadprog);
+    
     if diagnostics.problem == 0 % Feasible solution found
+        % Extract optimal values
         g_opt = value(g);
         u_opt = value(u);
         y_opt = value(y);
-    else       
-        error('Optimization problem is infeasible!')
+    else
+        % Check if failure is due to nonconvexity and retry with fmincon
+        warning('Quadprog failed. Trying with fmincon...');
+        options_fmincon = sdpsettings('verbose', 1, 'solver', 'fmincon');  
+
+        diagnostics = optimize(constraints, cost, options_fmincon);
+    
+        if diagnostics.problem == 0 % Feasible solution found with fmincon
+            % Extract optimal values
+            g_opt = value(g);
+            u_opt = value(u);
+            y_opt = value(y);
+        else
+            error('Optimization problem is infeasible even with fmincon!');
+        end
     end
+
 end
 
  
