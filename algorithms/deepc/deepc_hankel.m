@@ -7,11 +7,13 @@ function [Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, sys)
     
     m = sys.params.m;
     p = sys.params.p;
+
     T_ini = sys.deepc_config.T_ini;
     N = sys.deepc_config.N;
+    PE_order = T_ini + N;
 
-    [~, H_u] = construct_hankel(u_d, T_ini + N);
-    [~, H_y] = construct_hankel(y_d, T_ini + N);
+    [~, H_u] = construct_hankel(u_d, PE_order);
+    [~, H_y] = construct_hankel(y_d, PE_order);
 
     full_rank = PEness_check(H_u);
     isPE = deepc_PEness_check(u_d, T_ini, N, sys);
@@ -26,9 +28,5 @@ function [Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, sys)
     Uf = H_u((T_ini * m + 1):end, :); % Future inputs
     Yp = H_y(1:(T_ini * p), :); % Past outputs
     Yf = H_y((T_ini * p + 1):end, :); % Future outputs
-
-    disp("(deepc_hankel) Yp size: "); disp(size(Yp));
-    disp("(deepc_hankel) Yf size: "); disp(size(Yf));
-
 end
 

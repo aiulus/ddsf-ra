@@ -1,5 +1,5 @@
 %% DeePC algorithm
-debug_mode = true; % Toggle debug mode
+debug_toggle = true; % Toggle debug mode
 save_to_file = true; % Set to true if log file desired
 log_interval = 1; % Log every <log_interval> iterations
 
@@ -9,6 +9,7 @@ sys = linear_system("cruise_control");
 %sys = nonlinear_system("inverted_pendulum");
 %sys = nonlinear_system("deepc_quadrotor");
 %sys = nonlinear_system("ddsf_quadrotor");
+%sys = LTI('double_integrator');
 
    
 % Access DeePC configuration parameters from the system struct
@@ -20,6 +21,7 @@ N = deepc_config.N; % Prediction horizon
 s = deepc_config.s; % Sliding length
 Q = deepc_config.Q * eye(sys.params.p); % Output cost matrix
 R = deepc_config.R * eye(sys.params.m); % Control cost matrix
+
 m = sys.params.m;  % Input dimension
 p = sys.params.p; % Output dimension
 n = sys.params.n; % Dim. of the minimal state-space representation
@@ -34,7 +36,7 @@ n = sys.params.n; % Dim. of the minimal state-space representation
 u_ini = u_d(:, 1:T_ini).'; % Initial input trajectory
 y_ini = y_d(:, 1:T_ini).'; % Initial output trajectory
 
-if debug_mode
+if debug_toggle
     disp('--- SYSTEM PARAMETERS ---');
     disp(sys.deepc_config);
     disp('Initial u_ini:');
@@ -75,7 +77,7 @@ for k = 0:max_iter-1
     % by _opt
     %y_seq(:,t) = y_t; % Store the output
     
-    debug_log(t, log_interval, debug_mode, save_to_file, ...
+    debug_log(debug_toggle, t, log_interval, save_to_file, ...
         'u_ini', u_ini, 'y_ini', y_ini, 'u_t', u_t, 'y_t', y_t, ...
          'ref_trajectory', ref_trajectory);
 
@@ -84,7 +86,7 @@ for k = 0:max_iter-1
     y_ini = [y_ini((s + 1):end, :); y_t(1:s)];
 end
 
-debug_log(max_iter, 1, debug_mode, save_to_file, 'u_hist', u_hist, 'y_hist', y_hist); 
+debug_log(max_iter, 1, debug_toggle, save_to_file, 'u_hist', u_hist, 'y_hist', y_hist); 
 
 %% Final Output
 % Display the applied control inputs and resulting system outputs
