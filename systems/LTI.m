@@ -25,7 +25,7 @@ function sys = LTI(system_description)
                 );
 
             deepc_config = struct( ...
-                'T', 20, ... % Window length
+                'T', 41, ... % Window length
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2, ... % Sliding length
@@ -53,7 +53,7 @@ function sys = LTI(system_description)
                 );
 
             deepc_config = struct( ...
-                'T', 20, ... % Window length
+                'T', 43, ... % Window length
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2, ... % Sliding length
@@ -116,8 +116,8 @@ function sys = LTI(system_description)
                 'p', 1, ... % Output dimension (y = x in this case)
                 'n', 1, ... % System dimension (Position)
                 'dt', 0.1, ... % Sampling time
-                'u_min', -10, ... % Voltage limits
-                'u_max', 10, ... % Voltage limits
+                'u_min', -inf, ... % Voltage limits
+                'u_max', inf, ... % Voltage limits
                 'y_min', -inf, ... % Speed limits
                 'y_max', inf, ... % Speed limits
                 'x_ini', [0; 0], ...
