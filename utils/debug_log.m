@@ -1,4 +1,4 @@
-function debug_log(iteration, log_interval, debug_mode, file, varargin)
+function debug_log(debug_toggle, iteration, log_interval, file, varargin)
     % DEBUG_LOG Systematically logs data points during execution.
     % 
     % INPUTS:
@@ -15,7 +15,7 @@ function debug_log(iteration, log_interval, debug_mode, file, varargin)
         log_fid = fopen(log_file, 'a');
     end
 
-    if debug_mode && (mod(iteration, log_interval) == 0 || iteration == 1)
+    if debug_toggle && (mod(iteration, log_interval) == 0 || iteration == 1)
         fprintf('--- DEBUG: Iteration %d --- \n', iteration);
         
         if file
@@ -64,4 +64,5 @@ function debug_log(iteration, log_interval, debug_mode, file, varargin)
         end
     end
 end
+
 
