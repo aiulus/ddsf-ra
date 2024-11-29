@@ -13,6 +13,7 @@ function sys = populate_system_struct(A, B, C, D, params)
     % Constraints
     sys.constraints.U = [params.u_min, params.u_max];
     sys.constraints.Y = [params.y_min, params.y_max];
+    %sys.constraints.U_poly = polyhe
 
     % Parameters and target
     sys.params = params;

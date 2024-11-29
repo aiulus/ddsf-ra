@@ -7,11 +7,11 @@ function lat = system_latency(A, C)
     %       C - Output matrix
 
     n = size(A, 1);
-    H = C;
+    H = C; % l = 0
 
-    for l = 1:n
+    for l = 0:n-1
         if custom_rank(H) == n
-            lat = l - 1; % reversing one-indexing
+            lat = l; 
             return;
         end
         H = [H; C * A ^ l];
