@@ -30,7 +30,7 @@ function sys = linear_system(system_description)
                 'T', 41, ... % Window length
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
-                's', 1, ... % Sliding length
+                's', 2, ... % Sliding length
                 'Q', 150000, ... % Output cost matrix
                 'R', 0.1 ... % Control cost matrix
             );
@@ -94,6 +94,7 @@ function sys = linear_system(system_description)
 
     % Populate system struct
     sys = populate_system_struct(A, B, C, D, params);
+    sys = addEquilibriumStates(sys);
 
     % Add DeePC configuration if defined
     if exist('deepc_config', 'var')
