@@ -8,6 +8,7 @@ lti_system_description = 'double_integrator'; % Options: 'single_integrator', 'd
 
 system_description = 'cruise_control';
 sys = linear_system(system_description);
+%sys = LTI('dc_motor');
 
 % Extract system matrices
 A = sys.A;
@@ -43,23 +44,29 @@ mpc_controller.Weights.OutputVariables = 1; % Penalize output deviation
 % Simulation parameters
 t_final = 20; % Total simulation time [s]
 N_simulation = t_final / dt; % Number of time steps
-x = sys.params.x_ini; % Initial state from system definition
-x_history = zeros(size(A, 1), N_simulation); % Storage for states
-u_history = zeros(size(B, 2), N_simulation); % Storage for control inputs
-
-% Target reference
-r = sys.target;
+x_ini = sys.params.x_ini; % Initial state from system definition
+x_history = zeros(size(A, 1), N_simulation + 1); % Storage for states
+x_history(:, 1) = x_ini;
+y_ini = sys.C * x_ini;
+y_history = zeros(size(C,1), N_simulation + 1);
+y_history(:, 1) = y_ini;
+u_history = zeros(size(B, 2), N_simulation + 1); % Storage for control inputs
+r = sys.target; % Target reference
 
 % Simulation loop
-for k = 1:N_simulation
+for k = 2:(N_simulation + 1)
     % Compute optimal control action
-    u = mpcmove(mpc_controller, mpcstate(mpc_controller), x, r);
-    
+    %u = mpcmove(mpc_controller, mpcstate(mpc_controller), x, r);
+    x = x_history(:, k-1);
+    y = C * x + D * u_history(:, (k - 1));
+    u = mpcmove(mpc_controller, mpcstate(mpc_controller), y, r);
+
     % Update system state
     x = A * x + B * u;
 
     % Log state and input
     x_history(:, k) = x;
+    y_history(:, k) = y;
     u_history(:, k) = u;
 end
 
@@ -67,13 +74,13 @@ end
 t = (0:N_simulation-1) * dt;
 
 % Plot system states over time
-figure; hold on;
-plot(t, x_history', 'LineWidth', 1.5);
-if size(x_history, 1) == 1
-    yline(r, '--r', 'Target');
-else
-    plot(t, repmat(r(:), 1, N_simulation)', '--r', 'LineWidth', 1.5);
-end
+%figure; hold on;
+%plot(t, x_history, 'LineWidth', 1.5);
+%if size(x_history, 1) == 1
+%    yline(r, '--r', 'Target');
+%else
+%    plot(t, repmat(r(:), 1, N_simulation)', '--r', 'LineWidth', 1.5);
+%end
 %xlabel('Time (s)');
 %ylabel('States');
 %legend(sys.params.state_name, 'Target');
@@ -90,33 +97,23 @@ end
 %hold off;
 
 % Time vector
-t = (0:N_simulation-1) * dt;
+t = (0:N_simulation) * dt;
 
-% Create figure for states and inputs
-figure;
 
 % Plot system states over time
+figure; hold on;
 subplot(2,1,1); hold on;
-plot(t, x_history', 'LineWidth', 1.5);
-if size(x_history, 1) == 1
-    yline(r, '--r', 'Target', 'LineWidth', 1.5);
-else
-    plot(t, repmat(r(:), 1, N_simulation)', '--r', 'LineWidth', 1.5);
-end
+plot(y_history, 'r');
 xlabel('Time (s)');
-ylabel('States');
-legend(sys.params.state_name, 'Target', 'Location', 'Best');
-title(sprintf('System States for "%s"', system_description));
+ylabel('Outputs');
 grid on;
 hold off;
 
 % Plot control inputs over time
 subplot(2,1,2); hold on;
-plot(t, u_history', 'LineWidth', 1.5);
+plot(u_history, 'b');
 xlabel('Time (s)');
 ylabel('Control Input');
-legend(sys.params.input_name, 'Location', 'Best');
-title(sprintf('Control Inputs for "%s"', system_description));
 grid on;
 hold off;
 
