@@ -46,6 +46,7 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
 
     % DEBUG Sequence
     disp("---------------- COST FUNCTION ----------------");
+    disp("---------------- SIZES ----------------");
     fprintf("left: "); disp(size(left));
     fprintf("middle "); disp(size(R));
     fprintf("right: "); disp(size(right));
@@ -69,8 +70,7 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
         y_opt = value(control_y);
     else
         % Quadprog failed, ask user for next solver choice
-        disp(['Quadprog failed.' ...
-            ' and <o> to proceed with OSQP.']);
+        disp('Quadprog failed.');
         user_input = '';
         while ~ismember(lower(user_input), {'f', 'o'})
             user_input = input('Enter "f" for fmincon or "o" for osqp: ', 's');
