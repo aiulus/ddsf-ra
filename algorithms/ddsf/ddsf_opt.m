@@ -1,66 +1,113 @@
-function [alpha, u_opt, y_opt] = ddsf_opt(time_step, u_l, H_u, H_y, traj_ini, sys)
-    %% Setup
-    % Extract system parameters
-    N_p = sys.ddsf_config.N_p; % Prediction horizon
-    T = sys.ddsf_config.T; % Data length
-    T_ini = sys.ddsf_config.T_ini;
-    R = sys.ddsf_config.R;
-    S_f = sys.S_f; % TODO: Should only be computed if ddsf_main is being run
-                   %       but still store S_f as an attribute of sys.
-
-   % Initialize decision variables as symbolic variables
-   alpha = sdpvar(size(H_u, 2), 1, 'full');
-   u_opt = sdpvar(sys.params.m, N_p, 'full'); % TODO: check
-   y_opt = sdpvar(sys.params.p, N_p, 'full');
-
-   %% Define the optimization problem
-   cost = (u_opt - u_l).' * R * (u_opt - u_l); % Objective function
-
-   % Define complete trajectory
-   u_bar = H_u * alpha; 
-   y_bar = H_y * alpha; 
-   traj = [u; y];
-
-   % Unpack initial trajectory
-   u_bar_ini = traj_ini(1, :).';
-   y_bar_ini = traj_ini(2, :).';
-   traj_ini = [u_bar_ini; y_bar_ini];
-
-   disp("SIZE OF 'traj': "); disp(size(traj));
-   
-   constraints = [-u_opt <= -sys.constraints.U(1) * ones(size(u_opt)), ...
-               u_opt <= sys.constraints.U(2) * ones(size(u_opt)), ...
-               -y_opt <= -sys.constraints.Y(1) * ones(size(y_opt)), ...
-               y_opt <= sys.constraints.Y(2) * ones(size(y_opt)), ...
-               traj == [H_u; H_y] * alpha, ...
-               traj_ini == traj_p * [H_u; H_y]];
-
-   %% TODO: Add constraints related to S_f
-
-   % Solve the optimization problem using YALMIP
-   options = sdpsettings('solver', 'quadprog', 'verbose', 0);
-   %% TODO: Add error handling + fmincon
-   diagnostics = optimize(constraints, cost, options);
-
-   if diagnostics.problem == 0
-       alpha = value(alpha);
-       u_opt = value(u_opt);
-       y_opt = value(y_opt);
-   else
-       % Check if failure is due to nonconvexity and retry with fmincon
-        warning('Quadprog failed. Trying with fmincon...');
-        options_fmincon = sdpsettings('verbose', 1, 'solver', 'fmincon');  
-
-        diagnostics = optimize(constraints, cost, options_fmincon);
+function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
+    %% Extract parameters
+    T_ini = params.T_ini;
+    N_p = params.N_p;
+    m = params.dims.m;
+    p = params.dims.p;
+    num_cols = params.dims.hankel_cols;
+    R = params.R;
+    H = params.H;
+    U = params.sys.constraints.U;
+    Y = params.sys.constraints.Y;
     
-        if diagnostics.problem == 0 % Feasible solution found with fmincon
-            % Extract optimal values
-            alpha = value(alpha);
-            u_opt = value(u_opt);
-            y_opt = value(y_opt);
-        else
-            error('Optimization problem is infeasible even with fmincon!');
+    %% Define symbolic variables
+    alpha = sdpvar(num_cols, 1);
+    control_u = sdpvar(m, N_p + 2 * T_ini);
+    control_y = sdpvar(p, N_p + 2 * T_ini);
+    % traj_p = [control_u; control_y];
+
+    % Flatten the variables 
+    u_bar = reshape(control_u.', [], 1);
+    y_bar = reshape(control_y.', [], 1);
+    traj_p_bar = [u_bar; y_bar];
+
+    u_bar_ini = u_bar(1:(T_ini * m));
+    y_bar_ini = y_bar(1:T_ini * p);
+    traj_bar_ini = [u_bar_ini; y_bar_ini];
+
+    u_ini = traj_ini(1:m, :);
+    y_ini = traj_ini(m+1:end, :);
+    u_ini_flat = reshape(u_ini.', [], 1);
+    y_ini_flat = reshape(y_ini.', [], 1);
+    traj_ini_flat = [u_ini_flat; y_ini_flat];
+
+    % DEBUG Sequence
+    disp("---------------- SIZES ----------------");
+    fprintf("left: "); disp(size(traj_bar_ini));
+    fprintf("right: "); disp(size(traj_ini_flat));
+
+    %% Define the objective function and the constraints
+    %objective = (control_u - u_l).' * R * (control_u - u_l);
+
+    % DEBUG variables
+    left = (control_u(:, 1) - u_l).';
+    right = (control_u(:, 1) - u_l);
+    objective = left * R * right; 
+
+    % DEBUG Sequence
+    disp("---------------- COST FUNCTION ----------------");
+    fprintf("left: "); disp(size(left));
+    fprintf("middle "); disp(size(R));
+    fprintf("right: "); disp(size(right));
+    
+    % TODO: Add terminal safe-set constraints
+    constraints = [traj_p_bar == H * alpha, ...
+                   traj_bar_ini == traj_ini_flat, ...
+                   control_u >= repmat(U(:, 1), 1, N_p + 2 * T_ini), ...
+                   control_u <= repmat(U(:, 2), 1, N_p + 2 * T_ini), ...
+                   control_y >= repmat(Y(:, 1), 1, N_p + 2 * T_ini), ...
+                   control_y <= repmat(Y(:, 2), 1, N_p + 2 * T_ini) ...
+    ];
+
+    %% Define solver settings and run optimization
+    options_quadprog = sdpsettings('verbose', 0, 'solver', 'quadprog');  
+    diagnostics = optimize(constraints, objective, options_quadprog);
+        
+    if diagnostics.problem == 0 % Feasible solution found
+        % Extract optimal values
+        u_opt = value(control_u);
+        y_opt = value(control_y);
+    else
+        % Quadprog failed, ask user for next solver choice
+        disp(['Quadprog failed.' ...
+            ' and <o> to proceed with OSQP.']);
+        user_input = '';
+        while ~ismember(lower(user_input), {'f', 'o'})
+            user_input = input('Enter "f" for fmincon or "o" for osqp: ', 's');
         end
-   end
+    
+        if lower(user_input) == 'f' % User chose fmincon
+            disp('Trying with fmincon...');
+            options_fmincon = sdpsettings('verbose', 1, 'solver', 'fmincon');
+            diagnostics = optimize(constraints, objective, options_fmincon);
+    
+            if diagnostics.problem == 0 % Feasible solution found with fmincon
+                % Extract optimal values
+                u_opt = value(control_u);
+                y_opt = value(control_y);
+            else
+                error('Optimization problem is infeasible even with fmincon!');
+            end
+    
+        elseif lower(user_input) == 'o' % User chose osqp
+            disp('Trying with osqp...');
+            options_osqp = sdpsettings('solver', 'OSQP', ...
+                  'verbose', 0, ...             % Suppress solver output
+                  'osqp.max_iter', 30000, ...   % Set maximum iterations
+                  'osqp.eps_abs', 1e-7, ...     % Absolute tolerance
+                  'warmstart', 0);             % Disable warm start
+    
+            diagnostics = optimize(constraints, objective, options_osqp);
+    
+            if diagnostics.problem == 0 % Feasible solution found with osqp
+                % Extract optimal values
+                u_opt = value(control_u);
+                y_opt = value(control_y);
+            else
+                error('Optimization problem is infeasible even with osqp!');
+            end
+        end
+    end
+
 end
 
