@@ -31,17 +31,18 @@ function sys = linear_system(system_description)
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2, ... % Sliding length
-                'Q', 150000, ... % Output cost matrix
-                'R', 0.1 ... % Control cost matrix
+                'Q', 150000, ... % Output cost matrix 150000
+                'R', 0.1 ... % Input cost matrix 0.1
             );
+            %'Q', 1, ... % Output cost matrix
+            %'R', 1e-4 ... % Control cost matrix
 
             ddsf_config = struct( ...
                 'T', 41, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
                 's', 1, ... % Sliding length
-                'Q', 1, ... % Output cost matrix
-                'R', 0.1 ... % Control cost matrix
+                'R', 0.1 ... % Cost matrix
             );
             
             % State-space matrices
@@ -100,6 +101,7 @@ function sys = linear_system(system_description)
     if exist('deepc_config', 'var')
         sys.deepc_config = deepc_config;
     end
+    
     % Add DDSF configuration if defined
     if exist('ddsf_config', 'var')
         sys.ddsf_config = ddsf_config;

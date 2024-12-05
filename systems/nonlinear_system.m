@@ -67,9 +67,9 @@ function sys = nonlinear_system(system_type)
                 'mass', 0.2, ... % Quadrotor mass [kg]
                 'g', 9.81, ... % Gravity constant
                 'dt', 0.1, ... % Time step for discretization
-                'u_min', -[1; 0.1; 0.1; 0.1], ... % Minimum force
+                'u_min', (-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
                 'u_max', [1; 0.1; 0.1; 0.1], ... % Maximum force
-                'y_min', -[1; 1; 1; 0.2; 0.2; 0.2], ... % Output constraints
+                'y_min', (-1)*[1; 1; 1; 0.2; 0.2; 0.2], ... % Output constraints
                 'y_max', [1; 1; 1; 0.2; 0.2; 0.2], ...  % Output constraints                          
                 'I', repmat(10^(-3), 3, 1), ... % Moment of inertia in x, y, z
                 'x_ini', zeros(12, 1), ...
@@ -88,6 +88,14 @@ function sys = nonlinear_system(system_type)
                 's', 1, ... % Sliding length
                 'Q', 1500, ... % Output cost matrix
                 'R', 0.1 ... % Control cost matrix
+            );
+
+            ddsf_config = struct( ...
+                'T', 41, ... % Data length
+                'T_ini', 5, ... % Initial trajectory length
+                'N_p', 15, ... % Prediction horizon
+                's', 1, ... % Sliding length
+                'R', 0.1 ... % Cost matrix
             );
 
             
@@ -175,9 +183,14 @@ function sys = nonlinear_system(system_type)
 
     sys = populate_system_struct(A, B, C, D, params); % Assign the parameters to struct object
 
-        % Add DeePC configuration if defined
+    % Add DeePC configuration if defined
     if exist('deepc_config', 'var')
         sys.deepc_config = deepc_config;
+    end
+
+    % Add DDSF configuration if defined
+    if exist('ddsf_config', 'var')
+        sys.ddsf_config = ddsf_config;
     end
 end
 
