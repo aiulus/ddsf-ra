@@ -9,14 +9,17 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
     H = params.H;
     U = params.sys.constraints.U;
     Y = params.sys.constraints.Y;
+    U_s = params.sys.S_f.U_s;
+    Y_s = params.sys.S_f.Y_s;
     
     %% Define symbolic variables
     alpha = sdpvar(num_cols, 1);
     control_u = sdpvar(m, N_p + 2 * T_ini);
     control_y = sdpvar(p, N_p + 2 * T_ini);
     % traj_p = [control_u; control_y];
+    
 
-    % Flatten the variables 
+    %% Flatten the variables 
     u_bar = reshape(control_u.', [], 1);
     y_bar = reshape(control_y.', [], 1);
     traj_p_bar = [u_bar; y_bar];
@@ -54,11 +57,24 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
     % TODO: Add terminal safe-set constraints
     constraints = [traj_p_bar == H * alpha, ...
                    traj_bar_ini == traj_ini_flat, ...
-                   control_u >= repmat(U(:, 1), 1, N_p + 2 * T_ini), ...
-                   control_u <= repmat(U(:, 2), 1, N_p + 2 * T_ini), ...
-                   control_y >= repmat(Y(:, 1), 1, N_p + 2 * T_ini), ...
-                   control_y <= repmat(Y(:, 2), 1, N_p + 2 * T_ini) ...
+                   %control_u >= repmat(U(:, 1), 1, N_p + 2 * T_ini), ...
+                   control_u >= -inf, ...
+                   %control_u <= repmat(U(:, 2), 1, N_p + 2 * T_ini), ...
+                   control_u <= inf, ...
+                   %control_y >= repmat(Y(:, 1), 1, N_p + 2 * T_ini), ...
+                   control_y >= -inf, ...
+                   %control_y <= repmat(Y(:, 2), 1, N_p + 2 * T_ini) ...
+                   control_y <= inf ...
     ];
+    
+    %% Add the terminal safe set constraints
+    for t = (1:(N_p + 2 * T_ini))
+        % Basis vectors
+        z_u = sdpvar(size(U_s, 2), N_p + 2 * T_ini); 
+        z_y = sdpvar(size(Y_s, 2), N_p + 2 * T_ini); 
+        constraints = [constraints, control_u(t) == U_s * z_u];
+        constraints = [constraints, control_y(t) == Y_s * z_y];
+    end
 
     %% Define solver settings and run optimization
     options_quadprog = sdpsettings('verbose', 0, 'solver', 'quadprog');  
