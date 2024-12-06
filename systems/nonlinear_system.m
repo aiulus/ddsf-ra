@@ -153,7 +153,7 @@ function sys = nonlinear_system(system_type)
                 'lambda_y', (10^5) ... % Regularization parameter
             );
 
-                        %% State-space Matrices
+            %% State-space Matrices
 
             % Define state-space matrices as sparse for efficiency
             A_i = [1, 2, 3, 10, 11, 12];
@@ -182,6 +182,7 @@ function sys = nonlinear_system(system_type)
     end
 
     sys = populate_system_struct(A, B, C, D, params); % Assign the parameters to struct object
+    sys = addEquilibriumStates(sys);
 
     % Add DeePC configuration if defined
     if exist('deepc_config', 'var')
