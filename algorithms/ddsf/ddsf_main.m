@@ -43,6 +43,8 @@ logs = struct( ...
     );
 
 for t=(alg_params.T_ini+1):(alg_params.T_ini + 1 + alg_params.T_sim)
+    fprintf("----------------- DEBUG Information -----------------\n");
+    fprintf("CURRENT SIMULATION STEP: t = %d\n", t - alg_params.T_ini);
     u_ini = logs.u(:, (t - alg_params.T_ini):(t-1));
     y_ini = logs.y(:, (t - alg_params.T_ini):(t-1));
     traj_ini = [u_ini; y_ini];

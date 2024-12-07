@@ -23,6 +23,12 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
     y_min = Y(:, 1);
     y_max = Y(:, 2);
 
+    % Extract the initial trajectory and equilibrium states
+    u_ini = traj_ini(1:m, :);
+    y_ini = traj_ini(m+1:end, :);
+    u_eq = params.sys.S_f.u_eq;
+    y_eq = params.sys.S_f.y_eq;
+
     
     %% Define symbolic variables
     alpha = sdpvar(num_cols, 1);
@@ -30,46 +36,35 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
     control_y = sdpvar(p, N_p + 2 * T_ini);
     % traj_p = [control_u; control_y];
     
+    %% Populate the initial and terminal parts of the trajectory
+    % Replaces the encodings in constraints
+    control_u(:, 1:T_ini) = u_ini;
+    control_y(:, 1:T_ini) = y_ini;
+    control_u(:, T_ini + N_p + 1 : end) = repmat(u_eq, 1, T_ini);
+    control_y(:, T_ini + N_p + 1 : end) = repmat(y_eq, 1, T_ini);
 
     %% Flatten the variables 
     u_bar = reshape(control_u.', [], 1);
     y_bar = reshape(control_y.', [], 1);
     traj_p_bar = [u_bar; y_bar];
 
-    u_bar_ini = u_bar(1:(T_ini * m));
-    y_bar_ini = y_bar(1:T_ini * p);
-    traj_bar_ini = [u_bar_ini; y_bar_ini];
-
-    u_ini = traj_ini(1:m, :);
-    y_ini = traj_ini(m+1:end, :);
-    u_ini_flat = reshape(u_ini.', [], 1);
-    y_ini_flat = reshape(y_ini.', [], 1);
-    traj_ini_flat = [u_ini_flat; y_ini_flat];
 
     %% Define the objective function and the constraints
     delta_u = control_u(:, 1) - u_l;
     objective = delta_u.' * R * delta_u;
 
-    constraints = [traj_p_bar == H * alpha, ...
-                   traj_bar_ini == traj_ini_flat];
+    constraints = [traj_p_bar == H * alpha]; 
+
     % Element-wise constraints on control inputs
     constraints = [constraints, control_u >= repmat(u_min, 1, N_p + 2 * T_ini)];
     constraints = [constraints, control_u <= repmat(u_max, 1, N_p + 2 * T_ini)];
     
-    % Element-wise constraints on control outputs
+    % Element-wise constraints on outputs
     constraints = [constraints, control_y >= repmat(y_min, 1, N_p + 2 * T_ini)];
     constraints = [constraints, control_y <= repmat(y_max, 1, N_p + 2 * T_ini)];
-    
-    % Equilibrium constraints
-    YU_eq = (C * pinv(T_u) + D) * control_u;
-    constraints = [constraints, YU_eq >= repmat(y_min, 1, N_p + 2 * T_ini)];
-    constraints = [constraints, YU_eq <= repmat(y_max, 1, N_p + 2 * T_ini)];
-
-
-    
 
     %% Define solver settings and run optimization
-    options_quadprog = sdpsettings('verbose', 0, 'solver', 'quadprog');  
+    options_quadprog = sdpsettings('verbose', 1, 'solver', 'quadprog');  
     diagnostics = optimize(constraints, objective, options_quadprog);
         
     if diagnostics.problem == 0 % Feasible solution found
@@ -105,7 +100,7 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
         elseif lower(user_input) == 'o' % User chose osqp
             disp('Trying with osqp...');
             options_osqp = sdpsettings('solver', 'OSQP', ...
-                  'verbose', 0, ...             % Suppress solver output
+                  'verbose', 1, ...             % Detailed solver output
                   'osqp.max_iter', 30000, ...   % Set maximum iterations
                   'osqp.eps_abs', 1e-7, ...     % Absolute tolerance
                   'warmstart', 0);             % Disable warm start

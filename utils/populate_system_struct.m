@@ -22,8 +22,13 @@ function sys = populate_system_struct(A, B, C, D, params)
     k = min(size(B));
     n = size(A, 1);
     T_u = sparse_pinv(B, k) * (eye(n) - A);
-    T_y = C + D * T_u;
+    x_eq = ones(n, 1);
+    u_eq = T_u * x_eq;
+    y_eq = C * x_eq + D * u_eq;
+    sys.S_f = struct( ...
+        'u_eq', u_eq, ...
+        'y_eq', y_eq ...
+        );
 
     sys.equilibrium.U = T_u;
-    sys.equilibrium.Y = T_y;
 end

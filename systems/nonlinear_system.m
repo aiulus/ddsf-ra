@@ -91,7 +91,7 @@ function sys = nonlinear_system(system_type)
             );
 
             ddsf_config = struct( ...
-                'T', 24, ... % Data length
+                'T', 214, ... % Data length
                 'T_ini', 2, ... % Initial trajectory length
                 'N_p', 20, ... % Prediction horizon
                 's', 1, ... % Sliding length

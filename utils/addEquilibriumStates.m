@@ -14,7 +14,7 @@ function sys = addEquilibriumStates(sys)
 
     T_u = sparse_pinv(B, k) * (eye(n) - A);
     T_y = C + D * T_u;
-    
+    T_y_tilde = C*sparse_pinv((eye(n) - A), rank((eye(n) - A)))*B - D;
     
     % Compute the column space of T_u
     %[U_eq, ~, ~] = svd(T_u, 'econ');
