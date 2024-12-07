@@ -91,20 +91,20 @@ function sys = nonlinear_system(system_type)
             );
 
             ddsf_config = struct( ...
-                'T', 41, ... % Data length
-                'T_ini', 5, ... % Initial trajectory length
-                'N_p', 15, ... % Prediction horizon
+                'T', 24, ... % Data length
+                'T_ini', 2, ... % Initial trajectory length
+                'N_p', 20, ... % Prediction horizon
                 's', 1, ... % Sliding length
-                'R', 0.1 ... % Cost matrix
+                'R', 1 ... % Cost matrix
             );
 
             
             %% State-space Matrices
 
             % Define state-space matrices as sparse for efficiency
-            A_i = [1, 2, 3, 10, 11, 12];
-            A_j = [4, 5, 6, 7, 8, 9];
-            A_val = ones(6, 1);
+            A_i = [1, 2, 3, 10, 11, 12, 8, 7];
+            A_j = [4, 5, 6, 7, 8, 9, 1, 2];
+            A_val = [ones(6, 1); params.g; -params.g];
             A = sparse(A_i, A_j, A_val, params.n, params.n);
 
             B_i = [9, 4, 5, 6];
@@ -156,9 +156,9 @@ function sys = nonlinear_system(system_type)
             %% State-space Matrices
 
             % Define state-space matrices as sparse for efficiency
-            A_i = [1, 2, 3, 10, 11, 12];
-            A_j = [4, 5, 6, 7, 8, 9];
-            A_val = ones(6, 1);
+            A_i = [1, 2, 3, 10, 11, 12, 8, 7];
+            A_j = [4, 5, 6, 7, 8, 9, 1, 2];
+            A_val = [ones(6, 1); params.g; -params.g];
             A = sparse(A_i, A_j, A_val, params.n, params.n);
 
             B_i = [9, 4, 5, 6];
@@ -182,7 +182,7 @@ function sys = nonlinear_system(system_type)
     end
 
     sys = populate_system_struct(A, B, C, D, params); % Assign the parameters to struct object
-    sys = addEquilibriumStates(sys);
+    %sys = addEquilibriumStates(sys);
 
     % Add DeePC configuration if defined
     if exist('deepc_config', 'var')

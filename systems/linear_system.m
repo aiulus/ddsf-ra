@@ -95,7 +95,7 @@ function sys = linear_system(system_description)
 
     % Populate system struct
     sys = populate_system_struct(A, B, C, D, params);
-    sys = addEquilibriumStates(sys);
+    %sys = addEquilibriumStates(sys);
 
     % Add DeePC configuration if defined
     if exist('deepc_config', 'var')

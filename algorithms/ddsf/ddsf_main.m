@@ -13,6 +13,7 @@ dims = struct( ...
     'p', sys.params.p, ... % Output dimension
     'n', sys.params.n ... % Dim. of the minimal state-space representation
     );
+    %% 
 
 alg_params = struct( ...
     'sys', sys, ... % Specify system
@@ -63,5 +64,14 @@ function u_l = learning_policy()
     %   INPUTS:
     %       y   - Current system output (px1)
     %       y_d - Desired system output
-    u_l = randi([-1, 1], 1, 1);
+
+    %u_l = randi([-1, 1], 1, 1);
+    prbs = idinput(1, 'prbs', [], [-1, 1]);
+
+    lb = - 1.5;
+    ub = 1.5;
+    random_magnitude = lb + (ub - lb) * rand;
+    
+    % Returns a pseudo-random binary signal scaled by a random magnitude
+    u_l = random_magnitude * prbs;
 end

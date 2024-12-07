@@ -18,4 +18,12 @@ function sys = populate_system_struct(A, B, C, D, params)
     % Parameters and target
     sys.params = params;
     sys.target = params.target;
+
+    k = min(size(B));
+    n = size(A, 1);
+    T_u = sparse_pinv(B, k) * (eye(n) - A);
+    T_y = C + D * T_u;
+
+    sys.equilibrium.U = T_u;
+    sys.equilibrium.Y = T_y;
 end

@@ -21,8 +21,8 @@ function sys = addEquilibriumStates(sys)
     %[Y_eq, ~, ~] = svd(T_y, 'econ');
 
     % Represent the safe sets with polytopes
-    U_s = computeSafeSet(T_u, U);
-    Y_s = computeSafeSet(T_y, Y);
+    U_s = populateSafeSet(T_u, U);
+    Y_s = populateSafeSet(T_y, Y);
 
     sys.S_f = struct( ...
         'U_s', U_s, ...
@@ -30,9 +30,30 @@ function sys = addEquilibriumStates(sys)
         );
 end
 
-function X_s = computeSafeSet(T_x, X)
-    X_eq = polytope(T_x, zeros(size(T_x, 1), 1));
-    X_s = intersect(X_eq, polytope(X(1), X(2)));
+
+
+function X_s = populateSafeSet(T_x, X)
+    numDataPoints = 1e5;
+    dim = size(T_x, 2);
+    lb = X(:, 1);
+    ub =  X(:, 2); 
+    X_s = [];
+    t = 1;
+
+    while t < numDataPoints + 1
+        % Random Gaussian vector with increased variance, multiplied by a
+        % random magnitude
+        z = randn(1,1) * idinput([dim, 1], 'rgs', [0, 1], [-1,10]).';
+        x = T_x * z';
+        within_range = all(x >= lb & x <= ub);
+        
+        if within_range
+            X_s(:, t) = x;
+            t = t + 1;
+        end
+    end
 end
+
+
 
 

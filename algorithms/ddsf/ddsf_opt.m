@@ -1,16 +1,28 @@
 function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
     %% Extract parameters
+    % Extract lengths and dimensions
     T_ini = params.T_ini;
     N_p = params.N_p;
+    L = N_p + 2 * T_ini;
     m = params.dims.m;
     p = params.dims.p;
     num_cols = params.dims.hankel_cols;
+    
+    % Extract matrices
+    C = params.sys.C;
+    D = params.sys.D;
+    T_u = params.sys.equilibrium.U;
     R = params.R;
     H = params.H;
+    
+    % Extract constraints
     U = params.sys.constraints.U;
     Y = params.sys.constraints.Y;
-    U_s = params.sys.S_f.U_s;
-    Y_s = params.sys.S_f.Y_s;
+    u_min = U(:, 1);
+    u_max = U(:, 2);
+    y_min = Y(:, 1);
+    y_max = Y(:, 2);
+
     
     %% Define symbolic variables
     alpha = sdpvar(num_cols, 1);
@@ -34,47 +46,27 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
     y_ini_flat = reshape(y_ini.', [], 1);
     traj_ini_flat = [u_ini_flat; y_ini_flat];
 
-    % DEBUG Sequence
-    disp("---------------- SIZES ----------------");
-    fprintf("left: "); disp(size(traj_bar_ini));
-    fprintf("right: "); disp(size(traj_ini_flat));
-
     %% Define the objective function and the constraints
-    %objective = (control_u - u_l).' * R * (control_u - u_l);
+    delta_u = control_u(:, 1) - u_l;
+    objective = delta_u.' * R * delta_u;
 
-    % DEBUG variables
-    left = (control_u(:, 1) - u_l).';
-    right = (control_u(:, 1) - u_l);
-    objective = left * R * right; 
-
-    % DEBUG Sequence
-    disp("---------------- COST FUNCTION ----------------");
-    disp("---------------- SIZES ----------------");
-    fprintf("left: "); disp(size(left));
-    fprintf("middle "); disp(size(R));
-    fprintf("right: "); disp(size(right));
-    
-    % TODO: Add terminal safe-set constraints
     constraints = [traj_p_bar == H * alpha, ...
-                   traj_bar_ini == traj_ini_flat, ...
-                   %control_u >= repmat(U(:, 1), 1, N_p + 2 * T_ini), ...
-                   control_u >= -inf, ...
-                   %control_u <= repmat(U(:, 2), 1, N_p + 2 * T_ini), ...
-                   control_u <= inf, ...
-                   %control_y >= repmat(Y(:, 1), 1, N_p + 2 * T_ini), ...
-                   control_y >= -inf, ...
-                   %control_y <= repmat(Y(:, 2), 1, N_p + 2 * T_ini) ...
-                   control_y <= inf ...
-    ];
+                   traj_bar_ini == traj_ini_flat];
+    % Element-wise constraints on control inputs
+    constraints = [constraints, control_u >= repmat(u_min, 1, N_p + 2 * T_ini)];
+    constraints = [constraints, control_u <= repmat(u_max, 1, N_p + 2 * T_ini)];
     
-    %% Add the terminal safe set constraints
-    for t = (1:(N_p + 2 * T_ini))
-        % Basis vectors
-        z_u = sdpvar(size(U_s, 2), N_p + 2 * T_ini); 
-        z_y = sdpvar(size(Y_s, 2), N_p + 2 * T_ini); 
-        constraints = [constraints, control_u(t) == U_s * z_u];
-        constraints = [constraints, control_y(t) == Y_s * z_y];
-    end
+    % Element-wise constraints on control outputs
+    constraints = [constraints, control_y >= repmat(y_min, 1, N_p + 2 * T_ini)];
+    constraints = [constraints, control_y <= repmat(y_max, 1, N_p + 2 * T_ini)];
+    
+    % Equilibrium constraints
+    YU_eq = (C * pinv(T_u) + D) * control_u;
+    constraints = [constraints, YU_eq >= repmat(y_min, 1, N_p + 2 * T_ini)];
+    constraints = [constraints, YU_eq <= repmat(y_max, 1, N_p + 2 * T_ini)];
+
+
+    
 
     %% Define solver settings and run optimization
     options_quadprog = sdpsettings('verbose', 0, 'solver', 'quadprog');  
@@ -86,7 +78,10 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
         y_opt = value(control_y);
     else
         % Quadprog failed, ask user for next solver choice
-        disp('Quadprog failed.');
+        disp('Quadprog failed.'); 
+        disp(diagnostics.problem); % Solver exit code
+        disp(diagnostics.info);    % Detailed solver feedback
+
         user_input = '';
         while ~ismember(lower(user_input), {'f', 'o'})
             user_input = input('Enter "f" for fmincon or "o" for osqp: ', 's');
@@ -103,6 +98,8 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
                 y_opt = value(control_y);
             else
                 error('Optimization problem is infeasible even with fmincon!');
+                disp(diagnostics.problem); % Solver exit code
+                disp(diagnostics.info);    % Detailed solver feedback
             end
     
         elseif lower(user_input) == 'o' % User chose osqp
@@ -121,8 +118,17 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
                 y_opt = value(control_y);
             else
                 error('Optimization problem is infeasible even with osqp!');
+                disp(diagnostics.problem); % Solver exit code
+                disp(diagnostics.info);    % Detailed solver feedback
             end
         end
+        disp('---- Debug: Objective Function Evaluation ----');
+        disp('Objective value:');
+        disp(value(objective)); % Ensure it computes as expected
+
+        disp('---- Debug: Feasibility Check ----');
+        disp('Max constraint violation:');
+        disp(max(check(constraints))); % Show largest constraint violation
     end
 
 end
