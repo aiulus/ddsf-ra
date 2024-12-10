@@ -1,7 +1,10 @@
 function sys = deepc2_systems(sys_type)
     switch sys_type
         case 'example0'
-            params = struct();
+            params = struct( ...
+                'target', [0; 0; 0] ...
+                );
+
             sys = struct( ...
                 'A', [1 -0.01 0; ...
                       0.01 1 0;
@@ -34,9 +37,14 @@ function sys = deepc2_systems(sys_type)
                 'y_min', -inf, ... % Output constraint
                 'y_max', inf, ... % Output constraint
                 'target', 20, ... % Reference velocity [m/s]
+                'slack', 1e-2, ... % For relaxation  
                 'x_ini', 0, ...
                 'state_name', {"Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
+
+            % 'target', [1, 2, 3, 4] for dims.p = 4
+            %  The constraint then just refers to the decision variable at
+            %   y(index) being near target(index)
 
             A = 1 - (params.damping * params.dt) / params.mass;
             B = params.dt / params.mass;
@@ -79,14 +87,15 @@ function sys = deepc2_populate_system(sys, params, opt_params, run_config)
     );
 
     sys.dims = dims;
-    
+    largeval = 1e+30;
+
     % Assign constraints
     if isfield(params, 'u_min')
         if max(size(params.u_min)) == 1
             u_min = repmat(params.u_min, dims.m, 1);
         end
     else
-        u_min = -inf(dims.m, 1);
+        u_min = repmat(-largeval, dims.m, 1);
     end
 
     if isfield(params, 'u_max')
@@ -94,7 +103,7 @@ function sys = deepc2_populate_system(sys, params, opt_params, run_config)
             u_max = repmat(params.u_max, dims.m, 1);
         end
     else
-        u_max = inf(dims.m, 1);
+        u_max = repmat(largeval, dims.m, 1);
     end
 
     if isfield(params, 'y_min')
@@ -102,7 +111,7 @@ function sys = deepc2_populate_system(sys, params, opt_params, run_config)
             y_min = repmat(params.y_min, dims.p, 1);
         end
     else
-        y_min = -inf(dims.p, 1);
+        y_min = repmat(-largeval, dims.p, 1);
     end
 
     if isfield(params, 'y_max')
@@ -110,7 +119,7 @@ function sys = deepc2_populate_system(sys, params, opt_params, run_config)
             y_max = repmat(params.y_max, dims.p, 1);
         end
     else
-        y_max = inf(dims.p, 1);
+        y_max = repmat(largeval, dims.p, 1);
     end
 
     sys.constraints.U = [u_min, u_max];

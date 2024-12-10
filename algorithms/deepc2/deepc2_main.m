@@ -1,19 +1,17 @@
 %% Define the system
-sys = deepc2_systems("example0");
+sys = deepc2_systems("cruise_control");
 verbose = false; 
 rng(0, 'twister'); % Set seed and generator
 
 %% Extract relevant parameters
+dims = sys.dims;
 run_config =  sys.run_config;
 run_config.T_sim = 10;
 run_config.L = run_config.T_ini + run_config.T_f;
 % TODO: Check / Find out why there is a hard-coding
 run_config.T = (dims.m * dims.n + dims.m+1)*(run_config.L + dims.n) + 30;
-
-dims = sys.dims;
-
 opt_params = sys.opt_params;
-opt_params.lambda_g = 0;
+opt_params.lambda_g = 1;
 
 %% Initialize containers for logging
 u_sim = zeros(dims.m, run_config.T_sim);
@@ -85,8 +83,6 @@ for t=1:run_config.T_sim
     u_sim(:, t) = u;
     y_sim(:, t) = y;
     
-    fprintf("y = f(x, u_opt) vs y_opt: "); disp(y); disp(y_p);
-    
     % Update the initial trajectory
     u_ini = [u_ini(dims.m + 1:end, :); u];
     y_ini = [y_ini(dims.p + 1:end, :); y];
@@ -97,6 +93,7 @@ for t=1:run_config.T_sim
     if verbose
         fprintf("Optimal input: "); disp(u);
         fprintf("Corresp. output: "); disp(y);
+        fprintf("y = f(x, u_opt) vs y_opt: "); disp(y); disp(y_p);
     end
 end
 
