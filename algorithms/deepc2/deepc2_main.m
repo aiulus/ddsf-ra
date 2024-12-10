@@ -3,30 +3,17 @@ sys = deepc2_systems("example0");
 verbose = false; 
 rng(0, 'twister'); % Set seed and generator
 
-%% Define simulation parameters
-run_config = struct( ...
-    'T_ini', 5, ... % Initial trajectory length
-    'T_f', 4, ... % Prediction horizon
-    'T_sim', 10 ... % Number of data points
-    );
-
-dims = struct( ...
-    'n', size(sys.A, 1), ... % System state dim.
-    'm', size(sys.B, 2), ... % Input dim.
-    'p', size(sys.C, 1), ... % Output shape
-    'q', size(sys.B, 2) + size(sys.C, 1) ... % #I/O variables
-    );
-
-%% Initialize DeePC parameters
+%% Extract relevant parameters
+run_config =  sys.run_config;
+run_config.T_sim = 10;
 run_config.L = run_config.T_ini + run_config.T_f;
 % TODO: Check / Find out why there is a hard-coding
 run_config.T = (dims.m * dims.n + dims.m+1)*(run_config.L + dims.n) + 30;
 
-deepc_params = struct( ...
-    'Q', eye(dims.p), ... % Output cost matrix
-    'R', eye(dims.m), ... % Control cost matrix
-    'lambda_g', 0 ...
-    );
+dims = sys.dims;
+
+opt_params = sys.opt_params;
+opt_params.lambda_g = 0;
 
 %% Initialize containers for logging
 u_sim = zeros(dims.m, run_config.T_sim);
@@ -70,7 +57,7 @@ lookup = struct( ...
     'dims', dims, ...
     'hankel', hankel_params, ...
     'config', run_config, ...
-    'deepc', deepc_params, ...
+    'deepc', opt_params, ...
     'sys', sys, ...
     'data', data ...
     );
