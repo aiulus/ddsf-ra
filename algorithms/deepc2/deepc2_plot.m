@@ -1,47 +1,28 @@
-function deepc2_plot(time, y_sim, u_sim, ypre1, ypre2, ypre3, ypre4)
+function deepc2_plot(time, y_sim, u_sim)
     % Plot outputs
     figure(1);
-    tiledlayout(4, 1);
+    p = size(y_sim, 1);
     
-    % Plot ysim and predictions for y1
-    nexttile; hold on;    
-    scatter(time, y_sim(1, :), 'r', 'Marker', '^', 'DisplayName', 'Real y1'); 
-    plot(time, ypre1(1, :), 'b', 'DisplayName', 'Predicted1');
-    plot(time, ypre2(1, :), 'g', 'DisplayName', 'Predicted2');
-    plot(time, ypre3(1, :), 'k', 'DisplayName', 'Predicted3');
-    plot(time, ypre4(1, :), 'm', 'DisplayName', 'Predicted4');
-    title('Output y1'); xlabel('Time'); ylabel('y1');
-    legend('Location', 'best'); grid on; 
-    
-    % Plot ysim and predictions for y2
-    nexttile; hold on;
-    scatter(time, y_sim(2, :), 'r', 'Marker', '^', 'DisplayName', 'Real y2'); 
-    plot(time, ypre1(2, :), 'b', 'DisplayName', 'Predicted1');
-    plot(time, ypre2(2, :), 'g', 'DisplayName', 'Predicted2');
-    plot(time, ypre3(2, :), 'k', 'DisplayName', 'Predicted3');
-    plot(time, ypre4(2, :), 'm', 'DisplayName', 'Predicted4');
-    title('Output y2'); xlabel('Time'); ylabel('y2');
-    legend('Location', 'best'); grid on;
-    
-    % Plot ysim and predictions for y3
-    nexttile; hold on;
-    scatter(time, y_sim(3, :), 'r', 'Marker', '^', 'DisplayName', 'Real y3'); 
-    plot(time, ypre1(3, :), 'b', 'DisplayName', 'Predicted1');
-    plot(time, ypre2(3, :), 'g', 'DisplayName', 'Predicted2');
-    plot(time, ypre3(3, :), 'k', 'DisplayName', 'Predicted3');
-    plot(time, ypre4(3, :), 'm', 'DisplayName', 'Predicted4');
-    title('Output y3'); xlabel('Time'); ylabel('y3');
-    legend('Location', 'best'); grid on;
+    for i=1:p
+        subplot(p, 1, i);
+        y_name = sprintf("y%d", i);
+        plot(time, y_sim(1, :), 'r', 'LineWidth', 1.25, 'DisplayName', y_name); 
+        xlabel('Iteration #');
+        ylabel(sprintf('Output %d', i));
+        grid on;
+    end
     
     % Plot inputs
     figure(2);
+    m = size(u_sim, 1);
 
-    subplot(3, 1, 1); % 3 rows, 1 column, 1st subplot
-    stairs(time, u_sim(1, :), 'r', 'LineWidth', 1.5); % 'stairs' function creates a step plot
-    ylabel('u1');
-    
-    subplot(3, 1, 2); % 3 rows, 1 column, 2nd subplot
-    stairs(time, u_sim(2, :), 'r', 'LineWidth', 1.5);
-    ylabel('u2');
+    for i=1:m
+        subplot(m, 1, i);
+        u_name = sprintf("u%d", i);
+        stairs(time, u_sim(1, :), 'r', 'LineWidth', 1.25, 'DisplayName', u_name);
+        xlabel('Iteration #');
+        ylabel(sprintf('Control input %d', i));
+        grid on;
+    end
 end
 
