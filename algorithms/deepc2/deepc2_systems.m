@@ -66,7 +66,7 @@ function sys = deepc2_systems(sys_type)
             );
 
             opt_params = struct( ...
-                        'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                        'Q', 150000 * eye(size(sys.C, 1)), ... % Output cost matrix 
                         'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
                          ); % Optimization parameters
     end
