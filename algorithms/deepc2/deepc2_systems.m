@@ -1,6 +1,7 @@
 function sys = deepc2_systems(sys_type)
     switch sys_type
         case 'example0'
+            params = struct();
             sys = struct( ...
                 'A', [1 -0.01 0; ...
                       0.01 1 0;
@@ -9,6 +10,19 @@ function sys = deepc2_systems(sys_type)
                 'C', eye(3), ...
                 'D', zeros(3, 2) ...
              );
+
+            run_config = struct( ...
+                'T', 138, ... % Window length
+                'T_ini', 5, ... % Initial trajectory length
+                'T_f', 4, ... % Prediction horizon
+                's', 2 ... % Sliding length
+            );
+
+            opt_params = struct( ...
+                'Q', eye(size(sys.C, 1)), ... % Output cost matrix
+                'R', eye(size(sys.B, 2)) ... % Control cost matrix
+                 );
+
         case 'cruise_control'
             % System-specific parameters
             params = struct( ...
@@ -39,14 +53,71 @@ function sys = deepc2_systems(sys_type)
             run_config = struct( ...
                 'T', 41, ... % Window length
                 'T_ini', 5, ... % Initial trajectory length
-                'N', 15, ... % Prediction horizon
-                's', 2, ... % Sliding length
-                'Q', 1, ... % Output cost matrix 150000
-                'R', 0.1 ... % Input cost matrix 0.1
+                'T_f', 15, ... % Prediction horizon
+                's', 2 ... % Sliding length
             );
-            sys.constraints.U = [params.u_min, params.u_max];
-            sys.constraints.Y = [params.y_min, params.y_max];
-            sys.run_config = run_config;
+
+            opt_params = struct( ...
+                        'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                        'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
+                         ); % Optimization parameters
     end
+  
+    sys = deepc2_populate_system(sys, params, opt_params, run_config);
+end
+
+function sys = deepc2_populate_system(sys, params, opt_params, run_config)
+    % Assign system-specific parameters
+    sys.params = params;
+
+    % Assign dimensions
+    dims = struct( ...
+        'n', size(sys.A, 1), ... % System state dim.
+        'm', size(sys.B, 2), ... % Input dim.
+        'p', size(sys.C, 1), ... % Output shape
+        'q', size(sys.B, 2) + size(sys.C, 1) ... % #I/O variables
+    );
+
+    sys.dims = dims;
+    
+    % Assign constraints
+    if isfield(params, 'u_min')
+        if max(size(params.u_min)) == 1
+            u_min = repmat(params.u_min, dims.m, 1);
+        end
+    else
+        u_min = -inf(dims.m, 1);
+    end
+
+    if isfield(params, 'u_max')
+        if max(size(params.u_max)) == 1
+            u_max = repmat(params.u_max, dims.m, 1);
+        end
+    else
+        u_max = inf(dims.m, 1);
+    end
+
+    if isfield(params, 'y_min')
+        if max(size(params.y_min)) == 1
+            y_min = repmat(params.y_min, dims.p, 1);
+        end
+    else
+        y_min = -inf(dims.p, 1);
+    end
+
+    if isfield(params, 'y_max')
+        if max(size(params.y_max)) == 1
+            y_max = repmat(params.y_max, dims.p, 1);
+        end
+    else
+        y_max = inf(dims.p, 1);
+    end
+
+    sys.constraints.U = [u_min, u_max];
+    sys.constraints.Y = [y_min, y_max];
+    
+    % Assign config. & optimization parameters
+    sys.run_config = run_config;
+    sys.opt_params = opt_params;
 end
 
