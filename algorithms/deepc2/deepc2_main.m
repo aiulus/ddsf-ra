@@ -64,11 +64,6 @@ lookup = struct( ...
 
 H = deepc2_hankel(lookup);
 
-%% Initialize simulation results
-%ypre1 = zeros(dims.p, run_config.T_sim);
-%ypre2 = zeros(dims.p, run_config.T_sim);
-%ypre3 = zeros(dims.p, run_config.T_sim);
-%ypre4 = zeros(dims.p, run_config.T_sim);
 
 % Extract the last column of xData and reshape it into a column vector
 x = reshape(x_data(:, end), [], 1);
@@ -91,18 +86,13 @@ for t=1:run_config.T_sim
     y_sim(:, t) = y;
     
     fprintf("y = f(x, u_opt) vs y_opt: "); disp(y); disp(y_p);
-
-    %ypre1(:, t) = y_p(1:dims.p);
-    %ypre2(:, t) = y_p(dims.p + 1: 2 * dims.p);
-    %ypre3(:, t) = y_p(2 * dims.p + 1: 3 * dims.p);
-    %ypre4(:, t) = y_p(3 * dims.p + 1: end);
     
     % Update the initial trajectory
     u_ini = [u_ini(dims.m + 1:end, :); u];
     y_ini = [y_ini(dims.p + 1:end, :); y];
 
-            fprintf("------------------- " + ...
-            "Simulation step %d -------------------\n", t);
+    fprintf("------------------- " + ...
+             "Simulation step %d -------------------\n", t);
 
     if verbose
         fprintf("Optimal input: "); disp(u);
