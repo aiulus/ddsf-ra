@@ -69,6 +69,67 @@ function sys = deepc2_systems(sys_type)
                         'Q', 150000 * eye(size(sys.C, 1)), ... % Output cost matrix 
                         'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
                          ); % Optimization parameters
+
+        case 'inverted_pendulum'
+            params = struct( ...
+                'c_mass', 0.5, ... % Mass of the cart [kg]
+                'p_mass', 0.2, ... % Mass of the pendulum [kg]
+                'I', 0.006, ... % Mass moment of inertia of the pendulum [kg.m^2]
+                'l', 0.3, ... % length of the pendulum [m]
+                'g', 9.81, ... % Gravity constant [m/s^2]
+                'b', 0.1, ... % Friction [N*s/m]
+                'dt', 0.1, ... % Time step for discretization
+                'y_min', [-inf,-180], ... % Positional constraint
+                'y_max', [inf,180], ... % Positional constraint
+                'u_min', -10, ... % Minimum force
+                'u_max', 10, ... % Maximum force
+                'target', [0.2, NaN], ... % Desired output
+                'x_ini', [0; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
+                'state_name', {"Linear Position, Linear Velocity, Angular Position, Angular Velocity"}, ...
+                'input_name', {"Force"}); % Initial velocity [m/s]
+            
+            M = params.c_mass;
+            m = params.p_mass;
+            I = params.I;
+            l = params.l;
+            b = params.b;
+            g = params.g;
+
+            % Compute the state-space matrices
+
+            p = I*(M+m)+M*m*l^2; % denominator for the A and B matrices
+
+            A = [0      1              0           0;
+                 0 -(I+m*l^2)*b/p  (m^2*g*l^2)/p   0;
+                 0      0              0           1;
+                 0 -(m*l*b)/p       m*g*l*(M+m)/p  0];
+            B = [     0;
+                 (I+m*l^2)/p;
+                      0;
+                    m*l/p];
+            C = [1 0 0 0;
+                 0 0 1 0];
+            D = [0;
+                 0];
+
+            sys = struct( ...
+                'A', A, ...
+                'B', B, ...
+                'C', C, ...
+                'D', D ...
+                );
+
+            opt_params = struct( ...
+                'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
+             ); % Optimization parameters
+            
+            run_config = struct( ...
+                'T', 37, ... % Window length
+                'T_ini', 10, ... % Initial trajectory length
+                'T_f', 5, ... % Prediction horizon
+                's', 2 ... % Sliding length
+            );
     end
   
     sys = deepc2_populate_system(sys, params, opt_params, run_config);
@@ -93,6 +154,8 @@ function sys = deepc2_populate_system(sys, params, opt_params, run_config)
     if isfield(params, 'u_min')
         if max(size(params.u_min)) == 1
             u_min = repmat(params.u_min, dims.m, 1);
+        else
+            u_min = params.u_min;
         end
     else
         u_min = repmat(-largeval, dims.m, 1);
@@ -101,6 +164,8 @@ function sys = deepc2_populate_system(sys, params, opt_params, run_config)
     if isfield(params, 'u_max')
         if max(size(params.u_max)) == 1
             u_max = repmat(params.u_max, dims.m, 1);
+        else
+            u_max = params.u_max;
         end
     else
         u_max = repmat(largeval, dims.m, 1);
@@ -109,6 +174,8 @@ function sys = deepc2_populate_system(sys, params, opt_params, run_config)
     if isfield(params, 'y_min')
         if max(size(params.y_min)) == 1
             y_min = repmat(params.y_min, dims.p, 1);
+        else
+            y_min = params.y_min;
         end
     else
         y_min = repmat(-largeval, dims.p, 1);
@@ -117,6 +184,8 @@ function sys = deepc2_populate_system(sys, params, opt_params, run_config)
     if isfield(params, 'y_max')
         if max(size(params.y_max)) == 1
             y_max = repmat(params.y_max, dims.p, 1);
+        else
+            y_max = params.y_max;
         end
     else
         y_max = repmat(largeval, dims.p, 1);
