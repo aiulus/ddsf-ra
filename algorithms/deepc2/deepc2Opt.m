@@ -1,6 +1,6 @@
 function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     verbose = true; % Toggle debug mode
-    optimizer_type = 'f'; % Toggle optimization type 
+    optimizer_type = 'o'; % Toggle optimization type 
     constr_type = 'f'; % Toggle constraint type
 
     %% Extract DeePC parameters
@@ -81,9 +81,14 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
         options = sdpsettings('solver', 'quadprog', 'verbose', 1);
     elseif lower(optimizer_type) == 'f'
         options = sdpsettings('solver', 'fmincon', 'verbose', 0);
+        %options = sdpsettings('solver', 'fmincon', ...
+        %                    'relax', 0, ...
+        %                    'warning', 0, ...
+        %                    'showprogress', 1 ...
+        %                    );
     elseif lower(optimizer_type) == 'o'
         options = sdpsettings('solver', 'OSQP', ... % Use OSQP solver
-                      'verbose', 1, ...             % Suppress solver output
+                      'verbose', 0, ...             % Suppress solver output
                       'osqp.max_iter', 30000, ...   % Set maximum iterations
                       'osqp.eps_abs', 1e-7, ...     % Absolute tolerance
                       'warmstart', 0);             % Disable warm start

@@ -1,5 +1,6 @@
 function sys = deepc2_systems(sys_type)
     switch sys_type
+        %% Case 1: Example0
         case 'example0'
             params = struct( ...
                 'target', [0, 0, 0] ...
@@ -25,15 +26,16 @@ function sys = deepc2_systems(sys_type)
                 'Q', eye(size(sys.C, 1)), ... % Output cost matrix
                 'R', eye(size(sys.B, 2)) ... % Control cost matrix
                  );
-
+        
+        %% Case 2: Cruise Control
         case 'cruise_control'
             % System-specific parameters
             params = struct( ...
                 'mass', 1000, ... % Vehicle mass [kg]
                 'damping', 50, ... % Damping coefficient [N*s/m]
                 'dt', 0.1, ... % Sampling rate for discetization [s]
-                'u_min', -inf, ... % Minimum force
-                'u_max', inf, ... % Maximum force
+                'u_min', 0, ... % Minimum force
+                'u_max', 100, ... % Maximum force
                 'y_min', -inf, ... % Output constraint
                 'y_max', inf, ... % Output constraint
                 'target', 20, ... % Reference velocity [m/s]
@@ -69,7 +71,8 @@ function sys = deepc2_systems(sys_type)
                         'Q', 150000 * eye(size(sys.C, 1)), ... % Output cost matrix 
                         'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
                          ); % Optimization parameters
-
+        
+        %% Case 3: Inverted Pendulum
         case 'inverted_pendulum'
             params = struct( ...
                 'c_mass', 0.5, ... % Mass of the cart [kg]
@@ -120,8 +123,8 @@ function sys = deepc2_systems(sys_type)
                 );
 
             opt_params = struct( ...
-                'Q', 150000 * eye(size(sys.C, 1)), ... % Output cost matrix 
-                'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
+                'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                'R', 1 * eye(size(sys.B, 2)) ... % Input cost matrix 
              ); % Optimization parameters
             
             run_config = struct( ...
