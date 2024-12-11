@@ -1,5 +1,5 @@
 %% Define the system
-sys = deepc2_systems("example0");
+sys = deepc2_systems("cruise_control");
 verbose = false; 
 rng(0, 'twister'); % Set seed and generator
 
@@ -72,6 +72,7 @@ x = reshape(x_data(:, end), [], 1);
 u_ini = reshape(u_data(:, end - run_config.T_ini + 1:end), [], 1);
 y_ini = reshape(y_data(:, end - run_config.T_ini + 1:end), [], 1);
 
+
 %% Receding Horizon Loop
 for t=1:run_config.T_sim
     % Solve the quadratic optimization problem
@@ -120,6 +121,8 @@ function deepc2_save(time, u_sim, y_sim)
     writematrix(u_csv, 'u.csv');
     writematrix(y_csv, 'y.csv');
 end
+
+
 
 
 

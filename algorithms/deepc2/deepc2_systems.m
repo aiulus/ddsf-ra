@@ -83,7 +83,7 @@ function sys = deepc2_systems(sys_type)
                 'y_max', [inf;180], ... % Positional constraint
                 'u_min', -10, ... % Minimum force
                 'u_max', 10, ... % Maximum force
-                'target', [0.2; 0], ... % Desired output
+                'target', [0.15; 90], ... % Desired output
                 'x_ini', [0; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
                 'state_name', {"Linear Position, Linear Velocity, Angular Position, Angular Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
@@ -120,7 +120,7 @@ function sys = deepc2_systems(sys_type)
                 );
 
             opt_params = struct( ...
-                'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                'Q', 150000 * eye(size(sys.C, 1)), ... % Output cost matrix 
                 'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
              ); % Optimization parameters
             

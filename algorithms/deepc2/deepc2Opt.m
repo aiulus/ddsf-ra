@@ -1,5 +1,7 @@
 function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     verbose = true; % Toggle debug mode
+    optimizer_type = 'f'; % Toggle optimization type 
+    constr_type = 'f'; % Toggle constraint type
 
     %% Extract DeePC parameters
     Q = lookup.deepc.Q;
@@ -57,29 +59,38 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     y_ub = reshape(repmat(Y(:, 2), T_f, 1).', [], 1);
 
     % Define the constraints
-    constraints = [Up * g == u_ini, ...
-                   Yp * g == y_ini, ...
-                   Uf * g == u, ...
-                   Yf * g == y, ...
-                   u_lb <= u & u <= u_ub, ...
-                   y_lb <= y & y <= y_ub ...
-                   ];
+    if lower(constr_type) == 'f'
+        constraints = [Up * g == u_ini, ...
+                       Yp * g == y_ini, ...
+                       Uf * g == u, ...
+                       Yf * g == y, ...
+                       u_lb <= u & u <= u_ub, ...
+                       y_lb <= y & y <= y_ub ...
+                      ];
+    elseif lower(constr_type) == 's'
+        constraints = [Up * g == u_ini, ...
+                       Yp * g == y_ini, ...
+                       Uf * g == u, ...
+                       Yf * g == y
+                       ];
+    elseif lower(constr_type) == 'e'
+        constraints = [];
+    end
 
-    constraints = [Up * g == u_ini, ...
-                   Yp * g == y_ini, ...
-                   Uf * g == u, ...
-                   Yf * g == y
-                   ];
-                       
-    options = sdpsettings('solver', 'OSQP', ...          % Use OSQP solver
+    if lower(optimizer_type) == 'q'
+        options = sdpsettings('solver', 'quadprog', 'verbose', 1);
+    elseif lower(optimizer_type) == 'f'
+        options = sdpsettings('solver', 'fmincon', 'verbose', 0);
+    elseif lower(optimizer_type) == 'o'
+        options = sdpsettings('solver', 'OSQP', ... % Use OSQP solver
                       'verbose', 1, ...             % Suppress solver output
                       'osqp.max_iter', 30000, ...   % Set maximum iterations
                       'osqp.eps_abs', 1e-7, ...     % Absolute tolerance
                       'warmstart', 0);             % Disable warm start
-
-    % options = sdpsettings('solver', 'fmincon', 'verbose', 0);
-    % options = sdpsettings('solver', 'quadprog', 'verbose', 1);
-
+    else
+        error('Error assigning solver options!');
+    end
+    
     diagnostics = optimize(constraints, objective, options);
 
     if diagnostics.problem == 0
