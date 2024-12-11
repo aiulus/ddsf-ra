@@ -1,5 +1,5 @@
 %% Define the system
-sys = deepc2_systems("cruise_control");
+sys = deepc2_systems("example0");
 verbose = false; 
 rng(0, 'twister'); % Set seed and generator
 
