@@ -9,7 +9,9 @@ sys = linear_system("cruise_control");
 %sys = nonlinear_system("inverted_pendulum");
 %sys = nonlinear_system("deepc_quadrotor");
 %sys = nonlinear_system("ddsf_quadrotor");
+%sys = LTI("single_integrator");
 %sys = LTI('double_integrator');
+%sys = LTI("dc_motor");
 
    
 % Access DeePC configuration parameters from the system struct
@@ -27,7 +29,7 @@ p = sys.params.p; % Output dimension
 n = sys.params.n; % Dim. of the minimal state-space representation
 
 %% Step 1: Data collection
-[u_d, y_d, ~, ~] = generate_data(sys, T); % Simulate the system
+[u_d, y_d, ~, ~, ~] = generate_data(sys, T); % Simulate the system
 
 %% Step 2: Generate the Hankel matrices
 [Up, Yp, Uf, Yf] = deepc_hankel(u_d, y_d, sys);
@@ -68,6 +70,7 @@ for k = 0:max_iter-1
     % Apply the first s optimal control inputs
     u_t = value(u_opt);
     y_t = value(y_opt);
+
     u_hist(t: t+s) = u_t(1:(s + 1));
     y_hist(t: t+s) = y_t(1:(s + 1));
 
@@ -104,6 +107,7 @@ title('System Outputs');
 xlabel('Time'); ylabel('Output');
 grid on;
 hold off;
+
 
 
 

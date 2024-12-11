@@ -1,7 +1,9 @@
 %% Define the system
-sys = deepc2_systems("inverted_pendulum");
+sys = deepc2_systems("cruise_control");
 verbose = false; 
 rng(0, 'twister'); % Set seed and generator
+
+%% TODO: Ensure shape match across _systems & Opt !!
 
 %% Extract relevant parameters
 dims = sys.dims;

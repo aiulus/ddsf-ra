@@ -42,7 +42,7 @@ mpc_controller.Weights.ManipulatedVariablesRate = 1e-3; % Penalize rate of input
 mpc_controller.Weights.OutputVariables = 1; % Penalize output deviation
 
 % Simulation parameters
-t_final = 20; % Total simulation time [s]
+t_final = 5; % Total simulation time [s]
 N_simulation = t_final / dt; % Number of time steps
 x_ini = sys.params.x_ini; % Initial state from system definition
 x_history = zeros(size(A, 1), N_simulation + 1); % Storage for states
@@ -97,25 +97,9 @@ t = (0:N_simulation-1) * dt;
 %hold off;
 
 % Time vector
-t = (0:N_simulation) * dt;
+t = (1:N_simulation);
 
-
-% Plot system states over time
-figure; hold on;
-subplot(2,1,1); hold on;
-plot(y_history, 'r');
-xlabel('Time (s)');
-ylabel('Outputs');
-grid on;
-hold off;
-
-% Plot control inputs over time
-subplot(2,1,2); hold on;
-plot(u_history, 'b');
-xlabel('Time (s)');
-ylabel('Control Input');
-grid on;
-hold off;
+deepc2_plot(t, y_history(:, 2:end), u_history(:, 2:end))
 
 % Save the figure if needed
 if save_to_file

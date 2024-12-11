@@ -2,7 +2,7 @@ function sys = deepc2_systems(sys_type)
     switch sys_type
         case 'example0'
             params = struct( ...
-                'target', [0; 0; 0] ...
+                'target', [0, 0, 0] ...
                 );
 
             sys = struct( ...
@@ -79,11 +79,11 @@ function sys = deepc2_systems(sys_type)
                 'g', 9.81, ... % Gravity constant [m/s^2]
                 'b', 0.1, ... % Friction [N*s/m]
                 'dt', 0.1, ... % Time step for discretization
-                'y_min', [-inf,-180], ... % Positional constraint
-                'y_max', [inf,180], ... % Positional constraint
+                'y_min', [-inf;-180], ... % Positional constraint
+                'y_max', [inf;180], ... % Positional constraint
                 'u_min', -10, ... % Minimum force
                 'u_max', 10, ... % Maximum force
-                'target', [0.2, NaN], ... % Desired output
+                'target', [0.2; 0], ... % Desired output
                 'x_ini', [0; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
                 'state_name', {"Linear Position, Linear Velocity, Angular Position, Angular Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
