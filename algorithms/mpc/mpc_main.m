@@ -70,31 +70,6 @@ for k = 2:(N_simulation + 1)
     u_history(:, k) = u;
 end
 
-% Time vector
-t = (0:N_simulation-1) * dt;
-
-% Plot system states over time
-%figure; hold on;
-%plot(t, x_history, 'LineWidth', 1.5);
-%if size(x_history, 1) == 1
-%    yline(r, '--r', 'Target');
-%else
-%    plot(t, repmat(r(:), 1, N_simulation)', '--r', 'LineWidth', 1.5);
-%end
-%xlabel('Time (s)');
-%ylabel('States');
-%legend(sys.params.state_name, 'Target');
-%title(sprintf('System States for "%s"', system_description));
-%hold off;
-
-% Plot control inputs over time
-%figure; hold on;
-%plot(t, u_history', 'LineWidth', 1.5);
-%xlabel('Time (s)');
-%ylabel('Control Input');
-%legend(sys.params.input_name);
-%title(sprintf('Control Inputs for "%s"', system_description));
-%hold off;
 
 % Time vector
 t = (1:N_simulation);
