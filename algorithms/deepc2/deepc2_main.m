@@ -8,7 +8,7 @@ rng(0, 'twister'); % Set seed and generator
 %% Extract relevant parameters
 dims = sys.dims;
 run_config =  sys.run_config;
-run_config.T_sim = 500;
+run_config.T_sim = 50;
 run_config.L = run_config.T_ini + run_config.T_f;
 % TODO: Check / Find out why there is a hard-coding
 run_config.T = (dims.m * dims.n + dims.m+1)*(run_config.L + dims.n) + 30;
@@ -19,12 +19,6 @@ opt_params.lambda_g = 1;
 u_sim = zeros(dims.m, run_config.T_sim);
 y_sim = zeros(dims.p, run_config.T_sim);
 
-u_data = zeros(dims.m, run_config.T);
-y_data = zeros(dims.p, run_config.T);
-x_data = zeros(dims.n, run_config.T + 1);
-x0 = rand(dims.n, 1); % Random initial state
-x_data(:, 1) = x0;
-x = x0;
 
 %% Parameters for Hankel matrix construction
 hankel_params = struct( ...
@@ -37,14 +31,7 @@ hankel_params = struct( ...
     );
 
 %% Generate data
-for t = 1:run_config.T
-    u = rand(dims.m, 1);
-    y = sys.C* x + sys.D * u;
-    x = sys.A * x + sys.B * u;
-    u_data(:, t) = u;
-    y_data(:, t) = y;
-    x_data(:, t + 1) = x;
-end
+[x_data, y_data, u_data] = deepc2generateData(sys, dims, run_config);
 
 data = struct( ...
      'u_data', u_data, ...
@@ -71,7 +58,6 @@ x = reshape(x_data(:, end), [], 1);
 % Reshape the last Tini columns of PData, uData, and yData into column vectors
 u_ini = reshape(u_data(:, end - run_config.T_ini + 1:end), [], 1);
 y_ini = reshape(y_data(:, end - run_config.T_ini + 1:end), [], 1);
-
 
 %% Receding Horizon Loop
 for t=1:run_config.T_sim
