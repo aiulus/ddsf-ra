@@ -4,9 +4,8 @@ function [x_data, y_data, u_data] = deepc2generateData(sys, dims, run_config)
     y_data = zeros(dims.p, run_config.T);
     x_data = zeros(dims.n, run_config.T + 1);
 
-    x0 = rand(dims.n, 1); % Random initial state
-    x_data(:, 1) = x0;
-    x = x0;
+    x = rand(dims.n, 1); % Random initial state
+    x_data(:, 1) = x;
     
     for t = 1:run_config.T
         u = rand(dims.m, 1);

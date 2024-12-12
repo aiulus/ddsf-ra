@@ -1,5 +1,5 @@
 %% Define the system
-sys = deepc2_systems("cruise_control");
+sys = deepc2_systems("inverted_pendulum");
 verbose = false; 
 rng(0, 'twister'); % Set seed and generator
 
@@ -19,6 +19,13 @@ opt_params.lambda_g = 1;
 u_sim = zeros(dims.m, run_config.T_sim);
 y_sim = zeros(dims.p, run_config.T_sim);
 
+%% Generate data
+[x_data, y_data, u_data] = deepc2generateData(sys, dims, run_config);
+
+data = struct( ...
+     'u_data', u_data, ...
+     'y_data', y_data, ...
+     'x_data', x_data);
 
 %% Parameters for Hankel matrix construction
 hankel_params = struct( ...
@@ -29,15 +36,6 @@ hankel_params = struct( ...
     'T_f', run_config.T_f, ...
     'n', dims.n ...
     );
-
-%% Generate data
-[x_data, y_data, u_data] = deepc2generateData(sys, dims, run_config);
-
-data = struct( ...
-     'u_data', u_data, ...
-     'y_data', y_data, ...
-     'x0', x0, ...
-     'x_data', x_data);
 
 %% Data structure that holds all relevant parameters
 lookup = struct( ...
@@ -52,26 +50,26 @@ lookup = struct( ...
 H = deepc2_hankel(lookup);
 lookup.H = H;
 
-% Extract the last column of xData and reshape it into a column vector
-x = reshape(x_data(:, end), [], 1);
-
 % Reshape the last Tini columns of PData, uData, and yData into column vectors
 u_ini = reshape(u_data(:, end - run_config.T_ini + 1:end), [], 1);
 y_ini = reshape(y_data(:, end - run_config.T_ini + 1:end), [], 1);
+x_ini = sys.params.x_ini;
+x = x_ini;
 
 %% Receding Horizon Loop
 for t=1:run_config.T_sim
+    s = run_config.s;
     % Solve the quadratic optimization problem
     [u, y_p] =  deepc2_get_input(lookup, H, u_ini, y_ini);
-    
+
     % Apply system dynamics
     y = sys.C * x + sys.D * u;
     x = sys.A * x + sys.B * u;
-    
+
     % Log the resulting trajectory
     u_sim(:, t) = u;
     y_sim(:, t) = y;
-    
+        
     % Update the initial trajectory
     u_ini = [u_ini(dims.m + 1:end, :); u];
     y_ini = [y_ini(dims.p + 1:end, :); y];
