@@ -1,7 +1,7 @@
 function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     verbose = true; % Toggle debug mode
-    optimizer_type = 'q'; % Toggle optimization type 
-    constr_type = 'f'; % Toggle constraint type
+    optimizer_type = 'o'; % Toggle optimization type 
+    constr_type = 's'; % Toggle constraint type
 
     %% Extract DeePC parameters
     Q = lookup.deepc.Q;
@@ -31,27 +31,23 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     u = sdpvar(T_f * m, 1);
     y = sdpvar(T_f * p, 1);
 
+
     %% Construct the reference trajectory
     target = reshape(repmat(target, T_f, 1).', [], 1);
-    r = zeros(size(target));   
-
-    nancols = isnan(target);
-    numcols = ~isnan(target);
-    
-    % Take over decision variables where target isn't specified
-    r(nancols) = y(nancols);
-    r(numcols) =  target(numcols);
+    % nancols = isnan(target);
+    numcols = ~isnan(target);    
 
     %% Define the optimization objective
-    % TODO
+    delta = y(numcols) - target(numcols);
+    Qext = kron(eye(T_f), Q);
+    Qext_cut = Qext(numcols, numcols);
+    
+    objective = delta' * Qext_cut * delta + u' * kron(eye(T_f), R) * u;
+
+    %% TODO
     %regularized_objective = g' * (lambda_g *  eye(length(g))) * g ...
     %            + (r - y)' * kron(eye(T_f), Q) * (r - y) + ...
     %            u' * kron(eye(T_f), R) * u;
-    
-
-    %% TODO: y(~isnan(target)) - r(~isnan(target))
-    objective = (y - r)' * kron(eye(T_f), Q) * (y - r) + ...
-                u' * kron(eye(T_f), R) * u;
     
     u_lb = reshape(repmat(U(:, 1), T_f, 1).', [], 1);
     u_ub = reshape(repmat(U(:, 2), T_f, 1).', [], 1);
@@ -88,7 +84,7 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
         %                    );
     elseif lower(optimizer_type) == 'o'
         options = sdpsettings('solver', 'OSQP', ... % Use OSQP solver
-                      'verbose', 0, ...             % Suppress solver output
+                      'verbose', 1, ...             
                       'osqp.max_iter', 30000, ...   % Set maximum iterations
                       'osqp.eps_abs', 1e-7, ...     % Absolute tolerance
                       'warmstart', 0);             % Disable warm start
@@ -103,9 +99,9 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
                 u = value(u);
                 y = value(y);
         if verbose
-            disp("REFERENCE TRAJECTORY: "); disp(r.');
-            disp("DELTA: "); disp((r - y).');
-            disp("PEANALTY TERM: "); disp((r - y)' * kron(eye(T_f), Q) * (r - y));
+            disp("REFERENCE TRAJECTORY: "); disp(target');
+            disp("DELTA: "); disp(value(delta)');
+            disp("PEANALTY TERM: "); disp(value(delta' * Qext_cut * delta));
         end
     else
         error('The problem did not solve successfully.');
