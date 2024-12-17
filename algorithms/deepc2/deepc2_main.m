@@ -1,5 +1,5 @@
 %% Define the system
-sys = deepc2_systems("cruise_control");
+sys = deepc2_systems("dampler");
 verbose = false; 
 rng(0, 'twister'); % Set seed and generator
 
@@ -8,12 +8,13 @@ rng(0, 'twister'); % Set seed and generator
 %% Extract relevant parameters
 dims = sys.dims;
 run_config =  sys.run_config;
-run_config.T_sim = 50;
+run_config.T_sim = 20;
 run_config.L = run_config.T_ini + run_config.T_f;
 % TODO: Check / Find out why there is a hard-coding
-run_config.T = (dims.m * dims.n + dims.m+1)*(run_config.L + dims.n) + 30;
+% run_config.T = (dims.m * dims.n + dims.m+1)*(run_config.L + dims.n) + 30;
+run_config.T = (dims.m + 1) * (run_config.T_ini + run_config.T_f + dims.n) - 1;
 opt_params = sys.opt_params;
-opt_params.lambda_g = 1;
+opt_params.lambda_g = 0.01; % Should be adaptive
 
 %% Initialize containers for logging
 u_sim = zeros(dims.m, run_config.T_sim);
