@@ -35,8 +35,8 @@ function sys = deepc2_systems(sys_type)
                 'mass', 1000, ... % Vehicle mass [kg]
                 'damping', 50, ... % Damping coefficient [N*s/m]
                 'dt', 0.1, ... % Sampling rate for discetization [s]
-                'u_min', -inf, ... % Minimum force
-                'u_max', inf, ... % Maximum force
+                'u_min', 0, ... % Minimum force
+                'u_max', 5000, ... % Maximum force
                 'y_min', -inf, ... % Output constraint
                 'y_max', inf, ... % Output constraint
                 'target', 20, ... % Reference velocity [m/s]
@@ -63,13 +63,13 @@ function sys = deepc2_systems(sys_type)
 
             run_config = struct( ...
                 'T', 41, ... % Window length
-                'T_ini', 5, ... % Initial trajectory length
+                'T_ini', 1, ... % Initial trajectory length
                 'T_f', 15, ... % Prediction horizon
                 's', 3 ... % Sliding length
             );
 
             opt_params = struct( ...
-                        'Q', 100000 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                        'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix 
                         'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
                          ); % Optimization parameters
         
@@ -87,7 +87,7 @@ function sys = deepc2_systems(sys_type)
                 'y_max', [inf;180], ... % Positional constraint
                 'u_min', -10, ... % Minimum force
                 'u_max', 10, ... % Maximum force
-                'target', [0.15; 90], ... % Desired output
+                'target', [0.15, 90], ... % Desired output
                 'x_ini', [0; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
                 'state_name', {"Linear Position, Linear Velocity, Angular Position, Angular Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
@@ -132,6 +132,99 @@ function sys = deepc2_systems(sys_type)
                 'T', 37, ... % Window length
                 'T_ini', 10, ... % Initial trajectory length
                 'T_f', 5, ... % Prediction horizon
+                's', 2 ... % Sliding length
+            );
+
+        %% Case 4: DC Motor
+        case 'dc_motor'
+            % Parameters
+            params = struct( ...
+                'J' , 0.01, ... % Inertia
+                'b', 0.1, ... % Damping coefficient
+                'K', 0.01, ... % Motor constant
+                'R', 1, ... % Resistance
+                'L', 0.5, ... % Inductance
+                'dt', 0.1, ... % Sampling time
+                'u_min', -inf, ... % Voltage limits
+                'u_max', inf, ... % Voltage limits
+                'y_min', -inf, ... % Speed limits
+                'y_max', inf, ... % Speed limits
+                'x_ini', [1; 1], ...
+                'target', 10 ...
+                );
+                        
+            b = params.b;
+            J = params.J;
+            K = params.K;
+            R = params.R;
+            L = params.L;
+            
+            A = [-b/J K/J; -K/L -R/L];
+            B = [0; 1/L];
+            C = [1 0];
+            D = 0;
+
+            sys = struct( ...
+                'A', A, ...
+                'B', B, ...
+                'C', C, ...
+                'D', D ...
+                );
+
+            opt_params = struct( ...
+                'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
+             ); % Optimization parameters
+            
+            run_config = struct( ...
+                'T', 20, ... % Window length % Not used
+                'T_ini', 5, ... % Initial trajectory length
+                'T_f', 15, ... % Prediction horizon
+                's', 2 ... % Sliding length
+            );
+
+        %% Case 5: Mass Spring Dampler
+        case 'dampler'
+            params = struct( ...
+               'dt', 0.1, ... % Sampling time
+                'u_min', -100, ... 
+                'u_max', 100, ...
+                'y_min', -inf, ...
+                'y_max', inf, ...
+                'x_ini', [0.5;0.5], ...
+                'target', 5,...
+                'mass', 1, ...
+                'spring_constant', 1, ...
+                'damping_coeff', 0.2 ...
+                );
+
+            dt = params.dt;
+            m = params.mass;
+            b = params.damping_coeff;
+            k = params.spring_constant;
+
+            % State-space matrices
+            A = [1 dt; -k/m*dt 1 - b/m*dt];
+            B = [0; dt/m];
+            C = [1 0];
+            D = 0;    
+
+            sys = struct( ...
+                'A', A, ...
+                'B', B, ...
+                'C', C, ...
+                'D', D ...
+                );
+
+            opt_params = struct( ...
+                'Q', 10 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
+             ); % Optimization parameters
+            
+            run_config = struct( ...
+                'T', 20, ... % Window length % Not used
+                'T_ini', 5, ... % Initial trajectory length
+                'T_f', 15, ... % Prediction horizon
                 's', 2 ... % Sliding length
             );
     end
