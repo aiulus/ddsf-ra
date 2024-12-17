@@ -1,9 +1,10 @@
 function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     verbose = true; % Toggle debug mode
     optimizer_type = 'o'; % Toggle optimization type 
-    constr_type = 's'; % Toggle constraint type
+    constr_type = 'r'; % Toggle constraint type
 
     %% Extract DeePC parameters
+    % TODO: Line 8 gets interpreted as a function call by the b&b solver
     Q = lookup.deepc.Q;
     R = lookup.deepc.R;
     lambda_g = lookup.deepc.lambda_g;
@@ -55,7 +56,7 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     y_ub = reshape(repmat(Y(:, 2), T_f, 1).', [], 1);
 
     % Define the constraints
-    if lower(constr_type) == 'f'
+    if lower(constr_type) == 'f'           % Full 
         constraints = [Up * g == u_ini, ...
                        Yp * g == y_ini, ...
                        Uf * g == u, ...
@@ -63,20 +64,33 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
                        u_lb <= u & u <= u_ub, ...
                        y_lb <= y & y <= y_ub ...
                       ];
-    elseif lower(constr_type) == 's'
-        constraints = [Up * g == u_ini, ...
-                       Yp * g == y_ini, ...
-                       Uf * g == u, ...
+    elseif lower(constr_type) == 'r'       % Regularized
+        Ux = [Up; Uf]; Yx = [Yp; Yf];
+        order = size(Ux, 1);
+        Ux = svdHankel(Ux, order);
+        Yx = svdHankel(Yx, order); 
+        gr = sdpvar(order, 1);
+        objective = objective + gr' * (lambda_g * eye(length(gr))) * gr;
+        constraints = [[Ux; Yx] * gr == [u_ini; u; y_ini; y], ...
+                       u_lb <= u & u <= u_ub, ...
+                       y_lb <= y & y <= y_ub ...
+                      ];
+    elseif lower(constr_type) == 's'       % Simple, just models the system 
+        constraints = [Up * g == u_ini, ...% dynamics - same as setting
+                       Yp * g == y_ini, ...% all input constraints to
+                       Uf * g == u, ...    % +/-inf
                        Yf * g == y
                        ];
-    elseif lower(constr_type) == 'e'
-        constraints = [];
+    elseif lower(constr_type) == 'e'       % Empty - meant to be used just
+        constraints = [];                  % as sanity check 
     end
 
     if lower(optimizer_type) == 'q'
         options = sdpsettings('solver', 'quadprog', 'verbose', 1);
     elseif lower(optimizer_type) == 'f'
-        options = sdpsettings('solver', 'fmincon', 'verbose', 0);
+        options = sdpsettings('solver', 'fmincon', ...
+                              'sdpa.maxIteration', 10, ...
+                              'verbose', 0);                             
         %options = sdpsettings('solver', 'fmincon', ...
         %                    'relax', 0, ...
         %                    'warning', 0, ...
@@ -88,6 +102,8 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
                       'osqp.max_iter', 30000, ...   % Set maximum iterations
                       'osqp.eps_abs', 1e-7, ...     % Absolute tolerance
                       'warmstart', 0);             % Disable warm start
+    elseif lower(optimizer_type) == 'b'
+        options = sdpsettings('solver', 'bmibnb', 'verbose', 1);
     else
         error('Error assigning solver options!');
     end
@@ -101,9 +117,10 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
         if verbose
             disp("REFERENCE TRAJECTORY: "); disp(target');
             disp("DELTA: "); disp(value(delta)');
-            disp("PEANALTY TERM: "); disp(value(delta' * Qext_cut * delta));
+            disp("PEANALTY TERM: "); disp(value(objective));
         end
     else
+        disp(diagnostics.info);
         error('The problem did not solve successfully.');
     end
 end
