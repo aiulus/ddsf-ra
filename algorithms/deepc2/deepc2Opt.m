@@ -1,7 +1,7 @@
 function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     verbose = true; % Toggle debug mode
     optimizer_type = 'o'; % Toggle optimization type 
-    constr_type = 'r'; % Toggle constraint type
+    constr_type = 'f'; % Toggle constraint type
 
     %% Extract DeePC parameters
     % TODO: Line 8 gets interpreted as a function call by the b&b solver

@@ -39,9 +39,9 @@ function sys = deepc2_systems(sys_type)
                 'u_max', 5000, ... % Maximum force
                 'y_min', -inf, ... % Output constraint
                 'y_max', inf, ... % Output constraint
-                'target', 20, ... % Reference velocity [m/s]
+                'target', 10, ... % Reference velocity [m/s]
                 'slack', 1e-2, ... % For relaxation  
-                'x_ini', 0, ...
+                'x_ini', 20, ...
                 'state_name', {"Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
 
@@ -69,26 +69,26 @@ function sys = deepc2_systems(sys_type)
             );
 
             opt_params = struct( ...
-                        'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                        'Q', 150000 * eye(size(sys.C, 1)), ... % Output cost matrix 
                         'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
                          ); % Optimization parameters
         
         %% Case 3: Inverted Pendulum
         case 'inverted_pendulum'
             params = struct( ...
-                'c_mass', 0.5, ... % Mass of the cart [kg]
-                'p_mass', 0.2, ... % Mass of the pendulum [kg]
-                'I', 0.006, ... % Mass moment of inertia of the pendulum [kg.m^2]
-                'l', 0.3, ... % length of the pendulum [m]
+                'c_mass', 50, ... % Mass of the cart [kg]
+                'p_mass', 2, ... % Mass of the pendulum [kg]
+                'I', 0.6, ... % Mass moment of inertia of the pendulum [kg.m^2]
+                'l', 3, ... % length of the pendulum [m]
                 'g', 9.81, ... % Gravity constant [m/s^2]
                 'b', 0.1, ... % Friction [N*s/m]
                 'dt', 0.1, ... % Time step for discretization
-                'y_min', [-inf;-180], ... % Positional constraint
-                'y_max', [inf;180], ... % Positional constraint
-                'u_min', -10, ... % Minimum force
-                'u_max', 10, ... % Maximum force
-                'target', [0.15, 90], ... % Desired output
-                'x_ini', [0; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
+                'y_min', [0;-inf], ... % Positional constraint
+                'y_max', [1.5;inf], ... % Positional constraint
+                'u_min', -inf, ... % Minimum force
+                'u_max', inf, ... % Maximum force
+                'target', [1.45, NaN], ... % Desired output
+                'x_ini', [0.5; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
                 'state_name', {"Linear Position, Linear Velocity, Angular Position, Angular Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
             
@@ -116,22 +116,25 @@ function sys = deepc2_systems(sys_type)
             D = [0;
                  0];
 
+            % Discretize the continuous-time system
+            [Ad, Bd, Cd, Dd] = discretize_system(A, B, C, D, params.dt);
+
             sys = struct( ...
-                'A', A, ...
-                'B', B, ...
-                'C', C, ...
-                'D', D ...
+                'A', Ad, ...
+                'B', Bd, ...
+                'C', Cd, ...
+                'D', Dd ...
                 );
 
             opt_params = struct( ...
-                'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix 
-                'R', 1 * eye(size(sys.B, 2)) ... % Input cost matrix 
+                'Q', 150000 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
              ); % Optimization parameters
             
             run_config = struct( ...
                 'T', 37, ... % Window length
-                'T_ini', 10, ... % Initial trajectory length
-                'T_f', 5, ... % Prediction horizon
+                'T_ini', 5, ... % Initial trajectory length
+                'T_f', 15, ... % Prediction horizon
                 's', 2 ... % Sliding length
             );
 
@@ -149,7 +152,7 @@ function sys = deepc2_systems(sys_type)
                 'u_max', inf, ... % Voltage limits
                 'y_min', -inf, ... % Speed limits
                 'y_max', inf, ... % Speed limits
-                'x_ini', [1; 1], ...
+                'x_ini', [1; 1], ... % y_ini = x_ini(1)
                 'target', 10 ...
                 );
                         
@@ -164,11 +167,14 @@ function sys = deepc2_systems(sys_type)
             C = [1 0];
             D = 0;
 
+            % Discretize the continuous-time system
+            [Ad, Bd, Cd, Dd] = discretize_system(A, B, C, D, params.dt);
+
             sys = struct( ...
-                'A', A, ...
-                'B', B, ...
-                'C', C, ...
-                'D', D ...
+                'A', Ad, ...
+                'B', Bd, ...
+                'C', Cd, ...
+                'D', Dd ...
                 );
 
             opt_params = struct( ...
@@ -191,7 +197,7 @@ function sys = deepc2_systems(sys_type)
                 'u_max', 100, ...
                 'y_min', -inf, ...
                 'y_max', inf, ...
-                'x_ini', [0.5;0.5], ...
+                'x_ini', [0.5;0.5], ... % y_ini = x_ini(1)
                 'target', 5,...
                 'mass', 1, ...
                 'spring_constant', 1, ...
@@ -217,7 +223,7 @@ function sys = deepc2_systems(sys_type)
                 );
 
             opt_params = struct( ...
-                'Q', 10 * eye(size(sys.C, 1)), ... % Output cost matrix 
+                'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix 
                 'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
              ); % Optimization parameters
             
@@ -227,70 +233,116 @@ function sys = deepc2_systems(sys_type)
                 'T_f', 15, ... % Prediction horizon
                 's', 2 ... % Sliding length
             );
+        
+        %% Case 6: Temperature Control
+        case 'thermostat'
+            % System-specific parameters
+            params = struct( ...
+                'thermal_capacitance', 500, ... % [J/°C]
+                'heat_transfer_coeff', 10, ...  % [W/°C]
+                'dt', 0.1, ...                  % Sampling time [s]
+                'u_min', 0, ...              % Minimum heating power [W]
+                'u_max', 15000, ...               % Maximum heating power [W]
+                'y_min', 15, ...                % Minimum room temperature [°C]
+                'y_max', 27, ...                % Maximum room temperature [°C]
+                'target', -5, ...               % Desired room temperature [°C]
+                'x_ini', 10 ...                % Initial room temperature [°C]
+            );
+
+            C = params.thermal_capacitance;
+            h = params.heat_transfer_coeff;
+            dt = params.dt;
+
+            % Continuous-time state-space matrices
+            A = -h / C;
+            B = 1 / C;
+            C = 1;
+            D = 0;
+
+            % Discretize the continuous-time system
+            [Ad, Bd, Cd, Dd] = discretize_system(A, B, C, D, dt);
+
+            % Define the system structure
+            sys = struct( ...
+                'A', A, ...
+                'B', B, ...
+                'C', C, ...
+                'D', D ...
+            );
+
+            % Optimization parameters
+            opt_params = struct( ...
+                'Q', 10 * eye(size(sys.C, 1)), ... % Output cost matrix
+                'R', 0.01 * eye(size(sys.B, 2)) ... % Input cost matrix
+            );
+
+            % Run configuration
+            run_config = struct( ...
+                'T', 50, ...    % Window length
+                'T_ini', 15, ... % Initial trajectory length
+                'T_f', 25, ...  % Prediction horizon
+                's', 2 ...      % Sliding length
+            );
+
+        %% Case 7: Continuous Stirred-Tank Reactor
+        case 'cstr'
+             params = struct( ...
+                'V', 1.0, ... % Reactor volume [m^3]
+                'F', 1.0, ... % Volumetric flow rate [m^3/s]
+                'k0', 1.0e6, ... % Pre-exponential factor [1/s]
+                'E', 50000, ... % Activation energy [J/mol]
+                'R', 8.314, ... % Universal gas constant [J/(mol·K)]
+                'dH', -50000, ... % Heat of reaction [J/mol]
+                'rho', 1000, ... % Density [kg/m^3]
+                'Cp', 4.18, ... % Heat capacity [J/(kg·K)]
+                'UA', 5000, ... % Heat transfer coefficient [W/K]
+                'CA0', 1.0, ... % Inlet concentration [mol/m^3]
+                'T0', 300, ... % Inlet temperature [K]
+                'Tc', 290, ... % Coolant temperature [K]
+                'x_ini', [0.5; 155], ... % Initial state [CA; T]
+                'target', [0.5; 310], ... % Desired output [CA; T]                
+                'y_min', [-inf;-inf], ... 
+                'y_max', [inf;inf], ... 
+                'u_min', [-inf;-inf], ... 
+                'u_max', [inf;inf] ... 
+            );
+
+            A = [   -5  -0.3427; 
+                 47.68    2.785];
+            B = [    0   1
+                   0.3   0];
+            C = [0 1
+                 1 0];
+            D = zeros(2,2);
+
+            % Define the system structure
+            sys = struct( ...
+                'A', A, ...
+                'B', B, ...
+                'C', C, ...
+                'D', D ...
+            );
+
+            % Optimization parameters
+            opt_params = struct( ...
+                'Q', 1 * eye(size(sys.C, 1)), ... % Output cost matrix
+                'R', 0.01 * eye(size(sys.B, 2)) ... % Input cost matrix
+            );
+
+            % Run configuration
+            run_config = struct( ...
+                'T', 50, ...    % Window length
+                'T_ini', 15, ... % Initial trajectory length
+                'T_f', 25, ...  % Prediction horizon
+                's', 2 ...      % Sliding length
+            );
     end
   
     sys = deepc2_populate_system(sys, params, opt_params, run_config);
 end
 
 function sys = deepc2_populate_system(sys, params, opt_params, run_config)
-    % Assign system-specific parameters
-    sys.params = params;
-
-    % Assign dimensions
-    dims = struct( ...
-        'n', size(sys.A, 1), ... % System state dim.
-        'm', size(sys.B, 2), ... % Input dim.
-        'p', size(sys.C, 1), ... % Output shape
-        'q', size(sys.B, 2) + size(sys.C, 1) ... % #I/O variables
-    );
-
-    sys.dims = dims;
-    largeval = 1e+30;
-
-    % Assign constraints
-    if isfield(params, 'u_min')
-        if max(size(params.u_min)) == 1
-            u_min = repmat(params.u_min, dims.m, 1);
-        else
-            u_min = params.u_min;
-        end
-    else
-        u_min = repmat(-largeval, dims.m, 1);
-    end
-
-    if isfield(params, 'u_max')
-        if max(size(params.u_max)) == 1
-            u_max = repmat(params.u_max, dims.m, 1);
-        else
-            u_max = params.u_max;
-        end
-    else
-        u_max = repmat(largeval, dims.m, 1);
-    end
-
-    if isfield(params, 'y_min')
-        if max(size(params.y_min)) == 1
-            y_min = repmat(params.y_min, dims.p, 1);
-        else
-            y_min = params.y_min;
-        end
-    else
-        y_min = repmat(-largeval, dims.p, 1);
-    end
-
-    if isfield(params, 'y_max')
-        if max(size(params.y_max)) == 1
-            y_max = repmat(params.y_max, dims.p, 1);
-        else
-            y_max = params.y_max;
-        end
-    else
-        y_max = repmat(largeval, dims.p, 1);
-    end
-
-    sys.constraints.U = [u_min, u_max];
-    sys.constraints.Y = [y_min, y_max];
-    
+    sys = constraint_handler(sys, params);
     % Assign config. & optimization parameters
     sys.run_config = run_config;
     sys.opt_params = opt_params;
