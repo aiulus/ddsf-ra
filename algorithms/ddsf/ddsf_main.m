@@ -19,7 +19,7 @@ opt_params = struct( ...
                    );
 
 %% Step 1: Define and import parameters
-sys = ddsf_systems("cruise_control", toggle.discretize); 
+sys = ddsf_systems("dampler", toggle.discretize); 
 
 dims = sys.dims;
 T_sim = 25;
@@ -33,7 +33,7 @@ lookup = struct( ...
                 );
 
 % DEBUG STATEMENTS
-lookup.config.R = 1;
+lookup.config.R = 150000;
 lookup.config.T = 100;
 
 %% Step 2: Generate data & Hankel matrices
@@ -64,7 +64,7 @@ for t=(lookup.config.T_ini+1):(lookup.config.T_ini + 1 + T_sim)
     u_ini = logs.u(:, (t - lookup.config.T_ini):(t-1));
     y_ini = logs.y(:, (t -lookup.config.T_ini):(t-1));
     traj_ini = [u_ini; y_ini];
-    u_l = learning_policy();
+    u_l = learning_policy(sys);
 
     [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini, opt_params);
     u_next = u_opt(:, 1);
@@ -76,25 +76,27 @@ for t=(lookup.config.T_ini+1):(lookup.config.T_ini + 1 + T_sim)
 end
 
 %% Plot the results
-time = 0:(T_sim + 1);
+time = 0:(T_sim + lookup.config.T_ini);
 ddsf_plot(time, logs, sys)
 
-function u_l = learning_policy()
-    %   LATER change to:
-    %       u_l = learning_policy(y, y_d)
-    %
-    %   INPUTS:
-    %       y   - Current system output (px1)
-    %       y_d - Desired system output
+% Should this use the same policy as data generation?
+function u_l = learning_policy(sys)
+    m = sys.dims.m;
+    maxvals = sys.constraints.U(:, 2);
+    maxvals(maxvals == inf) = 1;
+    % Generate a Pseudo-Random Binary Signal for each dimension
+    prbs = idinput(m, 'prbs', [], [-1, 1]);
 
-    %u_l = randi([-1, 1], 1, 1);
-    prbs = idinput(1, 'prbs', [], [-1, 1]);
-
-    lb = - 1.5;
-    ub = 1.5;
-    random_magnitude = lb + (ub - lb) * rand;
+    lb = - 1.5; ub = 1.5;
+    random_magnitude = lb + (ub - lb) * rand(m, 1);
     
-    % Returns a pseudo-random binary signal scaled by a random magnitude
-    u_l = random_magnitude * prbs * 5000;
+    % Scale PRBS signal by a random magnitude
+    u_l = random_magnitude * prbs .* maxvals;
 end
 
+%   Can later be changed to:
+%       u_l = learning_policy(y, y_d)
+%
+%   INPUTS:
+%       y   - Current system output (px1)
+%       y_d - Desired system output

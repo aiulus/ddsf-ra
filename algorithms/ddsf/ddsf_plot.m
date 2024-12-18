@@ -1,6 +1,94 @@
-function ddsf_plot(time, logs, sys)
-    %% TODO: Add dashed lines to mark system boundaries
+function ddsf_plot(time, logs, sys)    
+    ul_hist = logs.u_d;
+    u_hist = logs.u;
+    y_hist = logs.y;
+        
+    figure(1);
+    m = size(u_hist, 1);
+    tiledlayout(m, 1); % Use tiled layout for better control
     
+    % Plot learning vs safe inputs
+    for i = 1:m
+        nexttile;
+        stairs(time, ul_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('ul[%d]', i));
+        hold on;
+        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.5, 'DisplayName', sprintf('u[%d]', i));
+    
+        bounds = sys.constraints.U(i, :);
+    
+        % Plot boundaries
+        if bounds(1) ~= -inf
+            plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');
+        end
+        if bounds(2) ~= inf
+            plot(time, bounds(2) * ones(size(time)), 'k--', 'DisplayName', 'Upper Bound');
+        end
+    
+        title(sprintf('Learning vs Safe Input %d', i));
+        xlabel('t');
+        ylabel(sprintf('Input %d', i));
+        grid on;
+        legend show;
+        hold off;
+    end
+        
+    figure(2);
+    p = size(y_hist, 1);
+    tiledlayout(m + p, 1); % Combine all inputs and outputs into a single layout
+    
+    % Plot learning vs safe inputs
+    for i = 1:m
+        nexttile;
+        stairs(time, ul_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('ul[%d]', i));
+        hold on;
+        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.5, 'DisplayName', sprintf('u[%d]', i));
+    
+        bounds = sys.constraints.U(i, :);
+    
+        % Plot boundaries
+        if bounds(1) ~= -inf
+            plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');
+        end
+        if bounds(2) ~= inf
+            plot(time, bounds(2) * ones(size(time)), 'k--', 'DisplayName', 'Upper Bound');
+        end
+    
+        title(sprintf('Learning vs Safe Input %d', i));
+        xlabel('t');
+        ylabel(sprintf('Input %d', i));
+        grid on;
+        legend show;
+        hold off;
+    end
+    
+    % Plot system outputs
+    for i = 1:p
+        nexttile;
+        plot(time, y_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
+        bounds = sys.constraints.Y(i, :);
+    
+        % Plot boundaries
+        if bounds(1) ~= -inf
+            hold on;
+            plot(time, bounds(1) * ones(size(time)), 'g--', 'DisplayName', 'Lower Bound');
+        end
+        if bounds(2) ~= inf
+            plot(time, bounds(2) * ones(size(time)), 'g--', 'DisplayName', 'Upper Bound');
+        end
+    
+        title(sprintf('System Output %d', i));
+        xlabel('t');
+        ylabel(sprintf('Output %d', i));
+        grid on;
+        legend show;
+        hold off;
+    end
+    
+    sgtitle('Comparison of Learning Inputs, Safe Inputs, and Outputs');
+
+end
+
+function single_plots(time, logs, sys)
     ul_hist = logs.u_d;
     u_hist = logs.u;
     y_hist = logs.y;
@@ -62,7 +150,7 @@ function ddsf_plot(time, logs, sys)
     
     for i = 1:m
         nexttile;
-        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.5, 'DisplayName', sprintf('u[%d]', i));
         bounds = sys.constraints.U(i, :);
     
         % Plot boundaries
@@ -85,58 +173,4 @@ function ddsf_plot(time, logs, sys)
     
     sgtitle('Safe Inputs');
     
-    
-    figure(4);
-    tiledlayout(m + p, 1); % Combine all inputs and outputs into a single layout
-    
-    % Plot learning vs safe inputs
-    for i = 1:m
-        nexttile;
-        stairs(time, ul_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('ul[%d]', i));
-        hold on;
-        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
-    
-        bounds = sys.constraints.U(i, :);
-    
-        % Plot boundaries
-        if bounds(1) ~= -inf
-            plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');
-        end
-        if bounds(2) ~= inf
-            plot(time, bounds(2) * ones(size(time)), 'k--', 'DisplayName', 'Upper Bound');
-        end
-    
-        title(sprintf('Learning vs Safe Input %d', i));
-        xlabel('t');
-        ylabel(sprintf('Input %d', i));
-        grid on;
-        legend show;
-        hold off;
-    end
-    
-    % Plot system outputs
-    for i = 1:p
-        nexttile;
-        plot(time, y_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
-        bounds = sys.constraints.Y(i, :);
-    
-        % Plot boundaries
-        if bounds(1) ~= -inf
-            hold on;
-            plot(time, bounds(1) * ones(size(time)), 'g--', 'DisplayName', 'Lower Bound');
-        end
-        if bounds(2) ~= inf
-            plot(time, bounds(2) * ones(size(time)), 'g--', 'DisplayName', 'Upper Bound');
-        end
-    
-        title(sprintf('System Output %d', i));
-        xlabel('t');
-        ylabel(sprintf('Output %d', i));
-        grid on;
-        legend show;
-        hold off;
-    end
-    
-    sgtitle('Comparison of Learning Inputs, Safe Inputs, and Outputs');
-
 end
