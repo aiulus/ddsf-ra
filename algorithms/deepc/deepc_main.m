@@ -5,13 +5,13 @@ log_interval = 1; % Log every <log_interval> iterations
 
 %% Step 0: Define global parameters, fetch system
 % Fetch system
-sys = linear_system("cruise_control");
+%sys = linear_system("cruise_control");
 %sys = nonlinear_system("inverted_pendulum");
 %sys = nonlinear_system("deepc_quadrotor");
 %sys = nonlinear_system("ddsf_quadrotor");
 %sys = LTI("single_integrator");
 %sys = LTI('double_integrator');
-%sys = LTI("dc_motor");
+sys = LTI("dc_motor");
 
    
 % Access DeePC configuration parameters from the system struct
