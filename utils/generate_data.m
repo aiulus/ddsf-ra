@@ -22,8 +22,6 @@ function [u_d, y_d, x_d, u, y] = generate_data(sys, T)
     % Generate data by simulating the system on random inputs for L steps
     for i = 1:T
         u_d(:, i) = PE_input(:, i);
-        %% TODO: This is computed with x_data = 0 at i=1, instead, 
-        %% it must be initialized with the initial state of the system
         x_d(:, i + 1) = A * x_d(:, i) + B * u_d(:, i);
         y_d(:, i) = C * x_d(:, i) + D * u_d(:, i);
     end
