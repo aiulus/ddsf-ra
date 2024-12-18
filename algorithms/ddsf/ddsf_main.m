@@ -1,6 +1,6 @@
 %% Setup
 %sys = linear_system("cruise_control"); ... % Specify system
-sys = nonlinear_system("ddsf_quadrotor");
+sys = ddsf_systems("dampler", true); % Set 2nd arg. to true to discretize
 
 IO_params = struct( ...
     'debug_toggle', true, ...
@@ -8,49 +8,41 @@ IO_params = struct( ...
     'log_interval', 1 ... % Log every n-the step of the simulation
     );
 
-dims = struct( ...
-    'm', sys.params.m, ...  % Input dimension
-    'p', sys.params.p, ... % Output dimension
-    'n', sys.params.n ... % Dim. of the minimal state-space representation
-    );
-    %% 
-
-alg_params = struct( ...
-    'sys', sys, ... % Specify system
-    'T', sys.ddsf_config.T, ... % Data length
-    'T_ini', sys.ddsf_config.T_ini, ... % Length of the initial trajectory
-    'T_sim', 50, ... % Simulation steps
-    'N_p', sys.ddsf_config.N_p, ... % Prediction horizon
-    's', sys.ddsf_config.s, ... % Sliding length
-    'R', sys.ddsf_config.R * eye(dims.m), ... % Cost matrix
-    'dims', dims, ...           % For single-point parameter-passing                   
-    'IO_params', IO_params ...
-    );
+dims = sys.dims;
+T_sim = 50;
+lookup = struct( ...
+                'sys', sys, ...
+                'sys_params', sys.params, ...
+                'config', sys.config, ...
+                'dims', dims, ...
+                'IO_params', IO_params, ...
+                'T_sim', T_sim ...
+                );
 
 %% Generate data & Hankel matrices
-[u_d, y_d, x_d, ~, ~] = generate_data(sys, alg_params.T); 
+[u_d, y_d, x_d, ~, ~] = ddsfGenerateData(lookup); 
 [H_u, H_y] = ddsf_hankel(u_d, y_d, sys);
-alg_params.dims.hankel_cols = size(H_u, 2);
-alg_params.H = [H_u; H_y];
+lookup.dims.hankel_cols = size(H_u, 2);
+lookup.H = [H_u; H_y];
 
 logs = struct( ...
-        'u', [u_d(:, end - alg_params.T_ini + 1: end).'; ...
-        zeros(dims.m, alg_params.T_sim).'].', ... % Initialize input history with the last T_ini steps of the offline input data
-        'y', [y_d(:, end - alg_params.T_ini + 1: end).'; ...
-        zeros(dims.p, alg_params.T_sim).'].', ... % Initialize output history with the last T_ini entries of the offline data
-        'x', [x_d(:, end - alg_params.T_ini + 1: end).'; ...
-        zeros(dims.n, alg_params.T_sim).'].' ... % TODO: tracking x not necessary
+        'u', [u_d(:, end - lookup.config.T_ini + 1: end).'; ...
+        zeros(dims.m, T_sim).'].', ... % Initialize input history with the last T_ini steps of the offline input data
+        'y', [y_d(:, end - lookup.config.T_ini + 1: end).'; ...
+        zeros(dims.p, T_sim).'].', ... % Initialize output history with the last T_ini entries of the offline data
+        'x', [x_d(:, end - lookup.config.T_ini + 1: end).'; ...
+        zeros(dims.n, T_sim).'].' ... % TODO: tracking x not necessary
     );
 
-for t=(alg_params.T_ini+1):(alg_params.T_ini + 1 + alg_params.T_sim)
+for t=(lookup.config.T_ini+1):(lookup.config.T_ini + 1 + T_sim)
     fprintf("----------------- DEBUG Information -----------------\n");
-    fprintf("CURRENT SIMULATION STEP: t = %d\n", t - alg_params.T_ini);
-    u_ini = logs.u(:, (t - alg_params.T_ini):(t-1));
-    y_ini = logs.y(:, (t - alg_params.T_ini):(t-1));
+    fprintf("CURRENT SIMULATION STEP: t = %d\n", t - lookup.config.T_ini);
+    u_ini = logs.u(:, (t - lookup.config.T_ini):(t-1));
+    y_ini = logs.y(:, (t -lookup.config.T_ini):(t-1));
     traj_ini = [u_ini; y_ini];
     u_l = learning_policy();
 
-    [u_opt, y_opt] = ddsf_opt(alg_params, u_l, traj_ini);
+    [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini);
     u_next = u_opt(:, 1);
     y_next = y_opt(:, 1);
 

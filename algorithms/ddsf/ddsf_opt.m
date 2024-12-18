@@ -1,23 +1,23 @@
-function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
+function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
     %% Extract parameters
     % Extract lengths and dimensions
-    T_ini = params.T_ini;
-    N_p = params.N_p;
+    T_ini = lookup.config.T_ini;
+    N_p = lookup.config.N_p;
     L = N_p + 2 * T_ini;
-    m = params.dims.m;
-    p = params.dims.p;
-    num_cols = params.dims.hankel_cols;
+    m = lookup.dims.m;
+    p = lookup.dims.p;
+    num_cols = lookup.dims.hankel_cols;
     
     % Extract matrices
-    C = params.sys.C;
-    D = params.sys.D;
-    T_u = params.sys.equilibrium.U;
-    R = params.R;
-    H = params.H;
+    C = lookup.sys.C;
+    D = lookup.sys.D;
+    T_u = lookup.sys.equilibrium.U;
+    R = lookup.config.R;
+    H = lookup.H;
     
     % Extract constraints
-    U = params.sys.constraints.U;
-    Y = params.sys.constraints.Y;
+    U = lookup.sys.constraints.U;
+    Y = lookup.sys.constraints.Y;
     u_min = U(:, 1);
     u_max = U(:, 2);
     y_min = Y(:, 1);
@@ -26,8 +26,8 @@ function [u_opt, y_opt] = ddsf_opt(params, u_l, traj_ini)
     % Extract the initial trajectory and equilibrium states
     u_ini = traj_ini(1:m, :);
     y_ini = traj_ini(m+1:end, :);
-    u_eq = params.sys.S_f.u_eq;
-    y_eq = params.sys.S_f.y_eq;
+    u_eq = lookup.sys.S_f.u_eq;
+    y_eq = lookup.sys.S_f.y_eq;
 
     
     %% Define symbolic variables

@@ -1,6 +1,6 @@
 function [H_u, H_y] = ddsf_hankel(u_d, y_d, sys)
-    T_ini = sys.ddsf_config.T_ini;
-    N_p = sys.ddsf_config.N_p;
+    T_ini = sys.config.T_ini;
+    N_p = sys.config.N_p;
     PE_order = N_p + 2 * T_ini;
 
     [~, H_u] = construct_hankel(u_d, PE_order);
