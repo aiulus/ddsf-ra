@@ -33,7 +33,7 @@ lookup = struct( ...
                 );
 
 % DEBUG STATEMENTS
-lookup.config.R = 0.01;
+lookup.config.R = 1;
 lookup.config.T = 100;
 
 %% Step 2: Generate data & Hankel matrices
@@ -77,7 +77,7 @@ end
 
 %% Plot the results
 time = 0:(T_sim + 1);
-ddsf_plot(time, logs)
+ddsf_plot(time, logs, sys)
 
 function u_l = learning_policy()
     %   LATER change to:
@@ -95,6 +95,6 @@ function u_l = learning_policy()
     random_magnitude = lb + (ub - lb) * rand;
     
     % Returns a pseudo-random binary signal scaled by a random magnitude
-    u_l = random_magnitude * prbs;
+    u_l = random_magnitude * prbs * 5000;
 end
 
