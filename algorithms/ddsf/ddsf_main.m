@@ -22,7 +22,7 @@ opt_params = struct( ...
 sys = ddsf_systems("cruise_control", toggle.discretize); 
 
 dims = sys.dims;
-T_sim = 50;
+T_sim = 25;
 lookup = struct( ...
                 'sys', sys, ...
                 'sys_params', sys.params, ...
@@ -77,7 +77,7 @@ end
 
 %% Plot the results
 time = 0:(T_sim + 1);
-deepc2_plot(time, logs.u_d, logs.u)
+ddsf_plot(time, logs)
 
 function u_l = learning_policy()
     %   LATER change to:

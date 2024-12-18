@@ -75,8 +75,6 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini, opt_params)
                            control_y <= repmat(y_max, 1, N_p + 2 * T_ini)];
     end
 
-
-
     %% Define solver settings and run optimization
     switch opt_params.solver_type
         case 'q'
@@ -113,4 +111,3 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini, opt_params)
     end
 
 end
-
