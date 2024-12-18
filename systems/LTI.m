@@ -66,7 +66,7 @@ function sys = LTI(system_description)
             C = [1 0];
             D = 0;
             
-        case 'mass_spring_dampler'
+        case 'dampler'
             % Parameters        
             params = struct( ...
                 'm', 1, ... % Input dimension (Velocity)
@@ -114,18 +114,18 @@ function sys = LTI(system_description)
                 'L', 0.5, ... % Inductance
                 'm', 1, ... % Input dimension (Velocity)
                 'p', 1, ... % Output dimension (y = x in this case)
-                'n', 1, ... % System dimension (Position)
+                'n', 2, ... % System dimension (Position)
                 'dt', 0.1, ... % Sampling time
                 'u_min', -inf, ... % Voltage limits
                 'u_max', inf, ... % Voltage limits
                 'y_min', -inf, ... % Speed limits
                 'y_max', inf, ... % Speed limits
                 'x_ini', [0; 0], ...
-                'target', [10; 0] ...
+                'target', 10 ...
                 );
 
             deepc_config = struct( ...
-                'T', 20, ... % Window length
+                'T', 43, ... % Window length
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2, ... % Sliding length
