@@ -78,7 +78,123 @@ function sys = ddsf_systems(sys_type, discretize)
                 's', 2, ... % Sliding length
                 'R', 1 ... % Cost matrix
             );
+
+        %% Example 3: Inverted Pendulum
+        case 'inverted_pendulum'
+            params = struct( ...
+                'c_mass', 50, ... % Mass of the cart [kg]
+                'p_mass', 2, ... % Mass of the pendulum [kg]
+                'I', 0.6, ... % Mass moment of inertia of the pendulum [kg.m^2]
+                'l', 3, ... % length of the pendulum [m]
+                'g', 9.81, ... % Gravity constant [m/s^2]
+                'b', 0.1, ... % Friction [N*s/m]
+                'dt', 0.1, ... % Time step for discretization
+                'y_min', [0;-inf], ... % Positional constraint
+                'y_max', [1.5;inf], ... % Positional constraint
+                'u_min', -inf, ... % Minimum force
+                'u_max', inf, ... % Maximum force
+                'target', [1.45, NaN], ... % Desired output
+                'x_ini', [0.5; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
+                'state_name', {"Linear Position, Linear Velocity, Angular Position, Angular Velocity"}, ...
+                'input_name', {"Force"}); % Initial velocity [m/s]
+
+            M = params.c_mass;
+            m = params.p_mass;
+            I = params.I;
+            l = params.l;
+            b = params.b;
+            g = params.g;
+
+            % Compute the state-space matrices
+
+            p = I*(M+m)+M*m*l^2; % denominator for the A and B matrices
+
+            A = [0      1              0           0;
+                 0 -(I+m*l^2)*b/p  (m^2*g*l^2)/p   0;
+                 0      0              0           1;
+                 0 -(m*l*b)/p       m*g*l*(M+m)/p  0];
+            B = [     0;
+                 (I+m*l^2)/p;
+                      0;
+                    m*l/p];
+            C = [1 0 0 0;
+                 0 0 1 0];
+            D = [0;
+                 0];
+
+            run_config = struct( ...
+                'T', 25, ... % Data length
+                'T_ini', 5, ... % Initial trajectory length
+                'N_p', 15, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'R', 1 ... % Cost matrix
+            );
+
+        %% Example 4: DC Motor
+        case 'dc_motor'
+            params = struct( ...
+                'J' , 0.01, ... % Inertia
+                'b', 0.1, ... % Damping coefficient
+                'K', 0.01, ... % Motor constant
+                'R', 1, ... % Resistance
+                'L', 0.5, ... % Inductance
+                'dt', 0.1, ... % Sampling time
+                'u_min', -inf, ... % Voltage limits
+                'u_max', inf, ... % Voltage limits
+                'y_min', -inf, ... % Speed limits
+                'y_max', inf, ... % Speed limits
+                'x_ini', [1; 1], ... % y_ini = x_ini(1)
+                'target', 10 ...
+                );
+                        
+            b = params.b;
+            J = params.J;
+            K = params.K;
+            R = params.R;
+            L = params.L;
             
+            A = [-b/J K/J; -K/L -R/L];
+            B = [0; 1/L];
+            C = [1 0];
+            D = 0;
+
+            run_config = struct( ...
+                'T', 25, ... % Data length
+                'T_ini', 5, ... % Initial trajectory length
+                'N_p', 15, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'R', 1 ... % Cost matrix
+            );
+
+        %% Example 5: Cruise Control
+        case 'cruise_control'
+            % System-specific parameters
+            params = struct( ...
+                'mass', 1000, ... % Vehicle mass [kg]
+                'damping', 50, ... % Damping coefficient [N*s/m]
+                'dt', 0.1, ... % Sampling rate for discetization [s]
+                'u_min', 0, ... % Minimum force
+                'u_max', 5000, ... % Maximum force
+                'y_min', -inf, ... % Output constraint
+                'y_max', inf, ... % Output constraint
+                'target', 10, ... % Reference velocity [m/s]
+                'slack', 1e-2, ... % For relaxation  
+                'x_ini', 20, ...
+                'state_name', {"Velocity"}, ...
+                'input_name', {"Force"}); % Initial velocity [m/s]
+
+            A = 1 - (params.damping * params.dt) / params.mass;
+            B = params.dt / params.mass;
+            C = 1;
+            D = 0;
+            
+            run_config = struct( ...
+                'T', 25, ... % Data length
+                'T_ini', 1, ... % Initial trajectory length
+                'N_p', 15, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'R', 1 ... % Cost matrix
+            );
     end
 
     if discretize == true

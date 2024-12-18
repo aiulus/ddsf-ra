@@ -1,12 +1,25 @@
-%% Setup
-%sys = linear_system("cruise_control"); ... % Specify system
-sys = ddsf_systems("dampler", true); % Set 2nd arg. to true to discretize
+%% Step 0: Setup
+toggle = struct( ...
+                'debug', true, ...
+                'save', true, ...
+                'discretize', 'true' ...
+                );
 
 IO_params = struct( ...
-    'debug_toggle', true, ...
-    'save_to_file', true, ...
+    'debug_toggle', toggle.debug, ...
+    'save_to_file', toggle.save, ...
     'log_interval', 1 ... % Log every n-the step of the simulation
     );
+
+opt_params = struct( ...
+                    'regularize', true, ...
+                    'constr_type', 'f', ...
+                    'solver_type', 'o', ...
+                    'verbose', false ...
+                   );
+
+%% Step 1: Define and import parameters
+sys = ddsf_systems("cruise_control", toggle.discretize); 
 
 dims = sys.dims;
 T_sim = 50;
@@ -19,38 +32,53 @@ lookup = struct( ...
                 'T_sim', T_sim ...
                 );
 
-%% Generate data & Hankel matrices
-[u_d, y_d, x_d, ~, ~] = ddsfGenerateData(lookup); 
-[H_u, H_y] = ddsf_hankel(u_d, y_d, sys);
-lookup.dims.hankel_cols = size(H_u, 2);
-lookup.H = [H_u; H_y];
+% DEBUG STATEMENTS
+lookup.config.R = 0.01;
+lookup.config.T = 100;
 
+%% Step 2: Generate data & Hankel matrices
+[u_d, y_d, x_d, ~, ~] = ddsfGenerateData(lookup); 
+
+[H_u, H_y] = ddsf_hankel(u_d, y_d, sys);
+ 
+lookup.H = [H_u; H_y];
+lookup.H_u = H_u; lookup.H_y = H_y;
+lookup.dims.hankel_cols = size(H_u, 2);
+
+%% Initialize objects to log simulation history
 logs = struct( ...
+        'u_d', zeros(dims.m, T_sim + lookup.config.T_ini), ...
         'u', [u_d(:, end - lookup.config.T_ini + 1: end).'; ...
-        zeros(dims.m, T_sim).'].', ... % Initialize input history with the last T_ini steps of the offline input data
+        zeros(dims.m, T_sim).'].', ... 
         'y', [y_d(:, end - lookup.config.T_ini + 1: end).'; ...
-        zeros(dims.p, T_sim).'].', ... % Initialize output history with the last T_ini entries of the offline data
+        zeros(dims.p, T_sim).'].', ... 
         'x', [x_d(:, end - lookup.config.T_ini + 1: end).'; ...
         zeros(dims.n, T_sim).'].' ... % TODO: tracking x not necessary
     );
 
+%% Step 3: Receding Horizon Loop
 for t=(lookup.config.T_ini+1):(lookup.config.T_ini + 1 + T_sim)
     fprintf("----------------- DEBUG Information -----------------\n");
     fprintf("CURRENT SIMULATION STEP: t = %d\n", t - lookup.config.T_ini);
+
     u_ini = logs.u(:, (t - lookup.config.T_ini):(t-1));
     y_ini = logs.y(:, (t -lookup.config.T_ini):(t-1));
     traj_ini = [u_ini; y_ini];
     u_l = learning_policy();
 
-    [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini);
+    [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini, opt_params);
     u_next = u_opt(:, 1);
     y_next = y_opt(:, 1);
-
+    
+    logs.u_d(:, t) = u_l;
     logs.u(:, t) = u_next;
     logs.y(:, t) = y_next;
 end
 
-% TODO: Remove placeholder
+%% Plot the results
+time = 0:(T_sim + 1);
+deepc2_plot(time, logs.u_d, logs.u)
+
 function u_l = learning_policy()
     %   LATER change to:
     %       u_l = learning_policy(y, y_d)
@@ -69,3 +97,4 @@ function u_l = learning_policy()
     % Returns a pseudo-random binary signal scaled by a random magnitude
     u_l = random_magnitude * prbs;
 end
+
