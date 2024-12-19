@@ -1,17 +1,20 @@
 function sys = ddsf_systems(sys_type, discretize)
     switch sys_type
         %% Example 1: The Quadrotor
-        case 'ddsf_quadrotor'
+        case 'quadrotor'
             % System-specific parameters
             params = struct( ...
                 'mass', 0.2, ... % Quadrotor mass [kg]
                 'g', 9.81, ... % Gravity constant
-                'dt', 0.1, ... % Time step for discretization
-                'u_min', (-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
-                'u_max', [1; 0.1; 0.1; 0.1], ... % Maximum force
-                'y_min', (-1)*[1; 1; 1; 0.2; 0.2; 0.2], ... % Output constraints
-                'y_max', [1; 1; 1; 0.2; 0.2; 0.2], ...  % Output constraints                          
+                'dt', 0.1, ... % Time step for discretization 
+                'u_min', (200)*(-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
+                'u_max', (200)*[1; 0.1; 0.1; 0.1], ... % Maximum force
+                'y_min', (200)*(-1)*[1; 1; 1; 0.2; 0.2; 0.2], ... % Output constraints
+                'y_max', (200)*[1; 1; 1; 0.2; 0.2; 0.2], ...  % Output constraints                          
                 'I', repmat(10^(-3), 3, 1), ... % Moment of inertia in x, y, z
+                'p', 6, ... % Output dimension (y € R^p)
+                'm', 4, ... % Input dimension (u € R^m)
+                'n', 12, ... % State dimension (x € R^n)
                 'x_ini', zeros(12, 1), ...
                 'target', ones(6, 1) ... % TODO: Current value is just a placeholder
                 );
@@ -49,10 +52,10 @@ function sys = ddsf_systems(sys_type, discretize)
         case 'dampler'
             params = struct( ...
                'dt', 0.1, ... % Sampling time
-                'u_min', -100, ... 
-                'u_max', 100, ...
-                'y_min', -inf, ...
-                'y_max', inf, ...
+                'u_min', -10, ... 
+                'u_max', 10, ...
+                'y_min', -100, ...
+                'y_max', 100, ...
                 'x_ini', [0.5;0.5], ... % y_ini = x_ini(1)
                 'target', 5,...
                 'mass', 1, ...
@@ -72,7 +75,7 @@ function sys = ddsf_systems(sys_type, discretize)
             D = 0;    
 
             run_config = struct( ...
-                'T', 25, ... % Data length
+                'T', 49, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
                 's', 2, ... % Sliding length
@@ -123,8 +126,8 @@ function sys = ddsf_systems(sys_type, discretize)
                  0];
 
             run_config = struct( ...
-                'T', 25, ... % Data length
-                'T_ini', 5, ... % Initial trajectory length
+                'T', 490, ... % Data length
+                'T_ini', 15, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
                 's', 2, ... % Sliding length
                 'R', 1 ... % Cost matrix
@@ -159,8 +162,8 @@ function sys = ddsf_systems(sys_type, discretize)
             D = 0;
 
             run_config = struct( ...
-                'T', 25, ... % Data length
-                'T_ini', 5, ... % Initial trajectory length
+                'T', 49, ... % Data length
+                'T_ini', 15, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
                 's', 2, ... % Sliding length
                 'R', 1 ... % Cost matrix
@@ -189,9 +192,70 @@ function sys = ddsf_systems(sys_type, discretize)
             D = 0;
             
             run_config = struct( ...
-                'T', 25, ... % Data length
+                'T', 45, ... % Data length
                 'T_ini', 1, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'R', 1 ... % Cost matrix
+            );
+
+        %% Example 6: Adaptive Cruise Control with Time-Delay
+        case 'acc'
+            params = struct( ...
+                            'mc', 1650, ... % Follower car mass [kg]
+                            'vl', 20, ... % Lead car velocity [m/s]
+                            'x_ini', 0.1, ... % Initial distance [km]
+                            'target', 0.2, ... % Target distance [km]
+                            'u_min', -2000, ... % Control input 
+                            'u_max', 2000, ...  % boundaries
+                            'y_min', -1, ... % Distance variation 
+                            'y_max', 1, ...  % boundaries
+                            'dt', 0.2, ... % Sampling time [s]
+                            'Td', 3 ... % Time delay / [dt]
+                           );
+
+            run_config = struct( ...
+                'T', 49, ... % Data length
+                'T_ini', 5, ... % Initial trajectory length
+                'N_p', 15, ... % Prediction horizon
+                's', 2, ... % Sliding length
+                'R', 1 ... % Cost matrix
+            );
+
+            A = [0 1; 0 0]; 
+            B = [0; (1/params.mc)];
+            C = [1 0];
+            D = 0;
+
+        %% Example 7: Ball & Beam
+        case 'ballNbeam'
+            params = struct( ...
+                'm', 0.11, ... % Mass of the ball [kg]
+                'R', 0.015, ... % Radius of the ball [m]
+                'd', 0.03, ... % Lever arm offset [m]
+                'L', 1, ... % Length of the beam [m]
+                'J', 9.99e-6, ... % Ball's moment of inertia [kg*m^2]
+                'g', 9.8, ... % Gravitational constant [m/s^2]
+                'x_ini', 0, ... % Initial ball position
+                'target', 0.5, ... % Desired ball position
+                'u_min', -10, ... % Minimum gear angle
+                'u_max', 10, ...  % Maximum gear angle
+                'y_min', 0, ...
+                'y_max', 1 ... % Must be the same as L
+                );
+
+            b21 = - (params.m * params.g * params.d) /(params.L * ...
+                (params.m + (params.J / (params.R^2))));
+
+            A = [0 1; 0 0];
+            B = [0; b21];
+            C = [1 0];
+            D = 0;
+
+            run_config = struct( ...
+                'T', 4900, ... % Data length
+                'T_ini', 1, ... % Initial trajectory length
+                'N_p', 5, ... % Prediction horizon
                 's', 2, ... % Sliding length
                 'R', 1 ... % Cost matrix
             );

@@ -31,6 +31,12 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini, opt_params)
         num_cols = size(H, 2);
     end
 
+    %% TODO: Can be used to encode a desired target state
+    % START - Debug statements
+    %u_eq = 0.5*ones(size(u_eq));
+    %y_eq = 0.5*ones(size(y_eq));
+    % END - Debug statements
+
     %% Define symbolic variables
     alpha = sdpvar(num_cols, 1);
     control_u = sdpvar(m, N_p + 2 * T_ini);
@@ -87,6 +93,8 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini, opt_params)
                   'osqp.max_iter', 30000, ...   % Set maximum iterations
                   'osqp.eps_abs', 1e-7, ...     % Absolute tolerance
                   'warmstart', 0);             % Disable warm start
+        case 'b'
+            options = sdpsettings('solver', 'bmibnb', 'verbose', 1);
     end
 
 
