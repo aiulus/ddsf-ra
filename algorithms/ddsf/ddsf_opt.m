@@ -1,9 +1,12 @@
-function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini, opt_params)
+function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
     %% Extract parameters
+    opt_params = lookup.opt_params;
+
     % Lengths and dimensions
     T_ini = lookup.config.T_ini;
     N_p = lookup.config.N_p;
     L = N_p + 2 * T_ini;
+    s = lookup.config.s;
     m = lookup.dims.m;
     p = lookup.dims.p;
     num_cols = lookup.dims.hankel_cols;
@@ -11,6 +14,7 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini, opt_params)
     % Matrices
     R = lookup.config.R;
     H = lookup.H;
+    T = eye(L, L);
     
     % Constraints
     U = lookup.sys.constraints.U;
@@ -23,32 +27,36 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini, opt_params)
     % Initial trajectory and equilibrium states
     u_ini = traj_ini(1:m, :);
     y_ini = traj_ini(m+1:end, :);
-    u_eq = lookup.sys.S_f.u_eq;
-    y_eq = lookup.sys.S_f.y_eq;
+
+    u_eq = lookup.sys.S_f.u_eq(end);
+    y_eq = lookup.sys.S_f.y_eq(end);
+
+    if iscell(u_eq)
+        u_eq = cell2mat(u_eq);
+    end
+    if iscell(y_eq)
+        y_eq = cell2mat(y_eq);
+    end
 
     if opt_params.regularize
         H = ddsf_regularize_hankel(lookup.H_u, lookup.H_y);
         num_cols = size(H, 2);
     end
 
-    %% TODO: Can be used to encode a desired target state
-    % START - Debug statements
-    %u_eq = 0.5*ones(size(u_eq));
-    %y_eq = 0.5*ones(size(y_eq));
-    % END - Debug statements
+    %% TODO: S_f can be used to encode a desired target state
 
     %% Define symbolic variables
     alpha = sdpvar(num_cols, 1);
-    control_u = sdpvar(m, N_p + 2 * T_ini);
-    control_y = sdpvar(p, N_p + 2 * T_ini);
+    control_u = sdpvar(m, L);
+    control_y = sdpvar(p, L);
     % traj_p = [control_u; control_y];
     
     %% Populate the initial and terminal parts of the trajectory
     % Replaces the encodings in constraints
     control_u(:, 1:T_ini) = u_ini;
     control_y(:, 1:T_ini) = y_ini;
-    control_u(:, T_ini + N_p + 1 : end) = repmat(u_eq, 1, T_ini);
-    control_y(:, T_ini + N_p + 1 : end) = repmat(y_eq, 1, T_ini);
+    control_u(:, end - T_ini + 1 : end) = repmat(u_eq, 1, T_ini); % T_ini + N_p + 1 : end
+    control_y(:, end - T_ini + 1 : end) = repmat(y_eq, 1, T_ini);
 
     %% Flatten the variables 
     u_bar = reshape(control_u.', [], 1);
@@ -57,10 +65,21 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini, opt_params)
 
 
     %% Define the objective function and the constraints
-    delta_u = control_u(:, 1) - u_l;
-    objective = delta_u.' * R * delta_u;
+    delta_u = control_u(:, :) - u_l(:, :);
+    A = delta_u.' * R * delta_u;
+    objective = trace(A(1:s, 1:s)); % Minimize cost over the next s steps
 
-    constraints = [traj_p_bar == H * alpha]; 
+    if lookup.opt_params.target_penalty
+        target = repmat(lookup.sys.params.target, 1, L);
+        delta_y = target - control_y;
+        discount = 0.9;
+        gamma = discount .^ (L:-1:1);
+        delta_y = delta_y .* gamma;
+        tpt = delta_y * T * delta_y.';
+        objective = objective + tpt;
+    end
+
+    constraints = traj_p_bar == H * alpha; 
     
     switch opt_params.constr_type
         case 's' % Just enforce system behavior

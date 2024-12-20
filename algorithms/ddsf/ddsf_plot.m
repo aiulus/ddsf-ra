@@ -1,4 +1,5 @@
-function ddsf_plot(time, logs, sys)    
+function ddsf_plot(time, logs, lookup)    
+    sys = lookup.sys;
     ul_hist = logs.u_d;
     u_hist = logs.u;
     y_hist = logs.y;
@@ -39,9 +40,9 @@ function ddsf_plot(time, logs, sys)
     % Plot learning vs safe inputs
     for i = 1:m
         nexttile;
-        stairs(time, ul_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('ul[%d]', i));
+        stairs(time, ul_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
         hold on;
-        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.5, 'DisplayName', sprintf('u[%d]', i));
+        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
     
         bounds = sys.constraints.U(i, :);
     
@@ -63,17 +64,20 @@ function ddsf_plot(time, logs, sys)
     
     % Plot system outputs
     for i = 1:p
-        nexttile;
+        nexttile; hold on;
         plot(time, y_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
         bounds = sys.constraints.Y(i, :);
     
         % Plot boundaries
         if bounds(1) ~= -inf
-            hold on;
-            plot(time, bounds(1) * ones(size(time)), 'g--', 'DisplayName', 'Lower Bound');
+            plot(time, bounds(1) * ones(size(time)), 'r--', 'DisplayName', 'Lower Bound');
         end
         if bounds(2) ~= inf
-            plot(time, bounds(2) * ones(size(time)), 'g--', 'DisplayName', 'Upper Bound');
+            plot(time, bounds(2) * ones(size(time)), 'r--', 'DisplayName', 'Upper Bound');
+        end
+        if lookup.opt_params.target_penalty
+            pi = sys.params.target(i);
+            plot(time, pi * ones(size(time)), 'g--', 'DisplayName', 'Target');
         end
     
         title(sprintf('System Output %d', i));

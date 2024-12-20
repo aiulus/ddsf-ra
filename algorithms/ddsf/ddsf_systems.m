@@ -23,7 +23,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 214, ... % Data length
                 'T_ini', 2, ... % Initial trajectory length
                 'N_p', 20, ... % Prediction horizon
-                's', 1, ... % Sliding length
+                's', 2, ... % Conservatism
                 'R', 1 ... % Cost matrix
             );
 
@@ -52,10 +52,10 @@ function sys = ddsf_systems(sys_type, discretize)
         case 'dampler'
             params = struct( ...
                'dt', 0.1, ... % Sampling time
-                'u_min', -10, ... 
-                'u_max', 10, ...
-                'y_min', -100, ...
-                'y_max', 100, ...
+                'u_min', -inf, ... 
+                'u_max', inf, ...
+                'y_min', -5, ...
+                'y_max', 5, ...
                 'x_ini', [0.5;0.5], ... % y_ini = x_ini(1)
                 'target', 5,...
                 'mass', 1, ...
@@ -78,7 +78,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 49, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
-                's', 2, ... % Sliding length
+                's', 2, ... % Conservatism
                 'R', 1 ... % Cost matrix
             );
 
@@ -129,7 +129,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 490, ... % Data length
                 'T_ini', 15, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
-                's', 2, ... % Sliding length
+                's', 2, ... % Conservatism
                 'R', 1 ... % Cost matrix
             );
 
@@ -165,7 +165,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 49, ... % Data length
                 'T_ini', 15, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
-                's', 2, ... % Sliding length
+                's', 2, ... % Conservatism
                 'R', 1 ... % Cost matrix
             );
 
@@ -177,12 +177,12 @@ function sys = ddsf_systems(sys_type, discretize)
                 'damping', 50, ... % Damping coefficient [N*s/m]
                 'dt', 0.1, ... % Sampling rate for discetization [s]
                 'u_min', 0, ... % Minimum force
-                'u_max', 5000, ... % Maximum force
+                'u_max', 250, ... % Maximum force
                 'y_min', -inf, ... % Output constraint
                 'y_max', inf, ... % Output constraint
-                'target', 10, ... % Reference velocity [m/s]
+                'target', 0, ... % Reference velocity [m/s]
                 'slack', 1e-2, ... % For relaxation  
-                'x_ini', 20, ...
+                'x_ini', 0, ... % Currently not used
                 'state_name', {"Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
 
@@ -195,7 +195,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 45, ... % Data length
                 'T_ini', 1, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
-                's', 2, ... % Sliding length
+                's', 1, ... % Conservatism; cannot exceed dims.m in the way this is used in the current implementation
                 'R', 1 ... % Cost matrix
             );
 
@@ -218,7 +218,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 49, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
-                's', 2, ... % Sliding length
+                's', 2, ... % Conservatism
                 'R', 1 ... % Cost matrix
             );
 
@@ -253,12 +253,13 @@ function sys = ddsf_systems(sys_type, discretize)
             D = 0;
 
             run_config = struct( ...
-                'T', 4900, ... % Data length
+                'T', 490, ... % Data length
                 'T_ini', 1, ... % Initial trajectory length
                 'N_p', 5, ... % Prediction horizon
-                's', 2, ... % Sliding length
+                's', 2, ... % Conservatism
                 'R', 1 ... % Cost matrix
             );
+
     end
 
     if discretize == true
@@ -269,6 +270,7 @@ function sys = ddsf_systems(sys_type, discretize)
     % Parse constraints
     sys = constraint_handler(sys, params);
     sys.config = run_config;
+    sys.config.R = sys.config.R * eye(size(B, 2));
 end
 
 % TODO: Remove -currently not in use
