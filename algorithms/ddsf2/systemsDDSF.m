@@ -1,4 +1,4 @@
-function sys = ddsf_systems(sys_type, discretize)
+function sys = systemsDDSF(sys_type, discretize)
     switch sys_type
         %% Example 1: The Quadrotor
         case 'quadrotor'
@@ -23,8 +23,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 214, ... % Data length
                 'T_ini', 2, ... % Initial trajectory length
                 'N_p', 20, ... % Prediction horizon
-                's', 2, ... % Conservatism
-                'R', 1 ... % Cost matrix
+                's', 2 ... % Conservatism
             );
 
             %% State-space Matrices
@@ -78,8 +77,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 49, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
-                's', 2, ... % Conservatism
-                'R', 150000 ... % Cost matrix
+                's', 2 ... % Conservatism
             );
 
         %% Example 3: Inverted Pendulum
@@ -129,8 +127,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 490, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
-                's', 2, ... % Conservatism
-                'R', 1 ... % Cost matrix
+                's', 2 ... % Conservatism
             );
 
         %% Example 4: DC Motor
@@ -165,8 +162,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 49, ... % Data length
                 'T_ini', 15, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
-                's', 2, ... % Conservatism
-                'R', 1 ... % Cost matrix
+                's', 2 ... % Conservatism
             );
 
         %% Example 5: Cruise Control
@@ -195,8 +191,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 45, ... % Data length
                 'T_ini', 1, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
-                's', 1, ... % Conservatism; cannot exceed dims.m in the way this is used in the current implementation
-                'R', 150000 ... % Cost matrix
+                's', 1 ... % Conservatism; cannot exceed dims.m in the way this is used in the current implementation
             );
 
         %% Example 6: Adaptive Cruise Control with Time-Delay
@@ -218,8 +213,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 49, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N_p', 15, ... % Prediction horizon
-                's', 2, ... % Conservatism
-                'R', 1 ... % Cost matrix
+                's', 2 ... % Conservatism
             );
 
             A = [0 1; 0 0]; 
@@ -256,8 +250,7 @@ function sys = ddsf_systems(sys_type, discretize)
                 'T', 490, ... % Data length
                 'T_ini', 1, ... % Initial trajectory length
                 'N_p', 5, ... % Prediction horizon
-                's', 2, ... % Conservatism
-                'R', 1 ... % Cost matrix
+                's', 2 ... % Conservatism
             );
 
     end
@@ -272,8 +265,6 @@ function sys = ddsf_systems(sys_type, discretize)
      % Perform checks on adherence to assumptions
     validate_config(run_config, A, C);
     sys.config = run_config;
-    % Upscale cost matrix to the correct dimensions
-    sys.config.R = sys.config.R * eye(size(B, 2));
   end
 
 function validate_config(config, A, C)
@@ -289,16 +280,4 @@ function validate_config(config, A, C)
     end
 end
 
-% TODO: Remove -currently not in use
-%function sys = ddsf_discretize(sys)
-%    ssc = ss(sys.A, sys.B, sys.C, sys.D);
-%    ssd = c2d(ssc, sys.params.dt);
-
-%    sys = struct( ...
-%        'A', ssd.A, ...
-%        'B', ssd.B, ...
-%        'C', ssd.C, ...
-%        'D', ssd.D ...
-%    );
-%end
 

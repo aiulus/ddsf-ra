@@ -20,10 +20,16 @@ function sys = populate_system_struct(A, B, C, D, params)
     x_eq = ones(n, 1);
     u_eq = T_u * x_eq;
     y_eq = C * x_eq + D * u_eq;
-    sys.S_f = struct( ...
-        'u_eq', u_eq, ...
-        'y_eq', y_eq ...
-        );
+
+    %sys.S_f = struct( ...
+    %    'u_eq', u_eq, ...
+    %    'y_eq', y_eq ...
+    %    );
+
+    % Initialize terminal safe set with an equlibrium point
+    S_f = table([], [], 'VariableNames',{'u_eq', 'y_eq'});
+    S_f = [S_f; {u_eq, y_eq}];
+    sys.S_f = S_f;
 
     sys.equilibrium.U = T_u;
 end

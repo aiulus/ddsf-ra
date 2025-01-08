@@ -1,4 +1,4 @@
-function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
+function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
     %% Extract parameters
     opt_params = lookup.opt_params;
 
@@ -12,7 +12,7 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
     num_cols = lookup.dims.hankel_cols;
     
     % Matrices
-    R = lookup.config.R;
+    R = lookup.opt_params.R;
     H = lookup.H;
     T = eye(L, L);
     
@@ -28,8 +28,8 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
     u_ini = traj_ini(1:m, :);
     y_ini = traj_ini(m+1:end, :);
 
-    u_eq = lookup.sys.S_f.u_eq(end);
-    y_eq = lookup.sys.S_f.y_eq(end);
+    u_eq = lookup.sys.S_f.u_eq(1);
+    y_eq = lookup.sys.S_f.y_eq(1);
 
     if iscell(u_eq)
         u_eq = cell2mat(u_eq);
@@ -39,7 +39,7 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
     end
 
     if opt_params.regularize
-        H = ddsf_regularize_hankel(lookup.H_u, lookup.H_y);
+        H = regHankelDDSF(lookup.H_u, lookup.H_y);
         num_cols = size(H, 2);
     end
 
@@ -63,11 +63,10 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
     y_bar = reshape(control_y.', [], 1);
     traj_p_bar = [u_bar; y_bar];
 
-
     %% Define the objective function and the constraints
-    delta_u = control_u(:, :) - u_l(:, :);
-    A = delta_u.' * R * delta_u;
-    objective = trace(A(1:s, 1:s)); % Minimize cost over the next s steps
+    delta_u = control_u(:, 1+T_ini) - ul_t;
+    objective = delta_u.' * R * delta_u;
+    % objective = trace(objective(1:s, 1:s)); % Minimize cost over the next s steps
 
     if lookup.opt_params.target_penalty
         target = lookup.sys.params.target;
@@ -115,7 +114,7 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
         case 'o'
             options = sdpsettings('solver', 'OSQP', ...
                   'verbose', 1, ...             % Detailed solver output
-                  'osqp.max_iter', 10000, ...   % Set maximum iterations
+                  'osqp.max_iter', 30000, ...   % Set maximum iterations
                   'osqp.eps_abs', 1e-5, ...     % Absolute tolerance
                   'osqp.eps_rel', 1e-5, ...     % Relative tolerance
                   'warmstart', 0);             % Disable warm start
@@ -135,7 +134,7 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
         disp(diagnostics.info);    % Detailed solver feedback        
     end
 
-    if opt_params.verbose
+    if lookup.IO_params.verbose
         disp('---- Debug: Objective Function Evaluation ----');
         disp('Objective value:');
         disp(value(objective)); % Ensure it computes as expected

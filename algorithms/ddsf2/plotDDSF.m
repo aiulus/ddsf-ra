@@ -1,4 +1,4 @@
-function ddsf_plot(time, logs, lookup)    
+function plotDDSF(time, logs, lookup)    
     sys = lookup.sys;
     ul_hist = logs.u_d;
     u_hist = logs.u;
@@ -12,9 +12,9 @@ function ddsf_plot(time, logs, lookup)
     % Plot learning vs safe inputs
     for i = 1:m
         nexttile;
-        stairs(time, ul_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('ul[%d]', i));
+        stairs(0:size(ul_hist, 2)-1, ul_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('ul[%d]', i));
         hold on;
-        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.5, 'DisplayName', sprintf('u[%d]', i));
+        stairs(0:size(u_hist, 2)-1, u_hist(i, :), 'b', 'LineWidth', 1.5, 'DisplayName', sprintf('u[%d]', i));
     
         bounds = sys.constraints.U(i, :);
     
@@ -41,9 +41,9 @@ function ddsf_plot(time, logs, lookup)
     % Plot learning vs safe inputs
     for i = 1:m
         nexttile;
-        stairs(time, ul_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
+        stairs(0:size(ul_hist, 2) - 1, ul_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
         hold on;
-        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+        stairs(0:size(u_hist, 2) - 1, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
     
         bounds = sys.constraints.U(i, :);
     
@@ -93,8 +93,8 @@ function ddsf_plot(time, logs, lookup)
 
     figure(3);
     hold on;
-    plot(time, loss_hist(1, :), 'r', 'LineWidth', 1.25, 'DisplayName', 'delta_u');
-    plot(time, loss_hist(2, :), 'b', 'LineWidth', 1.25, 'DisplayName', 'delta_u + distance to target convergence point');
+    plot(0:size(loss_hist, 2) - 1, loss_hist(1, :), 'r', 'LineWidth', 1.25, 'DisplayName', 'delta_u');
+    plot(0:size(loss_hist, 2) - 1, loss_hist(2, :), 'b', 'LineWidth', 1.25, 'DisplayName', 'delta_u + distance to target convergence point');
     grid on; legend show; hold off;
     sgtitle('Losses');
 
@@ -109,7 +109,7 @@ function single_plots(time, logs, sys)
     p = size(y_hist, 1);
     for i = 1:p
         subplot(p, 1, i);
-        plot(time, y_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
+        plot(0:size(y_hist, 2), y_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
         bounds = sys.constraints.Y(i, :);
         if bounds(1) ~= -inf
             plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');

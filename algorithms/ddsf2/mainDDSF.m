@@ -1,30 +1,35 @@
-%% Step 0: Setup
-toggle = struct( ...
-                'debug', true, ...
-                'save', true, ...
-                'discretize', true ...
-                );
-
-IO_params = struct( ...
-    'debug_toggle', toggle.debug, ...
-    'save_to_file', toggle.save, ...
-    'log_interval', 1 ... % Log every n-the step of the simulation
+%% Step 1: Configuration
+T_sim = 25; % Simulation length
+run_options = struct( ...
+    'datagen_mode', 'scaled_gaussian', ...
+    'system_type', 'cruise_control', ...
+    'T_sim', T_sim ...
     );
 
+IO_params = struct( ...
+    'debug', true, ...
+    'save', true, ...
+    'log_interval', 1, ... % Log every n-the step of the simulation
+    'verbose', false ...
+    );
+
+% TODO: Add information on various the configuration options
 opt_params = struct( ...
+                    'discretize', false, ... 
                     'regularize', false, ...
                     'constr_type', 'f', ...
                     'solver_type', 'o', ...
-                    'target_penalty', false, ...
-                    'verbose', false ...
+                    'target_penalty', false, ...    
+                    'init', true, ... % Encode initial condition
+                    'R', 10 ...
                    );
 
-%% Step 1: Define and import parameters
-sys = ddsf_systems("cruise_control", toggle.discretize); 
-
+% Initialize the system
+sys = systemsDDSF(run_options.system_type, opt_params.discretize); 
 dims = sys.dims;
-T_sim = 25;
-datagen_mode = 'rbs';
+opt_params.R = opt_params.R * eye(dims.m);
+
+% Create struct object 'lookup' for central and extensive parameter passing.
 lookup = struct( ...
                 'sys', sys, ...
                 'sys_params', sys.params, ...
@@ -32,18 +37,15 @@ lookup = struct( ...
                 'config', sys.config, ...
                 'dims', dims, ...
                 'IO_params', IO_params, ...
-                'T_sim', T_sim, ...
-                'datagen_mode', datagen_mode ...
+                'T_sim', run_options.T_sim, ...
+                'datagen_mode', run_options.datagen_mode ...
                 );
-% DEBUG STATEMENTS
-%lookup.sys.S_f.u_eq = 0;
-%lookup.sys.S_f.y_eq = lookup.sys.params.target;
 
 
 %% Step 2: Generate data & Hankel matrices
-[u_d, y_d, x_d, ~, ~] = ddsfGenerateData(lookup); 
+[u_d, y_d, x_d, ~, ~] = gendataDDSF(lookup); 
 
-[H_u, H_y] = ddsf_hankel(u_d, y_d, sys);
+[H_u, H_y] = hankelDDSF(u_d, y_d, sys);
  
 lookup.H = [H_u; H_y];
 lookup.H_u = H_u; lookup.H_y = H_y;
@@ -59,38 +61,44 @@ lookup.H = [H_u; H_y];
 % END DEBUG STATEMENTS
 
 %% Initialize objects to log simulation history
+T_ini = lookup.config.T_ini;
 logs = struct( ...
-        'u_d', zeros(dims.m, T_sim + lookup.config.T_ini), ...
-        'u', [u_d(:, end - lookup.config.T_ini + 1: end).'; ...
+        'u_d', zeros(dims.m, T_sim + T_ini), ...
+        'u', [u_d(:, 1:(1+ T_ini)).'; ...
         zeros(dims.m, T_sim).'].', ... 
-        'y', [y_d(:, end - lookup.config.T_ini + 1: end).'; ...
+        'y', [y_d(:, 1:(1 + T_ini)).'; ...
         zeros(dims.p, T_sim).'].', ... 
-        'x', [x_d(:, end - lookup.config.T_ini + 1: end).'; ...
+        'x', [x_d(:, 1:(1+T_ini)).'; ...
         zeros(dims.n, T_sim).'].', ... % TODO: tracking x not necessary
-        'loss', zeros(2, lookup.config.T_ini + T_sim) ...
+        'loss', zeros(2, T_ini + T_sim) ...
     );
 
+% TODO: Wrap debug statements in if-statements with IO_params.debug
+
+% Obtain an L-step random control policy
+u_l = learning_policy(lookup);
 %% Step 3: Receding Horizon Loop
-for t=(lookup.config.T_ini+1):(lookup.config.T_ini + 1 + T_sim)
+for t=(T_ini + 1):(T_ini + T_sim)
     fprintf("----------------- DEBUG Information -----------------\n");
-    fprintf("CURRENT SIMULATION STEP: t = %d\n", t - lookup.config.T_ini);
+    fprintf("CURRENT SIMULATION STEP: t = %d\n", t - T_ini);
 
-    u_ini = logs.u(:, (t - lookup.config.T_ini):(t-1));
-    y_ini = logs.y(:, (t -lookup.config.T_ini):(t-1));
+    u_ini = logs.u(:, (t - T_ini):(t-1));
+    y_ini = logs.y(:, (t - T_ini):(t-1));
     traj_ini = [u_ini; y_ini];
-
-    u_l = learning_policy(lookup);
+    
     %fprintf("Submitting u_l with value: "); disp(u_l);
 
-    [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini);
-    loss_t = get_loss(lookup, u_l, u_opt, y_opt);
+    ul_t = u_l(:, t - T_ini);
+
+    [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini);
+    loss_t = get_loss(lookup, ul_t, u_opt, y_opt);
     %fprintf("Received optimal values u_opt = %d, y_opt = %d\n", value(u_opt), value(y_opt));
 
-    u_next = u_opt(:, 1);
-    y_next = y_opt(:, 1);
+    u_next = u_opt(:, 1 + T_ini);
+    y_next = y_opt(:, 1 + T_ini);
     %fprintf("Storing first optimal values u_opt[1] = %d, y_opt[1] = %d\n", value(u_opt(:, 1)), value(y_opt(:, 1)));
     
-    logs.u_d(:, t) = u_l(:, 1);
+    logs.u_d(:, t) = ul_t;
     logs.u(:, t) = u_next;
     logs.y(:, t) = y_next;
     logs.loss(:, t) = loss_t;
@@ -102,13 +110,14 @@ end
 
 %% Plot the results
 time = 0:(T_sim + lookup.config.T_ini);
-ddsf_plot(time, logs, lookup)
+plotDDSF(time, logs, lookup)
 
 % Should this use the same policy as data generation?
 function u_l = learning_policy(lookup)
     sys = lookup.sys;
     m = sys.dims.m;
-    L = lookup.config.N_p + 2 * lookup.config.T_ini;
+    % L = lookup.config.N_p + 2 * lookup.config.T_ini;
+    T_sim = lookup.T_sim;
     mode = lookup.datagen_mode;
 
     lb = sys.constraints.U(:, 1);
@@ -124,12 +133,24 @@ function u_l = learning_policy(lookup)
             lb = (lb < 0) .* (scale .* lb) + (lb > 0) .* ((scale^(-1)) .* lb) + (lb == 0) .* (- 10^scale);
             ub = (ub > 0) .* (scale .* ub) + (ub < 0) .* ((scale^(-1)) .* ub);
             lb = (lb < 0) .* (scale .* lb) + (lb > 0) .* ((scale^(-1)) .* lb);
-            u_l = lb + (ub - lb) .* rand(m, L);
+            u_l = lb + (ub - lb) .* rand(m, T_sim);
             % DEBUG STATEMENT
             % u_l = ones(m, L);
             %fprintf("2. <learning_policy> Relaxed lower and Upper bounds: [%d, %d]\n", lb, ub);
         case 'rbs'
-            u_l = idinput([m, L], 'rbs', [0, 1], [-1,1]); 
+            u_l = idinput([m, T_sim], 'rbs', [0, 1], [-1,1]); 
+        case 'scaled_rbs'            
+            lower = 0.5;
+            upper = 0.8;
+            num = 10;
+            probs = (1/num) * ones(1, num);
+            factors = linspace(lower, upper, num);
+            scaler = randsample(factors, T_sim, true, probs);
+            lb = lb .* scaler;
+            ub = ub .* scaler;
+
+            u_l = idinput([m, T_sim], 'rbs', [0, 1], [-1,1]); 
+            u_l = u_l .* (lb + (ub - lb) .* rand(1));
     end
 end
 
@@ -141,7 +162,7 @@ end
 %       y_d - Desired system output
 
 function loss = get_loss(lookup, u_l, u_opt, y_opt)
-    R = lookup.sys.config.R;
+    R = lookup.opt_params.R;
     y_target = lookup.sys.params.target;
 
     loss1 = det(R) * norm(u_l - u_opt);    
