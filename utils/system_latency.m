@@ -9,9 +9,9 @@ function lat = system_latency(A, C)
     n = size(A, 1);
     H = C; % l = 0
 
-    for l = 0:n-1
+    for l = 1:n
         if custom_rank(H) == n
-            lat = l; 
+            lat = l - 1; 
             return;
         end
         H = [H; C * A ^ l];
