@@ -35,13 +35,13 @@ function sys = deepc2_systems(sys_type)
                 'mass', 1000, ... % Vehicle mass [kg]
                 'damping', 50, ... % Damping coefficient [N*s/m]
                 'dt', 0.1, ... % Sampling rate for discetization [s]
-                'u_min', 0, ... % Minimum force
-                'u_max', 5000, ... % Maximum force
+                'u_min', -inf, ... % Minimum force
+                'u_max', inf, ... % Maximum force
                 'y_min', -inf, ... % Output constraint
                 'y_max', inf, ... % Output constraint
-                'target', 10, ... % Reference velocity [m/s]
+                'target', 20, ... % Reference velocity [m/s]
                 'slack', 1e-2, ... % For relaxation  
-                'x_ini', 20, ...
+                'x_ini', 0, ...
                 'state_name', {"Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
 
@@ -63,9 +63,9 @@ function sys = deepc2_systems(sys_type)
 
             run_config = struct( ...
                 'T', 41, ... % Window length
-                'T_ini', 1, ... % Initial trajectory length
+                'T_ini', 5, ... % Initial trajectory length
                 'T_f', 15, ... % Prediction horizon
-                's', 3 ... % Sliding length
+                's', 2 ... % Sliding length
             );
 
             opt_params = struct( ...

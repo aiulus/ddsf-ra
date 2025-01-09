@@ -35,8 +35,7 @@ function plotDDSF(time, logs, lookup)
     end
         
     figure(2);
-    p = size(y_hist, 1);
-    tiledlayout(m + p, 1); % Combine all inputs and outputs into a single layout
+    tiledlayout(m, 1); % Combine all inputs into a single layout
     
     % Plot learning vs safe inputs
     for i = 1:m
@@ -61,17 +60,21 @@ function plotDDSF(time, logs, lookup)
         grid on;
         legend show;
         hold off;
-    end
-    
-    % Plot system outputs
+    end        
+    sgtitle('Learning Inputs vs. Safe Inputs');
+
+    figure(3);
+    p = size(y_hist, 1);
+    tiledlayout(p, 1); % Combine all inputs into a single layout
+
     for i = 1:p
         nexttile; hold on;
-        plot(time, y_hist(i, :), 'r', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
+        plot(time, y_hist(i, :), 'k', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
         bounds = sys.constraints.Y(i, :);
     
         % Plot boundaries
         if bounds(1) ~= -inf
-            plot(time, bounds(1) * ones(size(time)), 'r--', 'DisplayName', 'Lower Bound');
+            plot(time, bounds(1) * ones(size(time)), 'b--', 'DisplayName', 'Lower Bound');
         end
         if bounds(2) ~= inf
             plot(time, bounds(2) * ones(size(time)), 'r--', 'DisplayName', 'Upper Bound');
@@ -88,16 +91,20 @@ function plotDDSF(time, logs, lookup)
         legend show;
         hold off;
     end
-    
-    sgtitle('Comparison of Learning Inputs, Safe Inputs, and Outputs');
+    sgtitle("Resulting Outputs");
 
-    figure(3);
+
+    figure(4);
     hold on;
     plot(0:size(loss_hist, 2) - 1, loss_hist(1, :), 'r', 'LineWidth', 1.25, 'DisplayName', 'delta_u');
     plot(0:size(loss_hist, 2) - 1, loss_hist(2, :), 'b', 'LineWidth', 1.25, 'DisplayName', 'delta_u + distance to target convergence point');
     grid on; legend show; hold off;
     sgtitle('Losses');
 
+    figure(2);
+    matlab2tikz('quad_inputs_t50.tex');
+    figure(3);
+    matlab2tikz('quad_outputs_t50.tex');
 end
 
 function single_plots(time, logs, sys)

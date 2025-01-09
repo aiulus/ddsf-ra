@@ -7,10 +7,10 @@ function sys = systemsDDSF(sys_type, discretize)
                 'mass', 0.2, ... % Quadrotor mass [kg]
                 'g', 9.81, ... % Gravity constant
                 'dt', 0.1, ... % Time step for discretization 
-                'u_min', (200)*(-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
-                'u_max', (200)*[1; 0.1; 0.1; 0.1], ... % Maximum force
-                'y_min', (200)*(-1)*[1; 1; 1; 0.2; 0.2; 0.2], ... % Output constraints
-                'y_max', (200)*[1; 1; 1; 0.2; 0.2; 0.2], ...  % Output constraints                          
+                'u_min', (1)*(-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
+                'u_max', (1)*[1; 0.1; 0.1; 0.1], ... % Maximum force
+                'y_min', (1)*(-1)*[1; 1; 1; 0.2; 0.2; 0.2], ... % Output constraints
+                'y_max', (1)*[1; 1; 1; 0.2; 0.2; 0.2], ...  % Output constraints                          
                 'I', repmat(10^(-3), 3, 1), ... % Moment of inertia in x, y, z
                 'p', 6, ... % Output dimension (y € R^p)
                 'm', 4, ... % Input dimension (u € R^m)
@@ -252,6 +252,69 @@ function sys = systemsDDSF(sys_type, discretize)
                 'N_p', 5, ... % Prediction horizon
                 's', 2 ... % Conservatism
             );
+
+        %% Example 8: Double Pendulum
+        case 'double_pendulum'
+            % System-specific parameters
+            params = struct( ...
+                'M', 100, ... % Base mass [kg]
+                'M1', 10, ... % Pendulum 1 mass [kg]
+                'M2', 10, ... % Pendulum 2 mass [kg]
+                'L1', 2, ... % Length of pendulum 1 [m]
+                'L2', 1, ... % Length of pendulum 2 [m]
+                'g', 9.81, ... % Gravitational acceleration [m/s^2]
+                'dt', 0.1, ... % Sampling time [s]
+                'x_ini', [-5; zeros(5, 1)], ... % Initial state (position, velocity)
+                'target', zeros(6,1), ...
+                'u_min', -inf, ...
+                'u_max', inf, ...
+                'y_min', -inf, ...
+                'y_max', inf ...
+            );
+
+            % Extract parameters for clarity
+            M = params.M;
+            M1 = params.M1;
+            M2 = params.M2;
+            L1 = params.L1;
+            L2 = params.L2;
+            g = params.g;
+
+            % State-space matrices
+            A = sparse([
+                0, 0, 0, 1, 0, 0;
+                0, 0, 0, 0, 1, 0;
+                0, 0, 0, 0, 0, 1;
+                0, -g*(L1*(M1+M2)+L2*M2)/(L1*M), -g*(L2*M2)/(L1*M), 0, 0, 0;
+                0, g*(L1*M1*(M + M1 +M2)+L2*M2*(M+M1))/(M*M1*L1^2), g*M2*(-L1*M+L2*(M+M1))/(M*M1*L1^2), 0, 0, 0;
+                0, -g*M2/(L1*M1), g*(L1*(M1+M2)-L2*M2)/(L1*L2*M1), 0, 0, 0
+                ]);
+
+            B = sparse([
+                0;
+                0;
+                0;
+                1/M1;
+                -1/(L1*M);
+                0
+            ]);
+
+            C = sparse([
+                1, 0, 0, 0, 0, 0;
+                1, L1, 0, 0, 0, 0;
+                1, L1+L2, L2, 0, 0, 0
+            ]);
+
+            D = sparse(zeros(3, 1));
+
+            % Runtime configuration
+            run_config = struct( ...
+                'T', 300, ... % Data length
+                'T_ini', 5, ... % Initial trajectory length
+                'N_p', 20, ... % Prediction horizon
+                's', 2 ... % Conservatism
+            );
+
 
     end
 

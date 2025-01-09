@@ -74,7 +74,7 @@ end
 % Time vector
 t = (1:N_simulation);
 
-deepc2_plot(t, y_history(:, 2:end), u_history(:, 2:end))
+deepc2_plot(t, y_history(:, 2:end), u_history(:, 2:end), sys)
 
 % Save the figure if needed
 if save_to_file

@@ -69,7 +69,7 @@ for t=1:run_config.T_sim
 
     % Log the resulting trajectory
     u_sim(:, t) = u;
-    y_sim(:, t) = y;
+    y_sim(:, t) = y_p(1);
         
     % Update the initial trajectory
     u_ini = [u_ini(dims.m + 1:end, :); u];
@@ -88,7 +88,7 @@ end
 %% Plot the results
 Tsim = run_config.T_sim; 
 time = 0:Tsim-1;
-deepc2_plot(time, y_sim, u_sim)
+deepc2_plot(time, y_sim, u_sim, sys)
 
 %% Save the results
 % deepc2_save(time, u_sim, y_sim)
