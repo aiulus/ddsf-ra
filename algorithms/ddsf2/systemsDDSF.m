@@ -9,8 +9,8 @@ function sys = systemsDDSF(sys_type, discretize)
                 'dt', 0.1, ... % Time step for discretization 
                 'u_min', (1)*(-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
                 'u_max', (1)*[1; 0.1; 0.1; 0.1], ... % Maximum force
-                'y_min', (1)*(-1)*[1; 1; 1; 0.2; 0.2; 0.2], ... % Output constraints
-                'y_max', (1)*[1; 1; 1; 0.2; 0.2; 0.2], ...  % Output constraints                          
+                'y_min', (1)*(-1)*[0.2; 0.2; 0.2; 1; 1; 1], ... % Output constraints
+                'y_max', (1)*[0.2; 0.2; 0.2; 1; 1; 1], ...  % Output constraints                          
                 'I', repmat(10^(-3), 3, 1), ... % Moment of inertia in x, y, z
                 'p', 6, ... % Output dimension (y € R^p)
                 'm', 4, ... % Input dimension (u € R^m)
