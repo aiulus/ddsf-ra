@@ -64,9 +64,14 @@ function [u_d, y_d, x_d, u, y] = gendataDDSF(lookup)
         u_d(:, 1) = PE_input(:, 1);
         low = 2;
     end
-
+    
+    T_d = lookup.T_d;
     for i = low:T
-        u_d(:, i) = PE_input(:, i);
+        if (i - T_d) < 1
+            u_d(:, i) = 0;
+        else
+            u_d(:, i) = PE_input(:, i - T_d);
+        end        
         x_d(:, i + 1) = A * x_d(:, i) + B * u_d(:, i);
         y_d(:, i) = C * x_d(:, i) + D * u_d(:, i);
     end

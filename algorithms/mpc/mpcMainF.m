@@ -39,25 +39,25 @@ function [time, u_hist, y_hist] = mpcMainF(systype)
     x_ini = sys.params.x_ini; % Initial state from system definition
     x_history = zeros(size(A, 1), N_simulation + 1); % Storage for states
     x_history(:, 1) = x_ini;
-    y_ini = sys.C * x_ini;
+    % y_ini = sys.C * x_ini;
     y_history = zeros(size(C,1), N_simulation + 1);
-    y_history(:, 1) = y_ini;
+    % y_history(:, 1) = y_ini;
     u_history = zeros(size(B, 2), N_simulation + 1); % Storage for control inputs
     r = sys.params.target; % Target reference
 
     % Simulation loop
-    for k = 2:(N_simulation + 1)
+    for k = 1:N_simulation
         % Compute optimal control action
         %u = mpcmove(mpc_controller, mpcstate(mpc_controller), x, r);
-        x = x_history(:, k-1);
-        y = C * x + D * u_history(:, (k - 1));
+        x = x_history(:, k);
+        y = C * x + D * u_history(:, k);
         u = mpcmove(mpc_controller, mpcstate(mpc_controller), y, r);
     
         % Update system state
         x = A * x + B * u;
     
         % Log state and input
-        x_history(:, k) = x;
+        x_history(:, k + 1) = x;
         y_history(:, k) = y;
         u_history(:, k) = u;
     end

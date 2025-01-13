@@ -31,6 +31,12 @@ function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
     u_eq = lookup.sys.S_f.u_eq(1);
     y_eq = lookup.sys.S_f.y_eq(1);
 
+    % DEBUG STATEMENT - START
+    u_eq = zeros(m, 1);
+    y_eq = zeros(p, 1);
+    % DEBUG STATEMENT - END
+
+
     if iscell(u_eq)
         u_eq = cell2mat(u_eq);
     end
