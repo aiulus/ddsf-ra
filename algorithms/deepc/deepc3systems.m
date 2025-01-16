@@ -1,4 +1,5 @@
-function sys = deepc2_systems(sys_type)
+function sys = deepc3systems(sys_type)
+    discretize = false;
     switch sys_type
         %% Case 1: Example0
         case 'example0'
@@ -16,10 +17,10 @@ function sys = deepc2_systems(sys_type)
                 'D', zeros(3, 2) ...
              );
 
-            run_config = struct( ...
+            config = struct( ...
                 'T', 138, ... % Window length
                 'T_ini', 5, ... % Initial trajectory length
-                'T_f', 4, ... % Prediction horizon
+                'N', 4, ... % Prediction horizon
                 's', 2 ... % Sliding length
             );
 
@@ -61,16 +62,16 @@ function sys = deepc2_systems(sys_type)
                 'D', D ...
                 );
 
-            run_config = struct( ...
-                'T', 41, ... % Window length
+            config = struct( ...
+                'T', 41, ... % Window length (default: 41) - This reassigned in the main entry point for DeePC !!
                 'T_ini', 5, ... % Initial trajectory length
-                'T_f', 15, ... % Prediction horizon
+                'N', 15, ... % Prediction horizon (default: 15)
                 's', 2 ... % Sliding length
             );
 
             opt_params = struct( ...
-                        'Q', 150000 * eye(size(sys.C, 1)), ... % Output cost matrix 
-                        'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
+                        'Q', 100 * eye(size(sys.C, 1)), ... % Output cost matrix (150000)
+                        'R', 1e-4 * eye(size(sys.B, 2)) ... % Input cost matrix (0.1)
                          ); % Optimization parameters
         
         %% Case 3: Inverted Pendulum
@@ -131,10 +132,10 @@ function sys = deepc2_systems(sys_type)
                 'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
              ); % Optimization parameters
             
-            run_config = struct( ...
+            config = struct( ...
                 'T', 37, ... % Window length
                 'T_ini', 5, ... % Initial trajectory length
-                'T_f', 15, ... % Prediction horizon
+                'N', 15, ... % Prediction horizon
                 's', 2 ... % Sliding length
             );
 
@@ -182,10 +183,10 @@ function sys = deepc2_systems(sys_type)
                 'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
              ); % Optimization parameters
             
-            run_config = struct( ...
+            config = struct( ...
                 'T', 20, ... % Window length % Not used
                 'T_ini', 5, ... % Initial trajectory length
-                'T_f', 15, ... % Prediction horizon
+                'N', 15, ... % Prediction horizon
                 's', 2 ... % Sliding length
             );
 
@@ -227,10 +228,10 @@ function sys = deepc2_systems(sys_type)
                 'R', 0.1 * eye(size(sys.B, 2)) ... % Input cost matrix 
              ); % Optimization parameters
             
-            run_config = struct( ...
+            config = struct( ...
                 'T', 20, ... % Window length % Not used
                 'T_ini', 5, ... % Initial trajectory length
-                'T_f', 15, ... % Prediction horizon
+                'N', 15, ... % Prediction horizon
                 's', 2 ... % Sliding length
             );
         
@@ -259,9 +260,6 @@ function sys = deepc2_systems(sys_type)
             C = 1;
             D = 0;
 
-            % Discretize the continuous-time system
-            [Ad, Bd, Cd, Dd] = discretize_system(A, B, C, D, dt);
-
             % Define the system structure
             sys = struct( ...
                 'A', A, ...
@@ -277,10 +275,10 @@ function sys = deepc2_systems(sys_type)
             );
 
             % Run configuration
-            run_config = struct( ...
+            config = struct( ...
                 'T', 50, ...    % Window length
                 'T_ini', 15, ... % Initial trajectory length
-                'T_f', 25, ...  % Prediction horizon
+                'N', 25, ...  % Prediction horizon
                 's', 2 ...      % Sliding length
             );
 
@@ -330,21 +328,25 @@ function sys = deepc2_systems(sys_type)
             );
 
             % Run configuration
-            run_config = struct( ...
+            config = struct( ...
                 'T', 50, ...    % Window length
                 'T_ini', 15, ... % Initial trajectory length
-                'T_f', 25, ...  % Prediction horizon
+                'N', 25, ...  % Prediction horizon
                 's', 2 ...      % Sliding length
             );
     end
   
-    sys = deepc2_populate_system(sys, params, opt_params, run_config);
+    sys = deepc3_populate_system(sys, params, opt_params, config);
+
+    if discretize
+        [sys.A, sys.B, sys.C, sys.D] = discretize_system(A, B, C, D, dt);
+    end
 end
 
-function sys = deepc2_populate_system(sys, params, opt_params, run_config)
+function sys = deepc3_populate_system(sys, params, opt_params, config)
     sys = constraint_handler(sys, params);
     % Assign config. & optimization parameters
-    sys.run_config = run_config;
+    sys.config = config;
     sys.opt_params = opt_params;
 end
 

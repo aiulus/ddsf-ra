@@ -1,8 +1,8 @@
 %% Step 1: Configuration
 T_sim = 50; % Simulation length
 run_options = struct( ...
-    'datagen_mode', 'scaled_gaussian', ...
-    'system_type', 'quadrotor', ...
+    'datagen_mode', 'scaled_rbs', ...
+    'system_type', 'cruise_control', ...
     'T_sim', T_sim, ...
     'T_d', 0 ... % Input delay [s] / dt [s]
     );
@@ -22,7 +22,7 @@ opt_params = struct( ...
                     'solver_type', 'o', ...
                     'target_penalty', false, ...    
                     'init', true, ... % Encode initial condition
-                    'R', 10 ...
+                    'R', 1e+2 ...
                    );
 
 % Initialize the system
@@ -96,7 +96,8 @@ for t=(T_ini + 1):(T_ini + T_sim)
         ul_t = u_l(:, t - T_ini - T_d);
     end    
 
-    [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini);
+    % [u_opt, y_opt] = optDDSF(lookup, u_l(:, 1:N), traj_ini);
+    [u_opt, y_opt] = singleVarOptDDSF(lookup, u_l(:, 1:N), traj_ini);
     loss_t = get_loss(lookup, ul_t, u_opt, y_opt);
     %fprintf("Received optimal values u_opt = %d, y_opt = %d\n", value(u_opt), value(y_opt));
 
@@ -122,7 +123,7 @@ plotDDSF(time, logs, lookup)
 function u_l = learning_policy(lookup)
     sys = lookup.sys;
     m = sys.dims.m;
-    % L = lookup.config.N_p + 2 * lookup.config.T_ini;
+    % L = lookup.config.N + 2 * lookup.config.T_ini;
     T_sim = lookup.T_sim;
     mode = lookup.datagen_mode;
 

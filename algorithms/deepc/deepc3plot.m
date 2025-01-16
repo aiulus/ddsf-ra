@@ -1,8 +1,9 @@
-function deepc2_plot(time, y_sim, u_sim, sys)
+function deepc3plot(time, y_sim, u_sim, sys)
     % Plot outputs
     figure(1);
     p = size(y_sim, 1);
-    
+    sys.target = sys.params.target;
+
     for i=1:p
         subplot(p, 1, i);
         y_name = sprintf("y%d", i);
@@ -41,8 +42,8 @@ function deepc2_plot(time, y_sim, u_sim, sys)
     end
     sgtitle("System outputs over time");
     figure(1);
-    matlab2tikz('cc-mpc-outputs.tex');
+    matlab2tikz('deepc-cruise_control-outputs.tex');
     figure(2);
-    matlab2tikz('cc-mpc-inputs.tex');
+    matlab2tikz('deepc-cruise_control-inputs.tex');
 end
 

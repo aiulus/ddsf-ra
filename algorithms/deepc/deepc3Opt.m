@@ -1,5 +1,5 @@
-function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
-    verbose = true; % Toggle debug mode
+function [u, y] = deepc3Opt(lookup, H, u_ini, y_ini)
+    verbose = false; % Toggle debug mode
     optimizer_type = 'o'; % Toggle optimization type 
     constr_type = 'f'; % Toggle constraint type
 
@@ -16,7 +16,7 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     % Extract configuration parameters
     T = lookup.config.T;
     T_ini = lookup.config.T_ini;
-    T_f = lookup.config.T_f;
+    N = lookup.config.N;
 
     % Extract (past/future slices of) Hankel matrices
     Up = H.Up; Yp = H.Yp;
@@ -28,32 +28,32 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     target = lookup.sys.params.target;
 
     %% Define symbolic variables
-    g = sdpvar(T - T_ini - T_f + 1, 1);
-    u = sdpvar(T_f * m, 1);
-    y = sdpvar(T_f * p, 1);
+    g = sdpvar(T - T_ini - N + 1, 1);
+    u = sdpvar(N * m, 1);
+    y = sdpvar(N * p, 1);
 
 
     %% Construct the reference trajectory
-    target = reshape(repmat(target, T_f, 1).', [], 1);
+    target = reshape(repmat(target, N, 1).', [], 1);
     % nancols = isnan(target);
     numcols = ~isnan(target);    
 
     %% Define the optimization objective
     delta = y(numcols) - target(numcols);
-    Qext = kron(eye(T_f), Q);
+    Qext = kron(eye(N), Q);
     Qext_cut = Qext(numcols, numcols);
     
-    objective = delta' * Qext_cut * delta + u' * kron(eye(T_f), R) * u;
+    objective = delta' * Qext_cut * delta + u' * kron(eye(N), R) * u;
 
     %% TODO
     %regularized_objective = g' * (lambda_g *  eye(length(g))) * g ...
-    %            + (r - y)' * kron(eye(T_f), Q) * (r - y) + ...
-    %            u' * kron(eye(T_f), R) * u;
+    %            + (r - y)' * kron(eye(N), Q) * (r - y) + ...
+    %            u' * kron(eye(N), R) * u;
     
-    u_lb = reshape(repmat(U(:, 1), T_f, 1).', [], 1);
-    u_ub = reshape(repmat(U(:, 2), T_f, 1).', [], 1);
-    y_lb = reshape(repmat(Y(:, 1), T_f, 1).', [], 1);
-    y_ub = reshape(repmat(Y(:, 2), T_f, 1).', [], 1);
+    u_lb = reshape(repmat(U(:, 1), N, 1).', [], 1);
+    u_ub = reshape(repmat(U(:, 2), N, 1).', [], 1);
+    y_lb = reshape(repmat(Y(:, 1), N, 1).', [], 1);
+    y_ub = reshape(repmat(Y(:, 2), N, 1).', [], 1);
 
     % Define the constraints
     if lower(constr_type) == 'f'           % Full 
@@ -86,7 +86,7 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
     end
 
     if lower(optimizer_type) == 'q'
-        options = sdpsettings('solver', 'quadprog', 'verbose', 1);
+        options = sdpsettings('solver', 'quadprog', 'verbose', verbose);
     elseif lower(optimizer_type) == 'f'
         options = sdpsettings('solver', 'fmincon', ...
                               'sdpa.maxIteration', 10, ...
@@ -98,9 +98,9 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
         %                    );
     elseif lower(optimizer_type) == 'o'
         options = sdpsettings('solver', 'OSQP', ... % Use OSQP solver
-                      'verbose', 1, ...             
+                      'verbose', verbose, ...             
                       'osqp.max_iter', 30000, ...   % Set maximum iterations
-                      'osqp.eps_abs', 1e-7, ...     % Absolute tolerance
+                      'osqp.eps_abs', 1e-5, ...     % Absolute tolerance
                       'warmstart', 0);             % Disable warm start
     elseif lower(optimizer_type) == 'b'
         options = sdpsettings('solver', 'bmibnb', 'verbose', 1);
@@ -124,3 +124,16 @@ function [u, y] = deepc2Opt(lookup, H, u_ini, y_ini)
         error('The problem did not solve successfully.');
     end
 end
+
+%   CRUISE CONTROL - DeePC
+%
+%   best_params = 
+%
+%  struct with fields:
+%
+%       Q: 10000
+%        R: 0.0100
+%    T_ini: 10
+%       N: 30
+%
+%   in 1348/60

@@ -1,4 +1,5 @@
 function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
+    verbose = lookup.IO_params.verbose;
     %% Extract parameters
     opt_params = lookup.opt_params;
 
@@ -114,18 +115,18 @@ function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
     %% Define solver settings and run optimization
     switch opt_params.solver_type
         case 'q'
-            options = sdpsettings('verbose', 1, 'solver', 'quadprog');
+            options = sdpsettings('verbose', verbose, 'solver', 'quadprog');
         case 'f'
-            options = sdpsettings('verbose', 1, 'solver', 'fmincon');
+            options = sdpsettings('verbose', verbose, 'solver', 'fmincon');
         case 'o'
             options = sdpsettings('solver', 'OSQP', ...
-                  'verbose', 1, ...             % Detailed solver output
+                  'verbose', verbose, ...             % Detailed solver output
                   'osqp.max_iter', 30000, ...   % Set maximum iterations
                   'osqp.eps_abs', 1e-5, ...     % Absolute tolerance
                   'osqp.eps_rel', 1e-5, ...     % Relative tolerance
                   'warmstart', 0);             % Disable warm start
         case 'b'
-            options = sdpsettings('solver', 'bmibnb', 'verbose', 1);
+            options = sdpsettings('solver', 'bmibnb', 'verbose', verbose);
     end
 
 

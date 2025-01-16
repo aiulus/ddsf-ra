@@ -1,19 +1,23 @@
-function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
+function [u_opt, y_opt] = singleVarOptDDSF(lookup, ul_t, traj_ini)
+    verbose = lookup.IO_params.verbose;
     %% Extract parameters
     opt_params = lookup.opt_params;
 
     % Lengths and dimensions
     T_ini = lookup.config.T_ini;
-    N_p = lookup.config.N_p;
-    L = N_p + 2 * T_ini;
+    N = lookup.config.N;
+    L = N + 2 * T_ini;
     s = lookup.config.s;
     m = lookup.dims.m;
     p = lookup.dims.p;
     num_cols = lookup.dims.hankel_cols;
     
     % Matrices
-    R = lookup.config.R;
+    R = lookup.opt_params.R;
+    R_kron = kron(eye(N), R);
     H = lookup.H;
+    H_u = lookup.H_u;
+    H_y = lookup.H_y;
     T = eye(L, L);
     
     % Constraints
@@ -28,8 +32,14 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
     u_ini = traj_ini(1:m, :);
     y_ini = traj_ini(m+1:end, :);
 
-    u_eq = lookup.sys.S_f.u_eq(end);
-    y_eq = lookup.sys.S_f.y_eq(end);
+    u_eq = lookup.sys.S_f.u_eq(1);
+    y_eq = lookup.sys.S_f.y_eq(1);
+
+    % DEBUG STATEMENT - START
+    u_eq = zeros(m, 1);
+    y_eq = zeros(p, 1);
+    % DEBUG STATEMENT - END
+
 
     if iscell(u_eq)
         u_eq = cell2mat(u_eq);
@@ -39,35 +49,38 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
     end
 
     if opt_params.regularize
-        H = ddsf_regularize_hankel(lookup.H_u, lookup.H_y);
+        H = regHankelDDSF(H_u, H_y);
         num_cols = size(H, 2);
     end
 
-    %% TODO: S_f can be used to encode a desired target state
-
     %% Define symbolic variables
     alpha = sdpvar(num_cols, 1);
-    control_u = sdpvar(m, L);
-    control_y = sdpvar(p, L);
-    % traj_p = [control_u; control_y];
-    
-    %% Populate the initial and terminal parts of the trajectory
-    % Replaces the encodings in constraints
-    control_u(:, 1:T_ini) = u_ini;
-    control_y(:, 1:T_ini) = y_ini;
-    control_u(:, end - T_ini + 1 : end) = repmat(u_eq, 1, T_ini); % T_ini + N_p + 1 : end
-    control_y(:, end - T_ini + 1 : end) = repmat(y_eq, 1, T_ini);
+    u_bar = (H_u * alpha).';
+    y_bar = (H_y * alpha).';
+    u_bar_ini = u_bar(:, 1:T_ini);
+    u_s = u_bar(:, T_ini+1 : T_ini+N);
+    u_bar_fin = u_bar(:, T_ini+N+1 : 2*T_ini+N);
+    y_bar_ini = y_bar(:, 1:T_ini);
+    y_s = y_bar(:, T_ini+1 : T_ini+N);
+    y_bar_fin = y_bar(:, T_ini+N+1 : 2*T_ini+N);
 
-    %% Flatten the variables 
-    u_bar = reshape(control_u.', [], 1);
-    y_bar = reshape(control_y.', [], 1);
-    traj_p_bar = [u_bar; y_bar];
+    u_flat = reshape(u_bar, [], 1);
+    y_flat = reshape(y_bar, [], 1);
 
+    u_low = repmat(u_min, 1, N + 2 * T_ini).';
+    u_high = repmat(u_max, 1, N + 2 * T_ini).';
+    y_low = repmat(y_min, 1, N + 2 * T_ini).';
+    y_high = repmat(y_max, 1, N + 2 * T_ini).';
+
+    constraints = [u_bar_ini == u_ini, ...
+               y_bar_ini == y_ini, ...
+               u_bar_fin == repmat(u_eq, 1, T_ini), ...
+               y_bar_fin == repmat(y_eq, 1, T_ini) ...
+    ];
 
     %% Define the objective function and the constraints
-    delta_u = control_u(:, :) - u_l(:, :);
-    A = delta_u.' * R * delta_u;
-    objective = trace(A(1:s, 1:s)); % Minimize cost over the next s steps
+    delta = reshape(u_s, [], 1) - reshape(ul_t, [], 1);
+    objective = delta.' * R_kron * delta;
 
     if lookup.opt_params.target_penalty
         target = lookup.sys.params.target;
@@ -85,42 +98,41 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
         objective = objective + tpt;
     end
 
-    constraints = traj_p_bar == H * alpha; 
     
     switch opt_params.constr_type
         case 's' % Just enforce system behavior
             % No additional constraints needed
         case 'u' % Just encode input constraints
             constraints = [constraints, ...
-                           control_u >= repmat(u_min, 1, N_p + 2 * T_ini), ...
-                           control_u <= repmat(u_max, 1, N_p + 2 * T_ini)];
+                           u_flat >= u_low, ...
+                           u_flat <= u_high];
         case 'y' % Just encode output constraints
             constraints = [constraints, ...
-                           control_y >= repmat(y_min, 1, N_p + 2 * T_ini), ...
-                           control_y <= repmat(y_max, 1, N_p + 2 * T_ini)];
+                           y_flat >= y_low, ...
+                           y_flat <= y_high];
         case 'f' % All constraints
             constraints = [constraints, ...
-                           control_u >= repmat(u_min, 1, N_p + 2 * T_ini), ...
-                           control_u <= repmat(u_max, 1, N_p + 2 * T_ini), ...
-                           control_y >= repmat(y_min, 1, N_p + 2 * T_ini), ...
-                           control_y <= repmat(y_max, 1, N_p + 2 * T_ini)];
+                           u_flat >= u_low, ...
+                           u_flat <= u_high, ...
+                           y_flat >= y_low, ...
+                           y_flat <= y_high];
     end
 
     %% Define solver settings and run optimization
     switch opt_params.solver_type
         case 'q'
-            options = sdpsettings('verbose', 1, 'solver', 'quadprog');
+            options = sdpsettings('verbose', verbose, 'solver', 'quadprog');
         case 'f'
-            options = sdpsettings('verbose', 1, 'solver', 'fmincon');
+            options = sdpsettings('verbose', verbose, 'solver', 'fmincon');
         case 'o'
             options = sdpsettings('solver', 'OSQP', ...
-                  'verbose', 1, ...             % Detailed solver output
-                  'osqp.max_iter', 10000, ...   % Set maximum iterations
+                  'verbose', verbose, ...             % Detailed solver output
+                  'osqp.max_iter', 30000, ...   % Set maximum iterations
                   'osqp.eps_abs', 1e-5, ...     % Absolute tolerance
                   'osqp.eps_rel', 1e-5, ...     % Relative tolerance
                   'warmstart', 0);             % Disable warm start
         case 'b'
-            options = sdpsettings('solver', 'bmibnb', 'verbose', 1);
+            options = sdpsettings('solver', 'bmibnb', 'verbose', verbose);
     end
 
 
@@ -128,14 +140,14 @@ function [u_opt, y_opt] = ddsf_opt(lookup, u_l, traj_ini)
         
     if diagnostics.problem == 0 % Feasible solution found
         % Extract optimal values
-        u_opt = value(control_u);
-        y_opt = value(control_y);
+        u_opt = H_u * value(alpha);
+        y_opt = H_y * value(alpha);
     else
         disp(diagnostics.problem); % Solver exit code
         disp(diagnostics.info);    % Detailed solver feedback        
     end
 
-    if opt_params.verbose
+    if lookup.IO_params.verbose
         disp('---- Debug: Objective Function Evaluation ----');
         disp('Objective value:');
         disp(value(objective)); % Ensure it computes as expected

@@ -1,10 +1,12 @@
-function [x_data, y_data, u_data] = deepc2generateData(sys, dims, run_config)
+function [x_data, y_data, u_data] = deepc3generateData(sys, dims, run_config)
+    % rng(0, 'twister');
     % Initialize containers for data
     u_data = zeros(dims.m, run_config.T);
     y_data = zeros(dims.p, run_config.T);
     x_data = zeros(dims.n, run_config.T + 1);
 
-    x = rand(dims.n, 1); % Random initial state
+    % x = rand(dims.n, 1); % Random initial state
+    x = sys.params.x_ini;
     x_data(:, 1) = x;
     
     for t = 1:run_config.T
@@ -16,4 +18,3 @@ function [x_data, y_data, u_data] = deepc2generateData(sys, dims, run_config)
         x_data(:, t + 1) = x;
     end
 end
-
