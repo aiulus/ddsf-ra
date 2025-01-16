@@ -1,7 +1,12 @@
 %% Step 1: Configuration
 T_sim = 50; % Simulation length
-run_options = struct( ...
+data_options = struct( ...
     'datagen_mode', 'scaled_rbs', ...
+    'scale', 1, ...
+    'safe', false ... % Set 1/true to sample from safe input set
+    );
+
+run_options = struct( ...
     'system_type', 'cruise_control', ...
     'T_sim', T_sim, ...
     'T_d', 0 ... % Input delay [s] / dt [s]
@@ -22,7 +27,7 @@ opt_params = struct( ...
                     'solver_type', 'o', ...
                     'target_penalty', false, ...    
                     'init', true, ... % Encode initial condition
-                    'R', 1e+2 ...
+                    'R', 10 ...
                    );
 
 % Initialize the system
@@ -33,13 +38,12 @@ opt_params.R = opt_params.R * eye(dims.m);
 % Create struct object 'lookup' for central and extensive parameter passing.
 lookup = struct( ...
                 'sys', sys, ...
-                'sys_params', sys.params, ...
                 'opt_params', opt_params, ...
                 'config', sys.config, ...
                 'dims', dims, ...
                 'IO_params', IO_params, ...
                 'T_sim', run_options.T_sim, ...
-                'datagen_mode', run_options.datagen_mode, ...
+                'data_options', data_options, ...
                 'T_d', run_options.T_d ...
                 );
 
@@ -65,7 +69,6 @@ lookup.H = [H_u; H_y];
 %% Initialize objects to log simulation history
 T_ini = lookup.config.T_ini;
 logs = struct( ...
-        'u_d', zeros(dims.m, T_sim + T_ini), ...
         'u', [u_d(:, 1:(1+ T_ini)).'; ...
         zeros(dims.m, T_sim).'].', ... 
         'y', [y_d(:, 1:(1 + T_ini)).'; ...
@@ -78,25 +81,27 @@ logs = struct( ...
 % TODO: Wrap debug statements in if-statements with IO_params.debug
 
 % Obtain an L-step random control policy
-u_l = learning_policy(lookup);
 T_d = run_options.T_d;
 %% Step 3: Receding Horizon Loop
 for t=(T_ini + 1):(T_ini + T_sim)
     fprintf("----------------- DEBUG Information -----------------\n");
     fprintf("CURRENT SIMULATION STEP: t = %d\n", t - T_ini);
 
+    u_l = learning_policy(lookup);
+    ul_t = u_l(:, 1);
+
     u_ini = logs.u(:, (t - T_ini):(t-1));
     y_ini = logs.y(:, (t - T_ini):(t-1));
     traj_ini = [u_ini; y_ini];
     
     %fprintf("Submitting u_l with value: "); disp(u_l);
-    if (t - T_ini - T_d) < 1
-        ul_t = 0;
-    else 
-        ul_t = u_l(:, t - T_ini - T_d);
-    end    
+    %if (t - T_ini - T_d) < 1
+    %    ul_t = 0;
+    %else 
+    %    ul_t = u_l(:, t - T_ini - T_d);
+    %end    
 
-    [u_opt, y_opt] = optDDSF(lookup, u_l(:, 1:N), traj_ini);
+    [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini);
     %[u_opt, y_opt] = singleVarOptDDSF(lookup, u_l(:, 1:N), traj_ini);
     loss_t = get_loss(lookup, ul_t, u_opt, y_opt);
     %fprintf("Received optimal values u_opt = %d, y_opt = %d\n", value(u_opt), value(y_opt));
@@ -115,6 +120,9 @@ for t=(T_ini + 1):(T_ini + T_sim)
     lookup.sys.S_f.y_eq = [lookup.sys.S_f.y_eq, y_next];
 end
 
+% Store the final simulation results
+lookup.logs = logs;
+
 %% Plot the results
 time = 0:(T_sim + lookup.config.T_ini);
 plotDDSF(time, logs, lookup)
@@ -124,14 +132,13 @@ function u_l = learning_policy(lookup)
     sys = lookup.sys;
     m = sys.dims.m;
     % L = lookup.config.N + 2 * lookup.config.T_ini;
-    T_sim = lookup.T_sim;
-    mode = lookup.datagen_mode;
+    N = lookup.config.N;
+    mode = lookup.data_options.datagen_mode;
 
     lb = sys.constraints.U(:, 1);
     lb(lb == -inf) = 1;
     ub = sys.constraints.U(:, 2);
     ub(ub == inf) = 1;
-    %fprintf("1. <learning_policy> Lower and Upper bounds: [%d, %d]\n", lb, ub);
 
     switch mode
         case 'scaled_gaussian'
@@ -140,23 +147,23 @@ function u_l = learning_policy(lookup)
             lb = (lb < 0) .* (scale .* lb) + (lb > 0) .* ((scale^(-1)) .* lb) + (lb == 0) .* (- 10^scale);
             ub = (ub > 0) .* (scale .* ub) + (ub < 0) .* ((scale^(-1)) .* ub);
             lb = (lb < 0) .* (scale .* lb) + (lb > 0) .* ((scale^(-1)) .* lb);
-            u_l = lb + (ub - lb) .* rand(m, T_sim);
+            u_l = lb + (ub - lb) .* rand(m, N);
             % DEBUG STATEMENT
             % u_l = ones(m, L);
             %fprintf("2. <learning_policy> Relaxed lower and Upper bounds: [%d, %d]\n", lb, ub);
         case 'rbs'
-            u_l = idinput([m, T_sim], 'rbs', [0, 1], [-1,1]); 
+            u_l = idinput([m, N], 'rbs', [0, 1], [-1,1]); 
         case 'scaled_rbs'            
             lower = 0.5;
             upper = 0.8;
             num = 10;
             probs = (1/num) * ones(1, num);
             factors = linspace(lower, upper, num);
-            scaler = randsample(factors, T_sim, true, probs);
+            scaler = randsample(factors, N, true, probs);
             lb = lb .* scaler;
             ub = ub .* scaler;
 
-            u_l = idinput([m, T_sim], 'rbs', [0, 1], [-1,1]); 
+            u_l = idinput([m, N], 'rbs', [0, 1], [-1,1]); 
             u_l = u_l .* (lb + (ub - lb) .* rand(1));
     end
 end

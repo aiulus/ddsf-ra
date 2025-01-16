@@ -5,8 +5,8 @@ function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
 
     % Lengths and dimensions
     T_ini = lookup.config.T_ini;
-    N_p = lookup.config.N_p;
-    L = N_p + 2 * T_ini;
+    N = lookup.config.N;
+    L = N + 2 * T_ini;
     s = lookup.config.s;
     m = lookup.dims.m;
     p = lookup.dims.p;
@@ -33,8 +33,10 @@ function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
     y_eq = lookup.sys.S_f.y_eq(1);
 
     % DEBUG STATEMENT - START
-    u_eq = zeros(m, 1);
-    y_eq = zeros(p, 1);
+    %u_eq = zeros(m, 1);
+    %y_eq = zeros(p, 1);
+    %u_eq = ones(m, 1);
+    %y_eq = 200*ones(p, 1);
     % DEBUG STATEMENT - END
 
 
@@ -62,7 +64,7 @@ function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
     % Replaces the encodings in constraints
     control_u(:, 1:T_ini) = u_ini;
     control_y(:, 1:T_ini) = y_ini;
-    control_u(:, end - T_ini + 1 : end) = repmat(u_eq, 1, T_ini); % T_ini + N_p + 1 : end
+    control_u(:, end - T_ini + 1 : end) = repmat(u_eq, 1, T_ini); % T_ini + N + 1 : end
     control_y(:, end - T_ini + 1 : end) = repmat(y_eq, 1, T_ini);
 
     %% Flatten the variables 
@@ -72,7 +74,7 @@ function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
 
     %% Define the objective function and the constraints
     delta_u = control_u(:, 1+T_ini) - ul_t;
-    objective = delta_u.' * R * delta_u;
+    objective = delta_u * R * delta_u.';
     % objective = trace(objective(1:s, 1:s)); % Minimize cost over the next s steps
 
     if lookup.opt_params.target_penalty
@@ -98,18 +100,18 @@ function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
             % No additional constraints needed
         case 'u' % Just encode input constraints
             constraints = [constraints, ...
-                           control_u >= repmat(u_min, 1, N_p + 2 * T_ini), ...
-                           control_u <= repmat(u_max, 1, N_p + 2 * T_ini)];
+                           control_u >= repmat(u_min, 1, N + 2 * T_ini), ...
+                           control_u <= repmat(u_max, 1, N + 2 * T_ini)];
         case 'y' % Just encode output constraints
             constraints = [constraints, ...
-                           control_y >= repmat(y_min, 1, N_p + 2 * T_ini), ...
-                           control_y <= repmat(y_max, 1, N_p + 2 * T_ini)];
+                           control_y >= repmat(y_min, 1, N + 2 * T_ini), ...
+                           control_y <= repmat(y_max, 1, N + 2 * T_ini)];
         case 'f' % All constraints
             constraints = [constraints, ...
-                           control_u >= repmat(u_min, 1, N_p + 2 * T_ini), ...
-                           control_u <= repmat(u_max, 1, N_p + 2 * T_ini), ...
-                           control_y >= repmat(y_min, 1, N_p + 2 * T_ini), ...
-                           control_y <= repmat(y_max, 1, N_p + 2 * T_ini)];
+                           control_u >= repmat(u_min, 1, N + 2 * T_ini), ...
+                           control_u <= repmat(u_max, 1, N + 2 * T_ini), ...
+                           control_y >= repmat(y_min, 1, N + 2 * T_ini), ...
+                           control_y <= repmat(y_max, 1, N + 2 * T_ini)];
     end
 
     %% Define solver settings and run optimization
@@ -150,4 +152,13 @@ function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
         disp(max(check(constraints))); % Show largest constraint violation
     end
 
+end
+
+%% Helper method
+function [u, y] = alpha2traj(H_u, H_y, alpha)
+    u = H_u * value(alpha);
+    u = reshape(u, lookup.dims.m, []);
+
+    y = H_y * value(alpha);
+    y = reshape(y, lookup.dims.p, []);
 end

@@ -35,8 +35,8 @@ function sys = sysInit(sys_type)
                 'mass', 1000, ... % Vehicle mass [kg]
                 'damping', 50, ... % Damping coefficient [N*s/m]
                 'dt', 0.1, ... % Sampling rate for discetization [s]
-                'u_min', 0, ... % Minimum force
-                'u_max', 2000, ... % Maximum force
+                'u_min', -inf, ... % Minimum force
+                'u_max', inf, ... % Maximum force
                 'y_min', -inf, ... % Output constraint
                 'y_max', inf, ... % Output constraint
                 'target', 20, ... % Reference velocity [m/s]
@@ -63,8 +63,8 @@ function sys = sysInit(sys_type)
 
             config = struct( ...
                 'T', 41, ... % Window length - This reassigned in the main entry point for DeePC !!
-                'T_ini', 5, ... % Initial trajectory length
-                'N', 25, ... % Prediction horizon (default: 15)
+                'T_ini', 15, ... % Initial trajectory length
+                'N', 30, ... % Prediction horizon (default: 15)
                 's', 2 ... % Sliding length
             );
 
