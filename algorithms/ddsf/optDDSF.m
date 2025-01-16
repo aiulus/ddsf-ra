@@ -1,4 +1,4 @@
-function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
+function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     verbose = lookup.IO_params.verbose;
     %% Extract parameters
     opt_params = lookup.opt_params;
@@ -73,9 +73,11 @@ function [u_opt, y_opt] = optDDSF(lookup, ul_t, traj_ini)
     traj_p_bar = [u_bar; y_bar];
 
     %% Define the objective function and the constraints
-    delta_u = control_u(:, 1+T_ini) - ul_t;
-    objective = delta_u * R * delta_u.';
-    % objective = trace(objective(1:s, 1:s)); % Minimize cost over the next s steps
+    % delta_u = control_u(:, 1+T_ini:end) - u_l;
+    % objective = delta_u * R * delta_u.';
+    
+    delta_u = reshape(control_u(:, 1+T_ini:end-1) - u_l, [], 1);
+    objective = delta_u.' * kron(eye(N), R) * delta_u;
 
     if lookup.opt_params.target_penalty
         target = lookup.sys.params.target;

@@ -1,6 +1,6 @@
 function plotDDSF(time, logs, lookup)    
     sys = lookup.sys;
-    ul_hist = logs.u_d;
+    ul_hist = logs.ul_t; % s
     u_hist = logs.u;
     y_hist = logs.y;
     loss_hist = logs.loss;

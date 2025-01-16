@@ -79,6 +79,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini)
             'y', [y_d(:, 1:(1 + T_ini)).'; ...
             zeros(dims.p, T_sim).'].', ... 
             'ul', zeros(dims.m, lookup.config.N, T_sim), ...
+            'ul_t', zeros(dims.m, T_sim), ...
             'loss', zeros(2, T_ini + T_sim) ...
         );
     
@@ -92,8 +93,9 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini)
         fprintf("CURRENT SIMULATION STEP: t = %d\n", t - T_ini);
     
         u_l = learning_policy(lookup);
-        logs.ul(:, :, t) = u_l;
+        logs.ul(:, :, t - T_ini) = u_l;
         ul_t = u_l(:, 1);
+        logs.ul_t(:, t - T_ini) = ul_t;
     
         u_ini = logs.u(:, (t - T_ini):(t-1));
         y_ini = logs.y(:, (t - T_ini):(t-1));
