@@ -1,6 +1,6 @@
-function [H_u, H_y] = hankelDDSF(u_d, y_d, sys)
-    T_ini = sys.config.T_ini;
-    N = sys.config.N;
+function [H_u, H_y] = hankelDDSF(u_d, y_d, lookup)
+    T_ini = lookup.sys.config.T_ini;
+    N = lookup.sys.config.N;
     PE_order = N + 2 * T_ini;
 
     [~, H_u] = construct_hankel(u_d, PE_order);

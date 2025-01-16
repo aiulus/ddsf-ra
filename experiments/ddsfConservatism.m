@@ -8,6 +8,8 @@ values = [
     10 * ones(4, 1), (15:5:30)'
 ];
 
+logs= struct('u', {}, 'ul', {}, 'T_ini', {}, 'N', {}, 'C', {});
+
 systype = "cruise_control";
 T_sim = 10;
 
@@ -22,20 +24,30 @@ for i=1:nruns
 
     fprintf("------------------- Conservatism: %d / %d " + ...
         "-------------------", i, nruns);
-    fprintf('Running DDSF with T_ini = %d and N = %d...\n', T_ini, N);
+    fprintf('Running DDSF with T_ini = %d and N = %d...\n', Tini, N);
 
     try
-        [time, logs] = runDDSF(systype, T_sim, N, Tini);
+        [lookup, time, logs] = runDDSF(systype, T_sim, N, Tini);
+
+        cscore = conservatism(lookup.logs.u, lookup.sys.constraints.U(1), lookup.sys.constraints.U(2));
+
+        entry = struct();
+        entry.u = logs.u;
+        entry.ul = logs.ul;
+        entry.T_ini = T_ini;
+        entry.N = N;
+        entry.C = cscore;
+        logs(end+1) = entry;
 
         % Generate unique file suffix for plots
-        suffix = sprintf('Tini%d_N%d', T_ini, N);
+        suffix = sprintf('Tini%d_N%d', Tini, N);
 
         plotDDSF(time, logs, lookup);
 
         save_plots(output_dir, suffix);
 
     catch ME
-        fprintf('Error encountered with T_ini = %d and N = %d:\n', T_ini, N);
+        fprintf('Error encountered with T_ini = %d and N = %d:\n', Tini, N);
         fprintf('%s\n', ME.message);
         continue; 
     end

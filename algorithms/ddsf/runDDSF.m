@@ -1,4 +1,4 @@
-function [time, logs] = runDDSF(systype, T_sim, N, T_ini)
+function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini)
     %% Step 1: Configuration
     data_options = struct( ...
         'datagen_mode', 'scaled_rbs', ...
@@ -27,7 +27,7 @@ function [time, logs] = runDDSF(systype, T_sim, N, T_ini)
                         'solver_type', 'o', ...
                         'target_penalty', false, ...    
                         'init', true, ... % Encode initial condition
-                        'R', 10 ...
+                        'R', 100 ...
                        );
     
     % Initialize the system
@@ -46,12 +46,17 @@ function [time, logs] = runDDSF(systype, T_sim, N, T_ini)
                     'data_options', data_options, ...
                     'T_d', run_options.T_d ...
                     );
-    
+
+    lookup.config.N = N;
+    lookup.config.T_ini = T_ini;    
+
+    lookup.sys.config.N = N;
+    lookup.sys.config.T_ini = T_ini;    
     
     %% Step 2: Generate data & Hankel matrices
     [u_d, y_d, ~, ~, ~] = gendataDDSF(lookup); 
     
-    [H_u, H_y] = hankelDDSF(u_d, y_d, sys);
+    [H_u, H_y] = hankelDDSF(u_d, y_d, lookup);
      
     lookup.H = [H_u; H_y];
     lookup.H_u = H_u; lookup.H_y = H_y;
@@ -110,7 +115,7 @@ function [time, logs] = runDDSF(systype, T_sim, N, T_ini)
         y_next = y_opt(:, 1 + T_ini);
         %fprintf("Storing first optimal values u_opt[1] = %d, y_opt[1] = %d\n", value(u_opt(:, 1)), value(y_opt(:, 1)));
         
-        logs.u_d(:, t) = ul_t;
+        logs.ul(:, :, t) = u_l;
         logs.u(:, t) = u_next;
         logs.y(:, t) = y_next;
         logs.loss(:, t) = loss_t;
@@ -129,10 +134,9 @@ function [time, logs] = runDDSF(systype, T_sim, N, T_ini)
     
     % Should this use the same policy as data generation?
     function u_l = learning_policy(lookup)
-        sys = lookup.sys;
-        m = sys.dims.m;
+        m = lookup.sys.dims.m;
         % L = lookup.config.N + 2 * lookup.config.T_ini;
-        N = lookup.config.N;
+        Np = lookup.config.N;
         mode = lookup.data_options.datagen_mode;
     
         lb = sys.constraints.U(:, 1);
@@ -147,23 +151,23 @@ function [time, logs] = runDDSF(systype, T_sim, N, T_ini)
                 lb = (lb < 0) .* (scale .* lb) + (lb > 0) .* ((scale^(-1)) .* lb) + (lb == 0) .* (- 10^scale);
                 ub = (ub > 0) .* (scale .* ub) + (ub < 0) .* ((scale^(-1)) .* ub);
                 lb = (lb < 0) .* (scale .* lb) + (lb > 0) .* ((scale^(-1)) .* lb);
-                u_l = lb + (ub - lb) .* rand(m, N);
+                u_l = lb + (ub - lb) .* rand(m, Np);
                 % DEBUG STATEMENT
                 % u_l = ones(m, L);
                 %fprintf("2. <learning_policy> Relaxed lower and Upper bounds: [%d, %d]\n", lb, ub);
             case 'rbs'
-                u_l = idinput([m, N], 'rbs', [0, 1], [-1,1]); 
+                u_l = idinput([m, Np], 'rbs', [0, 1], [-1,1]); 
             case 'scaled_rbs'            
                 lower = 0.5;
                 upper = 0.8;
                 num = 10;
                 probs = (1/num) * ones(1, num);
                 factors = linspace(lower, upper, num);
-                scaler = randsample(factors, N, true, probs);
+                scaler = randsample(factors, Np, true, probs);
                 lb = lb .* scaler;
                 ub = ub .* scaler;
     
-                u_l = idinput([m, N], 'rbs', [0, 1], [-1,1]); 
+                u_l = idinput([m, Np], 'rbs', [0, 1], [-1,1]); 
                 u_l = u_l .* (lb + (ub - lb) .* rand(1));
         end
     end

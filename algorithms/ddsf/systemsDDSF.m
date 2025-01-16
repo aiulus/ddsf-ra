@@ -188,7 +188,7 @@ function sys = systemsDDSF(sys_type, discretize)
             D = 0;
             
             run_config = struct( ...
-                'T', 5, ... % Data length
+                'T', 50, ... % Data length
                 'T_ini', 1, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 1 ... % Conservatism; cannot exceed dims.m in the way this is used in the current implementation
@@ -325,7 +325,8 @@ function sys = systemsDDSF(sys_type, discretize)
     sys = populate_system_struct(A, B, C, D, params);
     % Parse constraints
     sys = constraint_handler(sys, params);
-     % Perform checks on adherence to assumptions    
+     % Perform checks on adherence to assumptions
+    
     sys.config = validate_config(run_config, A, C);
   end
 

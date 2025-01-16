@@ -51,7 +51,7 @@ lookup = struct( ...
 %% Step 2: Generate data & Hankel matrices
 [u_d, y_d, x_d, ~, ~] = gendataDDSF(lookup); 
 
-[H_u, H_y] = hankelDDSF(u_d, y_d, sys);
+[H_u, H_y] = hankelDDSF(u_d, y_d, lookup);
  
 lookup.H = [H_u; H_y];
 lookup.H_u = H_u; lookup.H_y = H_y;
