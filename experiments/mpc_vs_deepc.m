@@ -50,8 +50,8 @@ function plotMPCvsDeePC(systype, mpc_t, mpc_u, mpc_y, deepc_t, deepc_u, deepc_y)
     end
     sgtitle("MPC vs. DeePC: Control inputs over time");
     figure(1);
-    matlab2tikz('cc-deepc_vs_mpc-outputs.tex');
+    matlab2tikz('outputs/plots/cc-deepc_vs_mpc-outputs.tex');
     figure(2);
-    matlab2tikz('cc-deepc_vs_-inputs.tex');
+    matlab2tikz('outputs/plots/cc-deepc_vs_-inputs.tex');
 end
 

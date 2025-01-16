@@ -89,7 +89,7 @@ function [time, u_sim, y_sim] = runDeePC(systype, T_sim)
     
     %% Save the results
     if save
-        deepc3save(time, u_sim, y_sim);
+        save2csv(time, u_sim, y_sim);
     end
 end
 

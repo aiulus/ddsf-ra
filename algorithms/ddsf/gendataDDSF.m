@@ -24,8 +24,8 @@ function [u_d, y_d, x_d, u, y] = gendataDDSF(lookup)
             lb = sys.constraints.U(:, 1);
             lb(lb == -inf) = 0;
 
-            lower = 1; % 0.1
-            upper = 1.; %1.1
+            lower = 0.1; % 0.1
+            upper = 1.1; %1.1
             num = 10;
             numsamples = T;
             probs = (1/num) * ones(1, num);

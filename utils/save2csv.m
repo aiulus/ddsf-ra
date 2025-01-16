@@ -5,6 +5,6 @@ function save2csv(time, u_sim, y_sim)
     u_csv = [time, u_sim.'];
     y_csv = [time, y_sim.'];
 
-    writematrix(u_csv, 'u.csv', 'Delimiter', ',', 'WriteMode', 'overwrite');
-    writematrix(y_csv, 'y.csv', 'Delimiter', ',', 'WriteMode', 'overwrite');
+    writematrix(u_csv, 'outputs/data/u.csv', 'Delimiter', ',', 'WriteMode', 'overwrite');
+    writematrix(y_csv, 'outputs/data/y.csv', 'Delimiter', ',', 'WriteMode', 'overwrite');
 end

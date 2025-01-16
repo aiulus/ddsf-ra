@@ -90,7 +90,7 @@ deepc3plot(time, y_sim, u_sim, sys)
 
 %% Save the results
 if save
-    deepc3save(time, u_sim, y_sim);
+    save2csv(time, u_sim, y_sim);
 end
 
 

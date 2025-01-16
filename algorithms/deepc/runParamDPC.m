@@ -107,7 +107,7 @@ function logs = runParamDPC(systype, Q, R, T_ini, N, T_sim)
 
     %% Save the results
     if save
-        deepc3save(time, u_sim, y_sim);
+        save2csv(time, u_sim, y_sim);
     end
 end
 
