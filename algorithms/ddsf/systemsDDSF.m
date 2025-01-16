@@ -188,7 +188,7 @@ function sys = systemsDDSF(sys_type, discretize)
             D = 0;
             
             run_config = struct( ...
-                'T', 45, ... % Data length
+                'T', 5, ... % Data length
                 'T_ini', 1, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 1 ... % Conservatism; cannot exceed dims.m in the way this is used in the current implementation
@@ -325,12 +325,11 @@ function sys = systemsDDSF(sys_type, discretize)
     sys = populate_system_struct(A, B, C, D, params);
     % Parse constraints
     sys = constraint_handler(sys, params);
-     % Perform checks on adherence to assumptions
-    validate_config(run_config, A, C);
-    sys.config = run_config;
+     % Perform checks on adherence to assumptions    
+    sys.config = validate_config(run_config, A, C);
   end
 
-function validate_config(config, A, C)
+function config = validate_config(config, A, C)
     if config.N <= config.T_ini
         error("Prediction Horizon (current value: N = %d) must be " + ...
             "greater than the length of the initial trajcetory " + ...
@@ -341,6 +340,8 @@ function validate_config(config, A, C)
         error("T_ini !>= latency(A,C), but T_ini = %d " + ...
             "and latency(A,C) = %d", sys.config.T_ini, lat);
     end
+    min_length = config.N + 2*config.T_ini;
+    config.T = (config.T < min_length)*min_length + (config.T >= min_length)*config.T;
 end
 
 
