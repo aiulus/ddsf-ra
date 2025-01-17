@@ -40,9 +40,10 @@ as well as a custom version of **Model Predictive Control (MPC)** that pairs wit
 
 Clone the repository:
 
+```plaintext
 git clone https://github.com/aiulus/ddsf.git
 cd ddsf
-
+```
 ### Usage
 
 Navigate to one of the folders (/algorithms/ddsf, /algorithms/deepc, /algorithms/mpc, /experiments) and follow the instructions in the respective README sections.
