@@ -1,8 +1,12 @@
-function logs = runParamDPC(systype, Q, R, T_ini, N, T_sim, toggle_save)
+function logs = runParamDPC(systype, Qnew, Rnew, T_ini, N, T_sim, toggle_save)
      %% Define the system
     sys = sysInit(systype);
-    sys.opt_params.R = R;
-    sys.opt_params.Q = Q;
+    dims = sys.dims;
+
+    if Qnew ~= -1 && Rnew ~= -1
+        sys.opt_params.R = Rnew*eye(dims.p);
+        sys.opt_params.Q = Qnew*eye(dims.m);
+    end
 
     if T_ini == -1 || N == -1
         T_ini = sys.config.T_ini;
@@ -15,7 +19,6 @@ function logs = runParamDPC(systype, Q, R, T_ini, N, T_sim, toggle_save)
     % rng(0, 'twister'); % Set seed and generator
        
     %% Extract relevant parameters
-    dims = sys.dims;
     config =  sys.config;
     config.T_sim = T_sim;
     config.L = config.T_ini + config.N;

@@ -45,7 +45,7 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
                         u{end} = u_i;
                         ul{end} = ul_i;
                         descriptions{end} = d_i;
-                        k = max_tries;
+                        break;
                     catch ME
                         fprintf(['Attempt to run DDSF (conf.: %d) failed at: %s\n ' ...
                             'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);

@@ -1,7 +1,7 @@
 function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
     max_tries = 5;
-    
-    if nargs < 4
+
+    if nargin < 4
         toggle_save = false;
     end
     
@@ -35,7 +35,7 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
         case {'QvsR', 'qr'}
             values = vals.constraints;
             nruns = max(size(values));
-        case mixed
+        case 'mixed'
             values = vals.mixed;
             nruns = max(size(values.nt)) * max(size(values.qr));
         otherwise
@@ -49,6 +49,7 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
     
     switch mode
         case {'NvsTini', 'nt'}
+            Q = -1; R = -1;
             for i=1:nruns
                T_ini_i = values(i, 1);
                N_i = values(i, 2);
@@ -56,14 +57,14 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
                for k=1:max_tries
                     try
                         logs = runParamDPC(systype, Q, R, T_ini_i, N_i, T_sim, toggle_save);
-                        u_i = logs.u; % m x T_sim
-                        y_i = logs.y; % m x T_sim                
+                        u_i = logs.u_sim; % m x T_sim
+                        y_i = logs.y_sim; % m x T_sim                
                         u{end} = u_i;
                         y{end} = y_i;
                         descriptions{end} = d_i;
-                        k = max_tries;
+                        break;
                     catch ME
-                        fprintf(['Attempt to run runParamDPC.m (conf.: %d) failed at: %s\n ' ...
+                        fprintf(['Attempt to run runParamDPC.m (conf.: %s) failed at: %s\n ' ...
                             'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);
                     end
                end
@@ -77,19 +78,19 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
                 for k=1:max_tries
                     try
                         logs = runParamDPC(systype, Q_i, R_i, T_ini, N, T_sim, toggle_save);
-                        u_i = logs.u; % m x T_sim
-                        y_i = logs.y; % m x T_sim                
+                        u_i = logs.u_sim; % m x T_sim
+                        y_i = logs.y_sim; % m x T_sim                
                         u{end} = u_i;
                         y{end} = y_i;
                         descriptions{end} = d_i;
-                        k = max_tries;
+                        break;
                     catch ME
                          fprintf(['Attempt to run DDSF (conf.: %s) failed at: %s\n ' ...
                             'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);
                     end
                 end
             end
-        case mixed
+        case 'mixed'
             qr = values.qr;
             nt = values.nt;
             for i=1:nruns
@@ -99,14 +100,14 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
                for k=1:max_tries
                     try
                         logs = runParamDPC(systype, Q_i, R_i, T_ini_i, N_i, T_sim, toggle_save);
-                        u_i = logs.u; % m x T_sim
-                        y_i = logs.y; % m x T_sim                
+                        u_i = logs.u_sim; % m x T_sim
+                        y_i = logs.y_sim; % m x T_sim                
                         u{end} = u_i;
                         y{end} = y_i;
                         descriptions{end} = d_i;
-                        k = max_tries;
+                        break;
                     catch ME
-                        fprintf(['Attempt to run runParamDPC.m (conf.: %d) failed at: %s\n ' ...
+                        fprintf(['Attempt to run runParamDPC.m (conf.: %s) failed at: %s\n ' ...
                             'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);
                     end
                end
