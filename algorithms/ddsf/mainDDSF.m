@@ -123,6 +123,7 @@ for t=(T_ini + 1):(T_ini + T_sim)
 end
 
 % Store the final simulation results
+time = 0:(T_sim + lookup.config.T_ini);
 lookup.logs = logs;
 
 %% Plot the results

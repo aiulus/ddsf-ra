@@ -128,6 +128,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini)
     end
     
     % Store the final simulation results
+    logs.u = logs.u(:, 1+T_ini:end);
     lookup.logs = logs;
     
     %% Plot the results
