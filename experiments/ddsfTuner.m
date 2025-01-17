@@ -17,7 +17,7 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
     switch lower(mode)
         case 'nvstini'
             values = vals.NvsTini;
-        case 'constraints'
+        case {'constraints', 'constr'}
             values = vals.constraints;
         otherwise
             error("The provided tuner mode isn't supported.");
@@ -36,7 +36,7 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
             for i=1:nruns
                T_ini_i = values(i, 1);
                N_i = values(i, 2);
-               d_i = sprintf('%s-N%d-Tini-%d-%s-T%d', mode, N_i, T_ini_i, systype, T_sim);
+               d_i = sprintf('ddsfTuner-%s-N%d-Tini-%d-%s-T%d', mode, N_i, T_ini_i, systype, T_sim);
                for k=1:max_tries
                     try
                         [~, ~, logs] = runDDSF(systype, T_sim, N_i, T_ini_i, constraint_scaler, toggle_plot);
@@ -47,14 +47,15 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
                         descriptions{end} = d_i;
                         k = max_tries;
                     catch ME
-                        fprintf('Attempt to run DDSF failed: %s ME = %s\n. Trying again...', d_i, ME.message);
+                        fprintf(['Attempt to run DDSF (conf.: %d) failed at: %s\n ' ...
+                            'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);
                     end
                end
             end
-        case 'constraints'
+        case {'constraints', 'constr'}
             T_ini = -1; N = -1;
             for i=1:nruns
-                d_i = sprintf('%s-scalingfactor%d-%s-T%d', mode, values(i), systype, T_sim);
+                d_i = sprintf('ddsfTuner-%s-scalingfactor%d-%s-T%d', mode, values(i), systype, T_sim);
                 for k=1:max_tries
                     try
                         [~, ~, logs] = runDDSF(systype, T_sim, N, T_ini, values(i), toggle_plot);
@@ -64,7 +65,8 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
                         ul{end} = ul_i;
                         descriptions{end} = d_i;
                     catch ME
-                        fprintf('Attempt to run DDSF failed: %s ME = %s\n. Trying again...', d_i, ME.message);
+                         fprintf(['Attempt to run DDSF (conf.: %s) failed at: %s\n ' ...
+                            'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);
                     end
                 end
             end

@@ -1,16 +1,19 @@
-function logs = runParamDPC(systype, Q, R, T_ini, N, T_sim)
+function logs = runParamDPC(systype, Q, R, T_ini, N, T_sim, toggle_save)
      %% Define the system
     sys = sysInit(systype);
     sys.opt_params.R = R;
     sys.opt_params.Q = Q;
+
+    if T_ini == -1 || N == -1
+        T_ini = sys.config.T_ini;
+        N = sys.config.N;
+    end
+
     sys.config.T_ini = T_ini;
     sys.config.N = N;
     verbose = true; 
-    save = true;
-    rng(0, 'twister'); % Set seed and generator
-    
-    %% TODO: Ensure shape match across _systems & Opt !!
-    
+    % rng(0, 'twister'); % Set seed and generator
+       
     %% Extract relevant parameters
     dims = sys.dims;
     config =  sys.config;
@@ -106,7 +109,7 @@ function logs = runParamDPC(systype, Q, R, T_ini, N, T_sim)
         );
 
     %% Save the results
-    if save
+    if toggle_save
         save2csv(time, u_sim, y_sim);
     end
 end
