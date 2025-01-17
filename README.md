@@ -21,6 +21,8 @@ as well as a custom version of **Model Predictive Control (MPC)** that pairs wit
 ├── docs/           # Documentation files
 └── README.md       # Repository documentation
 
+```
+
 ## Key Features
 
 - **DDSF: ([Reference 1][ddsflink])** Ensures safe operation through system-behavioral filtering of suggested control inputs
