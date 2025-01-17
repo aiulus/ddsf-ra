@@ -76,8 +76,8 @@ function logs = runParamDPC(systype, Qnew, Rnew, T_ini, N, T_sim, toggle_save)
     %% Receding Horizon Loop
     for t=1:config.T_sim
         % Solve the quadratic optimization problem
-        % [u_opt, y_opt] =  deepc3Opt(lookup, H, u_ini, y_ini);
-        [u_opt, y_opt] =  singleVarOptDPC(lookup, H, u_ini, y_ini);
+        [u_opt, y_opt] =  deepc3Opt(lookup, H, u_ini, y_ini);
+        %[u_opt, y_opt] =  singleVarOptDPC(lookup, H, u_ini, y_ini);
     
         u_ts = u_opt(1:dims.m*config.s);
         y_ts = y_opt(1:dims.p*config.s);

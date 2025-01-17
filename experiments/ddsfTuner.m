@@ -1,8 +1,6 @@
 function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
     max_tries = 5;
     toggle_plot = false;
-
-    u = {}; ul = {}; descriptions = {};
     
     vals = struct( ...
             'NvsTini', [ ...
@@ -24,6 +22,7 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
     end
 
     nruns = max(size(values));
+    u = cell(1, nruns); y = cell(1, nruns); descriptions = cell(1, nruns);
 
     output_dir = fullfile('..', 'outputs', 'plots', 'ddsf_tuner');
     if ~exist(output_dir, 'dir')
@@ -42,9 +41,9 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
                         [~, ~, logs] = runDDSF(systype, T_sim, N_i, T_ini_i, constraint_scaler, toggle_plot);
                         u_i = logs.u; % m x T_sim
                         ul_i = logs.ul_t; % m x T_sim                
-                        u{end} = u_i;
-                        ul{end} = ul_i;
-                        descriptions{end} = d_i;
+                        u(:, i) = u_i;
+                        y(:, i) = y_i;
+                        descriptions(:, i) = d_i;
                         break;
                     catch ME
                         fprintf(['Attempt to run DDSF (conf.: %d) failed at: %s\n ' ...
@@ -61,9 +60,9 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
                         [~, ~, logs] = runDDSF(systype, T_sim, N, T_ini, values(i), toggle_plot);
                         u_i = logs.u; % m x T_sim
                         ul_i = logs.ul_t; % m x T_sim                
-                        u{end} = u_i;
-                        ul{end} = ul_i;
-                        descriptions{end} = d_i;
+                        u(:, i) = u_i;
+                        y(:, i) = y_i;
+                        descriptions(:, i) = d_i;
                     catch ME
                          fprintf(['Attempt to run DDSF (conf.: %s) failed at: %s\n ' ...
                             'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);
