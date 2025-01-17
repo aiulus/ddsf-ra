@@ -123,11 +123,12 @@ for t=(T_ini + 1):(T_ini + T_sim)
 end
 
 % Store the final simulation results
-time = 0:(T_sim + lookup.config.T_ini);
+logs.u = logs.u(:, 1+T_ini:end);
+logs.y = logs.y(:, 1+T_ini:end);
 lookup.logs = logs;
 
 %% Plot the results
-time = 0:(T_sim + lookup.config.T_ini);
+time = 1:T_sim;
 plotDDSF(time, logs, lookup)
 
 % Should this use the same policy as data generation?
