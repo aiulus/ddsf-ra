@@ -61,6 +61,11 @@ Navigate to one of the folders (/algorithms/ddsf, /algorithms/deepc, /algorithms
 [ddsflink]: https://arxiv.org/abs/2309.00189
 [deepclink]: https://arxiv.org/abs/1811.05890
 
+## Feedback
+
+If you have any feedback or suggestions about this project or the report, please open an [issue](https://github.com/aiulus/ddsf/issues) or contact [aybuke.ulusarslan@tum.de].
+
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
