@@ -1,3 +1,4 @@
+%% Saves up to three individual sequences
 function save2csv(col1, col2, col3, prefix)
     if nargin < 3
         error('At least, col1, and col2, and prefix must be provided.');

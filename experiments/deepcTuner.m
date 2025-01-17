@@ -50,8 +50,13 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
     switch mode
         case {'NvsTini', 'nt'}
             Q = -1; R = -1;
+            tic;
             for i=1:nruns
-                fprintf('("------------------- Trying parameter conf. %d / %d\n', i, nruns);
+                fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', i, nruns);
+                if i > 1
+                    elapsed = toc;
+                    timeEstimator(elapsed, i, nruns);
+                end
                 T_ini_i = values(i, 1);
                 N_i = values(i, 2);
                 d_i = sprintf('deepcTuner-%s-N%d-Tini%d-%s-T%d', mode, N_i, T_ini_i, systype, T_sim);
@@ -72,9 +77,14 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
             end
         case {'QvsR', 'qr'}
             T_ini = -1; N = -1;
+            tic;
             for i=1:nruns
-                fprintf('("------------------- Trying parameter conf. %d / %d\n', i, nruns);
-                d_i = sprintf('%deepcTuner-s-Q%d-R%d-%s-T%d', mode, values(i), systype, T_sim);
+                fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', i, nruns);
+                if i > 1
+                    elapsed = toc;
+                    timeEstimator(elapsed, i, nruns);
+                end
+                d_i = sprintf('deepcTuner-s-Q%d-R%d-%s-T%d', mode, values(i), systype, T_sim);
                 Q_i = values(i, 1);
                 R_i = values(i, 2);
                 for k=1:max_tries
@@ -97,10 +107,16 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
             nt = values.nt;
             for i=1:max(size(qr))
                 Q_i = qr(i, 1); R_i = qr(i, 2);
+                tic;
                 for j=1:max(size(nt))                    
                     T_ini_j = nt(j, 1); N_j = nt(j, 2);
                     d_i = sprintf('deepcTuner-%s-N%d-Tini%d-Q%d-R%d-%s-T%d', mode, N_j, T_ini_j, Q_i, R_i, systype, T_sim);
-                    fprintf('("------------------- Trying parameter conf. %d / %d\n', (i-1)*max(size(nt))+j, nruns);
+                    t = (i-1)*max(size(nt))+j;
+                    fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', t, nruns);
+                    if t > 1
+                        elapsed = toc;
+                        timeEstimator(elapsed, t, nruns);
+                    end
                     for k=1:max_tries
                         try
                             logs = runParamDPC(systype, Q_i, R_i, T_ini_j, N_j, T_sim);
@@ -120,7 +136,8 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
     end
 
     if toggle_save
-        prefix = sprintf('deepcTuner-%s-%s-T%d-', mode, systype, T_sim);
+        prefix = sprintf('deepcTuner-%s-%s-T%d', mode, systype, T_sim);
         save2csv(u, y, descriptions, prefix);
     end
 end
+
