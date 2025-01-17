@@ -16,12 +16,22 @@ function save2csv(col1, col2, col3, prefix)
         d_csv = [col1, col2, col3];
     end
 
-    output_dir = 'outputs/data';
+    %output_dir = 'outputs/data';
+    output_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'outputs', 'data');
+
     if ~exist(output_dir, 'dir')
         mkdir(output_dir);
     end
 
     filename = fullfile(output_dir, sprintf('%s.csv', prefix));
-    
-    writematrix(d_csv, filename, 'Delimiter', ',', 'WriteMode', 'overwrite');
+    try
+        writematrix(d_csv, filename, 'Delimiter', ',', 'WriteMode', 'overwrite');
+    catch matrixME
+        fprintf(matrixME.message);
+        try
+            writecell(d_csv, filename, 'Delimiter', ',', 'WriteMode', 'overwrite');
+        catch cellME
+            fprintf(cellME.message);
+        end
+    end
 end
