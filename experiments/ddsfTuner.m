@@ -1,6 +1,10 @@
-function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
+function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
     max_tries = 5;
     toggle_plot = false;
+
+    if nargin < 4
+        toggle_save = false;
+    end
 
     vals = struct( ...
             'NvsTini', [ ...
@@ -69,5 +73,9 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim)
                     end
                 end
             end
+    end
+    if toggle_save
+        prefix = sprintf('ddsfTuner-%s-%s-T%d-', mode, systype, T_sim);
+        save2csv(u, ul, descriptions, prefix);
     end
 end

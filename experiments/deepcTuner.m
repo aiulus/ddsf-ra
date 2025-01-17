@@ -54,10 +54,10 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
                 fprintf('("------------------- Trying parameter conf. %d / %d\n', i, nruns);
                 T_ini_i = values(i, 1);
                 N_i = values(i, 2);
-                d_i = sprintf('deepcTuner-%s-N%d-Tini-%d-%s-T%d', mode, N_i, T_ini_i, systype, T_sim);
+                d_i = sprintf('deepcTuner-%s-N%d-Tini%d-%s-T%d', mode, N_i, T_ini_i, systype, T_sim);
                 for k=1:max_tries
                     try
-                        logs = runParamDPC(systype, Q, R, T_ini_i, N_i, T_sim, toggle_save);
+                        logs = runParamDPC(systype, Q, R, T_ini_i, N_i, T_sim);
                         u_i = logs.u_sim; % m x T_sim
                         y_i = logs.y_sim; % m x T_sim
                         u{i} = u_i;
@@ -79,7 +79,7 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
                 R_i = values(i, 2);
                 for k=1:max_tries
                     try
-                        logs = runParamDPC(systype, Q_i, R_i, T_ini, N, T_sim, toggle_save);
+                        logs = runParamDPC(systype, Q_i, R_i, T_ini, N, T_sim);
                         u_i = logs.u_sim; % m x T_sim
                         y_i = logs.y_sim; % m x T_sim
                         u{i} = u_i;
@@ -99,11 +99,11 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
                 Q_i = qr(i, 1); R_i = qr(i, 2);
                 for j=1:max(size(nt))                    
                     T_ini_j = nt(j, 1); N_j = nt(j, 2);
-                    d_i = sprintf('deepcTuner-%s-N%d-Tini-%d-Q%d-R%d-%s-T%d', mode, N_j, T_ini_j, Q_i, R_i, systype, T_sim);
+                    d_i = sprintf('deepcTuner-%s-N%d-Tini%d-Q%d-R%d-%s-T%d', mode, N_j, T_ini_j, Q_i, R_i, systype, T_sim);
                     fprintf('("------------------- Trying parameter conf. %d / %d\n', (i-1)*max(size(nt))+j, nruns);
                     for k=1:max_tries
                         try
-                            logs = runParamDPC(systype, Q_i, R_i, T_ini_j, N_j, T_sim, toggle_save);
+                            logs = runParamDPC(systype, Q_i, R_i, T_ini_j, N_j, T_sim);
                             u_i = logs.u_sim; % m x T_sim
                             y_i = logs.y_sim; % m x T_sim
                             u{i} = u_i;
@@ -117,5 +117,10 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
                     end
                 end
             end
+    end
+
+    if toggle_save
+        prefix = sprintf('deepcTuner-%s-%s-T%d-', mode, systype, T_sim);
+        save2csv(u, y, descriptions, prefix);
     end
 end

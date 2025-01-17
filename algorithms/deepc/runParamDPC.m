@@ -1,7 +1,8 @@
-function logs = runParamDPC(systype, Qnew, Rnew, T_ini, N, T_sim, toggle_save)
+function logs = runParamDPC(systype, Qnew, Rnew, T_ini, N, T_sim)
      %% Define the system
     sys = sysInit(systype);
     dims = sys.dims;
+    toggle_save = 0;
 
     if Qnew ~= -1 && Rnew ~= -1
         sys.opt_params.R = Rnew*eye(dims.p);

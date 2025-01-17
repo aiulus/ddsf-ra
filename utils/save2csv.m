@@ -1,10 +1,27 @@
-function save2csv(time, u_sim, y_sim)
-    % Ensure time vector is a column vector
-    time = time(:);
+function save2csv(col1, col2, col3, prefix)
+    if nargin < 3
+        error('At least, col1, and col2, and prefix must be provided.');
+    end
 
-    u_csv = [time, u_sim.'];
-    y_csv = [time, y_sim.'];
+    col1 = col1(:);
+    col2 = col2(:);
 
-    writematrix(u_csv, 'outputs/data/u.csv', 'Delimiter', ',', 'WriteMode', 'overwrite');
-    writematrix(y_csv, 'outputs/data/y.csv', 'Delimiter', ',', 'WriteMode', 'overwrite');
+    if isempty(prefix)
+        prefix = '';
+    end
+    if nargin < 4 || isempty(col3)
+        d_csv = [col1, col2];
+    else
+        col3 = col3(:);
+        d_csv = [col1, col2, col3];
+    end
+
+    output_dir = 'outputs/data';
+    if ~exist(output_dir, 'dir')
+        mkdir(output_dir);
+    end
+
+    filename = fullfile(output_dir, sprintf('%s.csv', prefix));
+    
+    writematrix(d_csv, filename, 'Delimiter', ',', 'WriteMode', 'overwrite');
 end
