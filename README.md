@@ -63,7 +63,7 @@ Navigate to one of the folders (/algorithms/ddsf, /algorithms/deepc, /algorithms
 
 ## Feedback
 
-If you have any feedback or suggestions about this project or the report, please open an [issue](https://github.com/aiulus/ddsf/issues) or contact [aybuke.ulusarslan@tum.de].
+If you have any feedback or suggestions about this project, please open an [issue](https://github.com/aiulus/ddsf/issues) or contact [aybuke.ulusarslan@tum.de].
 
 
 ## License
