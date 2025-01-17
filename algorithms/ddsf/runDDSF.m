@@ -1,4 +1,8 @@
-function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini)
+function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constraints)
+    if nargin < 5
+        constraints = 1;
+    end
+
     %% Step 1: Configuration
     data_options = struct( ...
         'datagen_mode', 'scaled_rbs', ...
@@ -32,8 +36,15 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini)
     
     % Initialize the system
     sys = systemsDDSF(run_options.system_type, opt_params.discretize); 
+    sys.constraints = sys.constrains * scale_constraints;
     dims = sys.dims;
     opt_params.R = opt_params.R * eye(dims.m);
+
+    if T_ini == -1 || N == -1
+        T_ini = sys.config.T_ini;
+        N = sys.config.N;
+    end
+    
     
     % Create struct object 'lookup' for central and extensive parameter passing.
     lookup = struct( ...

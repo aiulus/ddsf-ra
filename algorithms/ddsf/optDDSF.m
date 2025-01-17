@@ -76,7 +76,7 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     % delta_u = control_u(:, 1+T_ini:end) - u_l;
     % objective = delta_u * R * delta_u.';
     
-    delta_u = reshape(control_u(:, 1+T_ini:end-1) - u_l, [], 1);
+    delta_u = reshape(control_u(:, 1+T_ini:end-T_ini) - u_l, [], 1);
     objective = delta_u.' * kron(eye(N), R) * delta_u;
 
     if lookup.opt_params.target_penalty
