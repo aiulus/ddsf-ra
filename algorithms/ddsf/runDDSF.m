@@ -1,6 +1,6 @@
-function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constraints)
-    if nargin < 5
-        constraints = 1;
+function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constraints, toggle_plot)
+    if nargin < 6
+        scale_constraints = 1;
     end
 
     %% Step 1: Configuration
@@ -36,7 +36,8 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     
     % Initialize the system
     sys = systemsDDSF(run_options.system_type, opt_params.discretize); 
-    sys.constraints = sys.constrains * scale_constraints;
+    sys.constraints.U = sys.constraints.U .* scale_constraints;
+    sys.constraints.Y = sys.constraints.Y .* scale_constraints;
     dims = sys.dims;
     opt_params.R = opt_params.R * eye(dims.m);
 
@@ -145,7 +146,9 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     
     %% Plot the results
     time = 1:T_sim;
-    plotDDSF(time, logs, lookup)
+    if toggle_plot
+        plotDDSF(time, logs, lookup)
+    end
     
     % Should this use the same policy as data generation?
     function u_l = learning_policy(lookup)
