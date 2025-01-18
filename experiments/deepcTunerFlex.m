@@ -48,7 +48,7 @@ function [u, y, descriptions] = deepcTunerFlex(mode, systype, T_sim, toggle_save
 
     % Save results if required
     if toggle_save
-        prefix = sprintf('deepcTuner-%s-%s-T%d', mode, systype, T_sim);
+        prefix = sprintf('deepcTunerFlex-%s-%s-T%d', mode, systype, T_sim);
         saveResults(prefix, u, y, descriptions);
     end
 end
