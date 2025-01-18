@@ -85,8 +85,8 @@ function logs = runParamDPC(systype, Qnew, Rnew, T_ini, N, T_sim)
         loss_t = norm(y_ts - sys.params.target);
     
         % Log the resulting trajectory
-        u_sim(:, t:t+s) = u_ts;
-        y_sim(:, t:t+s) = y_ts;
+        u_sim(:, t:t+s-1) = u_ts;
+        y_sim(:, t:t+s-1) = y_ts;
         loss(:, t) = loss_t;
             
         % Update the initial trajectory

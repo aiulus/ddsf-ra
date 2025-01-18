@@ -1,29 +1,22 @@
-function gridPlot(mode, filepath, T_sim, m, p)
-    data = readtable(filepath, 'ReadVariableNames', false);
+function gridPlot(mode, filename, m , p)
+    [data, descriptions] = csvFlexRead(filename);
 
-    out1 = data{:, 1:T_sim}; % Input u                 
-    out2 = data{:, T_sim+1:2*T_sim}; % (DDSF) u_l // (DeePC) y        
-    configs = data{:, end}; 
+    nruns = numel(unique(descriptions));
+    nfeatures = max(size(data));
 
     switch mode
         case 'ddsf'
-            uX = out1; ulX = out2;
+            u_hist = cell2mat(data{1});
+            ul_hist = cell2mat(data{2});
             for i=1:T_sim
-                u_i = u
+                lower = (i-1)*m + 1; upper = i*m;
+                u_i = u_hist(lower, upper);
+                ul_i = ul_hist(lower, upper);
             end
         case 'deepc'
     end
 end
 
-ddsfTuner-nt-N5-Tini-1-cruise_control-T25
-ddsfTuner-nt-N10-Tini-1-cruise_control-T25
-ddsfTuner-nt-N15-Tini-1-cruise_control-T25
-ddsfTuner-nt-N20-Tini-1-cruise_control-T25
+function plotSingleRun(mode, data)
+end
 
-
-ddsfTuner-nt-N5-Tini-2-cruise_control-T25
-ddsfTuner-nt-N10-Tini-2-cruise_control-T25
-ddsfTuner-nt-N15-Tini-2-cruise_control-T25
-ddsfTuner-nt-N20-Tini-2-cruise_control-T25
-
-function

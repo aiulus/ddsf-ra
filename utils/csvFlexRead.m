@@ -1,6 +1,6 @@
 %% Retrieves individual sequences from a CSV file
 % Inputs:
-%   filename: The path to the CSV file.
+%   filename: The path to the CSV file respective to the MATLAB directory.
 %
 % Outputs:
 %   data: A cell array where each cell contains one sequence.
@@ -30,7 +30,10 @@ function [data, sequenceNames] = csvFlexRead(filename)
     
     % Read the CSV file into a table
     try
-        dataTable = readtable(fullPath);
+        opts = detectImportOptions(fullPath, 'Delimiter', ',');
+        % Set variable types to 'char' to handle text data
+        opts = setvartype(opts, 'char');
+        dataTable = readtable(fullPath, opts);
     catch err
         error('Error reading the CSV file: %s', err.message);
     end
@@ -42,7 +45,7 @@ function [data, sequenceNames] = csvFlexRead(filename)
     nSequences = numel(sequenceNames);
     data = cell(1, nSequences);
     for i = 1:nSequences
-        columnData = dataTable.(sequenceNames{i});
+        columnData = str2double(dataTable.(sequenceNames{i}));
         data{i} = columnData(~isnan(columnData)); % Remove NaN padding
     end
     
