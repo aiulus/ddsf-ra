@@ -83,10 +83,10 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
                 if i > 1
                     elapsed = toc;
                     timeEstimator(elapsed, i, nruns);
-                end
-                d_i = sprintf('deepcTuner-s-Q%d-R%d-%s-T%d', mode, values(i), systype, T_sim);
+                end                
                 Q_i = values(i, 1);
                 R_i = values(i, 2);
+                d_i = sprintf('deepcTuner-%s-Q%d-R%d-%s-T%d', mode, Q_i, R_i, systype, T_sim);
                 for k=1:max_tries
                     try
                         logs = runParamDPC(systype, Q_i, R_i, T_ini, N, T_sim);
@@ -137,7 +137,8 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
 
     if toggle_save
         prefix = sprintf('deepcTuner-%s-%s-T%d', mode, systype, T_sim);
-        save2csv(u, y, descriptions, prefix);
+        % save2csv(u, y, descriptions, prefix);
+        csvFlexSave(prefix, u, y, descriptions);
     end
 end
 

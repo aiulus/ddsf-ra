@@ -173,9 +173,9 @@ function sys = systemsDDSF(sys_type, discretize)
                 'damping', 50, ... % Damping coefficient [N*s/m]
                 'dt', 0.1, ... % Sampling rate for discetization [s]
                 'u_min', 0, ... % Minimum force
-                'u_max', 2000, ... % Maximum force
-                'y_min', -20000, ... % Output constraint
-                'y_max', 20000, ... % Output constraint
+                'u_max', 20, ... % Maximum force
+                'y_min', -200, ... % Output constraint
+                'y_max', 200, ... % Output constraint
                 'target', 0, ... % Reference velocity [m/s]
                 'slack', 1e-2, ... % For relaxation  
                 'x_ini', 0, ... % Currently not used
