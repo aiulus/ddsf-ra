@@ -34,9 +34,9 @@ function logs = runParamDPC(systype, Qnew, Rnew, T_ini, N, T_sim)
     opt_params.lambda_g = 0.01; % Should be adaptive
     
     %% Initialize containers for logging
-    u_sim = zeros(dims.m, config.T_sim + 1);
-    y_sim = zeros(dims.p, config.T_sim + 1);
-    loss = zeros(1, config.T_sim + 1);
+    u_sim = zeros(dims.m, config.T_sim);
+    y_sim = zeros(dims.p, config.T_sim);
+    loss = zeros(1, config.T_sim);
     
     %% Generate data
     [x_data, y_data, u_data] = deepc3generateData(sys, dims, config);
@@ -85,8 +85,10 @@ function logs = runParamDPC(systype, Qnew, Rnew, T_ini, N, T_sim)
         loss_t = norm(y_ts - sys.params.target);
     
         % Log the resulting trajectory
-        u_sim(:, t:t+s-1) = u_ts;
-        y_sim(:, t:t+s-1) = y_ts;
+        %u_sim(:, t:t+s-1) = u_ts;
+        %y_sim(:, t:t+s-1) = y_ts;
+        u_sim(:, t) = u_ts;
+        y_sim(:, t) = y_ts;
         loss(:, t) = loss_t;
             
         % Update the initial trajectory
@@ -111,10 +113,5 @@ function logs = runParamDPC(systype, Qnew, Rnew, T_ini, N, T_sim)
         'y_sim', y_sim, ...
         'loss', loss ...
         );
-
-    %% Save the results
-    if toggle_save
-        save2csv(time, u_sim, y_sim);
-    end
 end
 
