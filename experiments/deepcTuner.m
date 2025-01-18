@@ -1,4 +1,10 @@
 function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
+    % RETURNS -
+    %       u -         R^(n_runs x m)
+    %       y -         R^(n_runs x p)
+    % descriptions -    n_runs x strings naming the respective parameter
+    %                   configuration
+
     max_tries = 5;
     
     if nargin < 4
@@ -138,7 +144,10 @@ function [u, y, descriptions] = deepcTuner(mode, systype, T_sim, toggle_save)
     if toggle_save
         prefix = sprintf('deepcTuner-%s-%s-T%d', mode, systype, T_sim);
         % save2csv(u, y, descriptions, prefix);
-        csvFlexSave(prefix, u, y, descriptions);
+        csvFlexSave(prefix, u,  y, descriptions);
     end
+
+    u = cell2mat(u(:));
+    y = cell2mat(y(:));
 end
 

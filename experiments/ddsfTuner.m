@@ -1,5 +1,11 @@
 function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
-    max_tries = 5;
+    % RETURNS -
+    %       u -         R^(n_runs x m)
+    %       ul -        R^(n_runs x m)
+    % descriptions -    n_runs x strings naming the respective parameter
+    %                   configuration
+
+    max_tries = 15;
     toggle_plot = false;
     
     if nargin < 4
@@ -63,7 +69,7 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
                         descriptions{i} = d_i;
                         break;
                     catch ME
-                        fprintf(['Attempt to run runDDSF.m (conf.: %d) failed at: %s\n ' ...
+                        fprintf(['Attempt to run runDDSF.m (conf.: %s) failed at: %s\n ' ...
                             'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);
                     end
                 end
@@ -126,9 +132,13 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
                 end
             end
     end
+
     if toggle_save
         prefix = sprintf('ddsfTuner-%s-%s-T%d', mode, systype, T_sim);
         % save2csv(u, ul, descriptions, prefix);
         csvFlexSave(prefix, u, ul, descriptions);
     end
+
+    u = cell2mat(u(:));
+    ul = cell2mat(ul(:));
 end

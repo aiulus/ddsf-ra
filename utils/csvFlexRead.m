@@ -9,8 +9,12 @@
 % This function reads a CSV file saved with `csvFlexSave` and extracts individual
 % sequences as numeric arrays.
 
-function [data, sequenceNames] = csvFlexRead(filename)
-    % Check if file exists
+function [data, configs] = csvFlexRead(filename)
+
+    if nargin < 1 || isempty(filename) || ~ischar(filename)
+        error('Filename must be a non-empty string.');
+    end
+
     if ~isfile(filename)
         error('The file %s does not exist.', filename);
     end
@@ -27,27 +31,15 @@ function [data, sequenceNames] = csvFlexRead(filename)
     catch
         error('Error resolving full path for the file. Verify the input filename.');
     end
-    
+
     % Read the CSV file into a table
     try
-        opts = detectImportOptions(fullPath, 'Delimiter', ',');
-        % Set variable types to 'char' to handle text data
-        opts = setvartype(opts, 'char');
-        dataTable = readtable(fullPath, opts);
+        data = readtable(filename, 'Delimiter', ',');
     catch err
         error('Error reading the CSV file: %s', err.message);
     end
-    
-    % Extract sequence names (column headers)
-    sequenceNames = dataTable.Properties.VariableNames;
-    
-    % Convert each column into a numeric array
-    nSequences = numel(sequenceNames);
-    data = cell(1, nSequences);
-    for i = 1:nSequences
-        columnData = str2double(dataTable.(sequenceNames{i}));
-        data{i} = columnData(~isnan(columnData)); % Remove NaN padding
-    end
-    
-    fprintf('Successfully retrieved %d sequences from %s\n', nSequences, filename);
+
+    %data = data(:, 1:end-1);
+    configs = table2cell(data(:, end));
+    data = data(:, 1:end-1);
 end
