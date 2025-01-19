@@ -47,7 +47,7 @@ end
 function gridPlot(mode, vals1, vals2, filename)
     switch mode
         case 'ddsf'
-            
+
         case 'deepc'
     end
 end
@@ -95,3 +95,83 @@ function plotdata = getDataDDSF(data, configs, m, T_sim)
     plotUL = reshape(cell2mat(plotUL), T_sim, []).';
     plotdata = struct('u', plotU, 'ul', plotUL, 'configurations', configs.');
 end
+
+function gridPlotDDSF(filename, val1, val2, val3, val4)    
+    sysname = filename2sysname(filename);
+    sys = sysInit(sysname);    
+
+    u_hist = val1;
+    ul_hist = val2;
+    time = 0:size(u_hist, 2) - 1;
+
+    y_hist = val3;
+    yl_hist = val4;
+        
+    figure;
+    m = size(u_hist, 1);
+    tiledlayout(m, 1); 
+    
+    % Plot learning vs safe inputs
+    for i = 1:m
+        nexttile;
+        stairs(0:size(ul_hist, 2) - 1, ul_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
+        hold on;
+        stairs(0:size(u_hist, 2) - 1, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+    
+        bounds = sys.constraints.U(i, :);
+    
+        % Plot boundaries
+        if bounds(1) ~= -inf
+            plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');
+        end
+        if bounds(2) ~= inf
+            plot(time, bounds(2) * ones(size(time)), 'k--', 'DisplayName', 'Upper Bound');
+        end
+    
+        title(sprintf('Learning vs Safe Input %d', i));
+        xlabel('t');
+        ylabel(sprintf('Input %d', i));
+        grid on;
+        legend show;
+        hold off;
+    end        
+    sgtitle('Learning Inputs vs. Safe Inputs');
+    saveas(gcf, strcat(base_filename, '_inputs.png'));
+    matlab2tikz(strcat(base_filename, '_inputs.tex'));
+    close(gcf); 
+
+    figure;
+    p = size(y_hist, 1);
+    tiledlayout(p, 1); % Combine all inputs into a single layout
+
+    %% TODO
+    for i = 1:p
+        nexttile; hold on;
+        plot(time, y_hist(i, :), 'k', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
+        bounds = sys.constraints.Y(i, :);
+    
+        % Plot boundaries
+        if bounds(1) ~= -inf
+            plot(time, bounds(1) * ones(size(time)), 'b--', 'DisplayName', 'Lower Bound');
+        end
+        if bounds(2) ~= inf
+            plot(time, bounds(2) * ones(size(time)), 'r--', 'DisplayName', 'Upper Bound');
+        end
+        if lookup.opt_params.target_penalty
+            pi = sys.params.target(i);
+            plot(time, pi * ones(size(time)), 'g--', 'DisplayName', 'Target');
+        end
+    
+        title(sprintf('System Output %d', i));
+        xlabel('t');
+        ylabel(sprintf('Output %d', i));
+        grid on;
+        legend show;
+        hold off;
+    end
+    sgtitle("Resulting Outputs");
+    saveas(gcf, strcat(base_filename, '_outputs.png'));
+    matlab2tikz(strcat(base_filename, '_outputs.tex'));
+    close(gcf); 
+end
+
