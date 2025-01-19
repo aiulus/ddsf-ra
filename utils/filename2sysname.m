@@ -1,7 +1,7 @@
 function sysname = filename2sysname(filename)
     parts = split(filename, '-');
 
-    if numel(parts) >= 5
+    if numel(parts) >= 6
         % Extract the substring between the fourth and fifth hyphens
         sysname = parts{5};
     else

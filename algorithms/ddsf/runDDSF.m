@@ -1,4 +1,4 @@
-function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constraints, toggle_plot)
+function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constraints, R, toggle_plot)
     if nargin < 6
         scale_constraints = 1;
     end
@@ -31,7 +31,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
                         'solver_type', 'o', ...
                         'target_penalty', false, ...    
                         'init', true, ... % Encode initial condition
-                        'R', 1 ...
+                        'R', 0.05 ...
                        );
     
     % Initialize the system
@@ -44,6 +44,10 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     if T_ini == -1 || N == -1
         T_ini = sys.config.T_ini;
         N = sys.config.N;
+    end
+
+    if R ~= -1
+        opt_params.R = R;
     end
     
     
@@ -90,6 +94,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
             zeros(dims.m, T_sim).'].', ... 
             'y', [y_d(:, 1:T_ini).'; ...
             zeros(dims.p, T_sim).'].', ... 
+            'yl', zeros(dims.p, T_sim), ...
             'ul', zeros(dims.m, lookup.config.N, T_sim), ...
             'ul_t', zeros(dims.m, T_sim), ...
             'loss', zeros(2, T_ini + T_sim) ...
@@ -111,28 +116,28 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     
         u_ini = logs.u(:, (t - T_ini):(t-1));
         y_ini = logs.y(:, (t - T_ini):(t-1));
-        traj_ini = [u_ini; y_ini];
-        
-        %fprintf("Submitting u_l with value: "); disp(u_l);
-        %if (t - T_ini - T_d) < 1
-        %    ul_t = 0;
-        %else 
-        %    ul_t = u_l(:, t - T_ini - T_d);
-        %end    
+        traj_ini = [u_ini; y_ini]; 
     
         [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini);
-        %[u_opt, y_opt] = singleVarOptDDSF(lookup, u_l(:, 1:N), traj_ini);
+        
         loss_t = get_loss(lookup, ul_t, u_opt, y_opt);
-        %fprintf("Received optimal values u_opt = %d, y_opt = %d\n", value(u_opt), value(y_opt));
+
     
         u_next = u_opt(:, 1 + T_ini);
         y_next = y_opt(:, 1 + T_ini);
-        %fprintf("Storing first optimal values u_opt[1] = %d, y_opt[1] = %d\n", value(u_opt(:, 1)), value(y_opt(:, 1)));
+        
         
         logs.ul(:, :, t) = u_l;
         logs.u(:, t) = u_next;
         logs.y(:, t) = y_next;
         logs.loss(:, t) = loss_t;
+
+        try
+            yl_next = dataBasedU2Y(ul_t, logs.u(:, t-1),logs.y(:, t-1), u_d, y_d);
+            logs.yl(:, t-T_ini) = yl_next;
+        catch ME
+            warning('Failed to execute dataBasedU2Y at time step %d: %s', t-T_ini, ME.message);
+        end
     
         % Add recursively feasible points to the safe terminal set
         lookup.sys.S_f.u_eq = [lookup.sys.S_f.u_eq, u_next];

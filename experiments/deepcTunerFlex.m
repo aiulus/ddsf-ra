@@ -1,3 +1,4 @@
+% TODO: FIX NAMING BUG
 function [u, y, descriptions] = deepcTunerFlex(mode, systype, T_sim, toggle_save, varargin)
     % Default parameters
     max_tries = 5;
@@ -39,7 +40,7 @@ function [u, y, descriptions] = deepcTunerFlex(mode, systype, T_sim, toggle_save
     % parfor (i = 1:nruns, feature('numcores')) % Parallelize if possible
     for i = 1:nruns 
         fprintf('Trying parameter configuration %d / %d\n', i, nruns);
-        try
+        try            
             [u{i}, y{i}, descriptions{i}] = executeRun(systype, T_sim, configurations{i}, max_tries);
         catch ME
             fprintf('Configuration %d failed: %s\n', i, ME.message);

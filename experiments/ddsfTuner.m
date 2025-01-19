@@ -1,11 +1,11 @@
-function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
+function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
     % RETURNS -
     %       u -         R^(n_runs x m)
     %       ul -        R^(n_runs x m)
     % descriptions -    n_runs x strings naming the respective parameter
     %                   configuration
-
-    max_tries = 15;
+    
+    max_tries = 3;
     toggle_plot = false;
     
     if nargin < 4
@@ -22,7 +22,9 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
         'constraints', [1e+8, 0.1, 0.5, 1.5, 2, 10, 100], ...
         'mixed', struct( ...
         'nt', [repelem([1; 2], 4), repmat(5:5:20, 1, 2)'], ...
-        'constr', [1e+8, 0.1, 0.5, 1.5, 2]) ...
+        'constr', [1e+8, 0.1, 0.5, 1.5, 2], ...
+        'R', [1e-4, 1e-3,0.01, 0.1, 1, 10, 100, 1e+4, 1e+8] ...
+        ) ...
         );
     
     switch lower(mode)
@@ -34,12 +36,13 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
             nruns = max(size(values));
         case 'mixed'
             values = vals.mixed;
-            nruns = max(size(values.nt)) * max(size(values.constr));
+            nruns = max(size(values.nt)) * max(size(values.constr)) * max(size(values.R));
         otherwise
             error("The provided tuner mode isn't supported.");
     end
     
     u = cell(1, nruns); ul = cell(1, nruns); descriptions = cell(1, nruns);
+    y = cell(1, nruns); yl = cell(1, nruns);
     
     output_dir = fullfile('..', 'outputs', 'plots', 'ddsf_tuner');
     if ~exist(output_dir, 'dir')
@@ -48,7 +51,7 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
     
     switch mode
         case {'NvsTini', 'nt'}
-            constraint_scaler = 1;
+            constraint_scaler = 1; R = -1;
             tic;
             for i=1:nruns
                 T_ini_i = values(i, 1);
@@ -61,11 +64,20 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
                 end
                 for k=1:max_tries
                     try
-                        [~, ~, logs] = runDDSF(systype, T_sim, N_i, T_ini_i, constraint_scaler, toggle_plot);
+                        [~, ~, logs] = runDDSF(systype, T_sim, N_i, T_ini_i, constraint_scaler, R, toggle_plot);
+    
                         u_i = logs.u; % m x T_sim
                         ul_i = logs.ul_t; % m x T_sim
+    
                         u{i} = u_i;
                         ul{i} = ul_i;
+    
+                        y_i = logs.y;
+                        yl_i = logs.yl;
+    
+                        y{i} = y_i;
+                        yl{i} = yl_i;
+    
                         descriptions{i} = d_i;
                         break;
                     catch ME
@@ -78,7 +90,7 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
             T_ini = -1; N = -1;
             tic;
             for i=1:nruns
-                constr_i = values(i);
+                constr_i = values(i); R = -1;
                 d_i = sprintf('ddsfTuner-%s-scalingfactor%d-%s-T%d', mode, values(i), systype, T_sim);
                 fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', i, nruns);
                 if i > 1
@@ -87,11 +99,20 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
                 end
                 for k=1:max_tries
                     try
-                        [~, ~, logs] = runDDSF(systype, T_sim, N, T_ini, constr_i, toggle_plot);
+                        [~, ~, logs] = runDDSF(systype, T_sim, N, T_ini, constr_i, R, toggle_plot);
+    
                         u_i = logs.u; % m x T_sim
                         ul_i = logs.ul_t; % m x T_sim
+    
                         u{i} = u_i;
                         ul{i} = ul_i;
+    
+                        y_i = logs.y;
+                        yl_i = logs.yl;
+    
+                        y{i} = y_i;
+                        yl{i} = yl_i;
+    
                         descriptions{i} = d_i;
                     catch ME
                         fprintf(['Attempt to run runDDSF.m (conf.: %s) failed at: %s\n ' ...
@@ -99,46 +120,61 @@ function [u, ul, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_save)
                     end
                 end
             end
-        case 'mixed'            
+        case 'mixed'
             nt = values.nt;
             constr = values.constr;
+            R = values.R;
             tic;
             for i=1:max(size(nt))
                 T_ini_i = nt(i, 1);
                 N_i = nt(i, 2);
                 for j=1:max(size(constr))
-                    constr_j = constr(j);
-                    d_i = sprintf('ddsfTuner-%s-Tini%d-N%d-constr_scale%d-%s-T%d', mode, T_ini_i, N_i,constr_j, systype, T_sim);
-                    t = (i-1)*max(size(nt))+j;
-                    fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', t, nruns);
-                    if t > 1
-                        elapsed = toc;
-                        timeEstimator(elapsed, t, nruns);
-                    end
-                    for k=1:max_tries
-                        try
-                            [~, ~, logs] = runDDSF(systype, T_sim, N_i, T_ini_i, constr_j, toggle_plot);
-                            u_i = logs.u; % m x T_sim
-                        ul_i = logs.ul_t; % m x T_sim
-                        u{i} = u_i;
-                        ul{i} = ul_i;
-                        descriptions{i} = d_i;
-                            break;
-                        catch ME
-                            fprintf(['Attempt to run runDDSF.m (conf.: %s) failed at: %s\n ' ...
-                                'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);
+                    constr_j = constr(j);                    
+                    for l=1:max(size(R))
+                        R_l = R(l);
+                        d_i = sprintf('ddsfTuner-%s-Tini%d-N%d-constr_scale%d-R%s-systype-%s-T%d', mode, T_ini_i, N_i,constr_j, R_l, systype, T_sim);
+                        t = (i-1)*max(size(constr))+(j-1)*max(size(R))+l;
+                        fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', t, nruns);
+                        if t > 1
+                            elapsed = toc;
+                            timeEstimator(elapsed, t, nruns);
+                        end                        
+                        for k=1:max_tries
+                            try
+                                [~, ~, logs] = runDDSF(systype, T_sim, N_i, T_ini_i, constr_j, R_l, toggle_plot);
+    
+                                u_i = logs.u; % m x T_sim
+                                ul_i = logs.ul_t; % m x T_sim
+    
+                                u{i} = u_i;
+                                ul{i} = ul_i;
+    
+                                y_i = logs.y;
+                                yl_i = logs.yl;
+    
+                                y{i} = y_i;
+                                yl{i} = yl_i;
+    
+                                descriptions{i} = d_i;
+                                break;
+                            catch ME
+                                fprintf(['Attempt to run runDDSF.m (conf.: %s) failed at: %s\n ' ...
+                                    'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);
+                            end
                         end
                     end
                 end
             end
     end
-
+    
     if toggle_save
-        prefix = sprintf('ddsfTuner-%s-%s-T%d', mode, systype, T_sim);
+        prefix_u = sprintf('U-ddsfTuner-%s-%s-T%d', mode, systype, T_sim);
+        prefix_y = sprintf('Y-ddsfTuner-%s-%s-T%d', mode, systype, T_sim);
         % save2csv(u, ul, descriptions, prefix);
-        csvFlexSave(prefix, u, ul, descriptions);
+        csvFlexSave(prefix_u, u, ul, descriptions);
+        csvFlexSave(prefix_y, y, yl, descriptions);
     end
-
+    
     u = cell2mat(u(:));
     ul = cell2mat(ul(:));
 end
