@@ -23,18 +23,20 @@ end
 function plotdata = getDataDeePC(data, m, p, T_sim)
     % TODO: Hash with configs
     nruns = size(data,1);
-    t = 1:T_sim;
-    plotU = {}; plotY = {};
+    %t = 1:T_sim;
+    plotU = cell(1, nruns); plotY = cell(1, nruns);
     for i=1:nruns
         row_i = data(i, :);
         for ud=1:m
-            u_indices_d = ud + (t-1)*m;            
-            plotU{end} = u_indices_d;
+            % u_indices_d = ud + (t-1)*m;            
+            % plotU{i} = row_i(u_indices_d);            
         end
+        plotU{i} = reshape(row_i(reshape((0:(T_sim-1))' * m, [], 1) + (1:m)), T_sim, m)';
         for yd=1:p
-            y_indices_d = yd + (t-1)*p + T_sim*m;  
-            plotY{end} = y_indices_d;
+            % y_indices_d = yd + (t-1)*p + T_sim*m;  
+            % plotY{i} = row_i(y_indices_d);            
         end
+        plotY{i} = reshape(row_i(T_sim * m + reshape((0:(T_sim-1))' * p, [], 1) + (1:p)), T_sim, p)';
     end
     plotdata = struct('u', plotU, 'y', plotY);
 end
@@ -48,7 +50,7 @@ function plotdata = getDataDDSF(m, T_sim)
         for ud=1:m
             u_indices_d = ud + (t-1)*m;          
             ul_indices_d = uld + (t-1)*m + T_sim*m;  
-            plotdata{end} = [u_indices_d,  ul_indices_d];
+            plotdata{end} = [row_i(u_indices_d),  row_i(ul_indices_d]);
         end
     end
 
