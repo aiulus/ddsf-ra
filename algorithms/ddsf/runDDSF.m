@@ -35,11 +35,11 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
                        );
     
     % Initialize the system
-    sys = systemsDDSF(run_options.system_type, opt_params.discretize); 
+    % fprintf('\n-------------------- USING SYSNAME: %s --------------------\n', run_options.system_type);
+    sys = systemsDDSF(run_options.system_type, opt_params.discretize);     
     sys.constraints.U = sys.constraints.U .* scale_constraints;
     sys.constraints.Y = sys.constraints.Y .* scale_constraints;
     dims = sys.dims;
-    opt_params.R = opt_params.R * eye(dims.m);
 
     if T_ini == -1 || N == -1
         T_ini = sys.config.T_ini;
@@ -49,6 +49,8 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     if R ~= -1
         opt_params.R = R;
     end
+
+    opt_params.R = opt_params.R * eye(dims.m);
     
     
     % Create struct object 'lookup' for central and extensive parameter passing.
@@ -73,6 +75,9 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     [u_d, y_d, ~, ~, ~] = gendataDDSF(lookup); 
     
     [H_u, H_y] = hankelDDSF(u_d, y_d, lookup);
+
+    H_u_2 = construct_hankel(u_d, 2);
+    H_y_2 = construct_hankel(y_d, 2);
      
     lookup.H = [H_u; H_y];
     lookup.H_u = H_u; lookup.H_y = H_y;
@@ -132,8 +137,8 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
         logs.y(:, t) = y_next;
         logs.loss(:, t) = loss_t;
 
-        try
-            yl_next = dataBasedU2Y(ul_t, logs.u(:, t-1),logs.y(:, t-1), u_d, y_d);
+        try            
+            yl_next = dataBasedU2Y(ul_t, logs.u(:, t-1),logs.y(:, t-1), H_u_2, H_y_2);
             logs.yl(:, t-T_ini) = yl_next;
         catch ME
             warning('Failed to execute dataBasedU2Y at time step %d: %s', t-T_ini, ME.message);

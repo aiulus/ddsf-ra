@@ -1,55 +1,60 @@
-function batchPlot(mode, filename, m , p)
+function batchPlot(filename, m , p)
     [data, descriptions] = csvFlexRead(filename);
     
     T_sim = size(data, 2) / (m + p);
     nruns = numel(unique(descriptions));
+
+    mode = filename2param(filename, 'alg');
+    sysname = filename2param(filename, 'sys');
     
     switch mode
-        case 'ddsf'
-            plotdata = getDataDDSF(data, descriptions, m, T_sim);       
-                
-            if filename(1) == 'U'
-                plotU = plotdata.u; plotUL = plotdata.ul;
-                for i=1:nruns
-                    prefix = string(descriptions(i));
-                    suffix = sprintf('-run%d', i);
-                    config = strcat(prefix, suffix);
-                    u_vals_i = []; ul_vals_i = [];
-                    lower = (i -1)*T_sim + 1; upper = i*T_sim;
-                    for d=1:m
-                        u_i_d = plotU(d, lower:upper);
-                        u_vals_i = [u_vals_i; u_i_d];
-                        ul_i_d = plotUL(d, lower:upper);
-                        ul_vals_i = [ul_vals_i; ul_i_d];
-                    end
-                    gridPlot(u_vals_i, config, ul_vals_i);
+        case {'ddsf', 'u-ddsf'}
+            sys = systemsDDSF(sysname, 0);
+            plotdata = getDataDDSF(data, descriptions, m, T_sim);                    
+
+            plotU = plotdata.u; plotUL = plotdata.ul;
+            for i=1:nruns
+                prefix = string(descriptions(i));
+                suffix = sprintf('-run%d', i);
+                configname = strcat(prefix, suffix);
+                u_vals_i = []; ul_vals_i = [];
+                lower = (i -1)*T_sim + 1; upper = i*T_sim;
+                for d=1:m
+                    u_i_d = plotU(d, lower:upper);
+                    u_vals_i = [u_vals_i; u_i_d];
+                    ul_i_d = plotUL(d, lower:upper);
+                    ul_vals_i = [ul_vals_i; ul_i_d];
                 end
+                gridPlot(mode, configname, sys, u_vals_i, ul_vals_i);
             end
-            if filename(1) == 'Y'
-                plotY = plotdata.u; plotYL = plotdata.yl;
-                for i=1:nruns
-                    prefix = string(descriptions(i));
-                    suffix = sprintf('-run%d', i);
-                    config = strcat(prefix, suffix);
-                    y_vals_i = []; yl_vals_i = [];
-                    lower = (i -1)*T_sim + 1; upper = i*T_sim;
-                    for d=1:p
-                        y_i_d = plotU(d, lower:upper);
-                        y_vals_i = [y_vals_i; y_i_d];
-                        yl_i_d = plotUL(d, lower:upper);
-                        yl_vals_i = [yl_vals_i; yl_i_d];
-                    end
-                    gridPlot('ddsf', filename, y_vals_i, yl_vals_i);
+            
+        case 'y-ddsf'
+            sys = systemsDSF(sysname, 0);
+            plotdata = getDataDDSF(data, descriptions, m, T_sim);  
+            plotY = plotdata.u; plotYL = plotdata.yl;
+            for i=1:nruns
+                prefix = string(descriptions(i));
+                suffix = sprintf('-run%d', i);
+                configname = strcat(prefix, suffix);
+                y_vals_i = []; yl_vals_i = [];
+                lower = (i -1)*T_sim + 1; upper = i*T_sim;
+                for d=1:p
+                    y_i_d = plotY(d, lower:upper);
+                    y_vals_i = [y_vals_i; y_i_d];
+                    yl_i_d = plotYL(d, lower:upper);
+                    yl_vals_i = [yl_vals_i; yl_i_d];
                 end
-            end
+                gridPlot(mode, configname, sys, y_vals_i, yl_vals_i);
+            end      
     
         case 'deepc'
+            sys = sysInit(sysname);
             plotdata = getDataDeePC(data, descriptions, m, p, T_sim);
             plotU = plotdata.u; plotY = plotdata.y;
             for i=1:nruns
                 prefix = string(descriptions(i));
                 suffix = sprintf('-run%d', i);
-                config = strcat(prefix, suffix);
+                configname = strcat(prefix, suffix);
                 u_vals_i = []; y_vals_i = [];
                 %lower = (i -1)*T_sim + 1; upper = i*T_sim;
                 lower = 1; upper = T_sim;
@@ -61,24 +66,23 @@ function batchPlot(mode, filename, m , p)
                     y_i_d = plotY(yd, lower:upper);
                     y_vals_i = [y_vals_i; y_i_d];
                 end
-                gridPlot('deepc', config, u_vals_i, y_vals_i);
+                gridPlot('deepc', configname, sys, u_vals_i, y_vals_i);
             end
     end
 end
 
-function gridPlot(mode, filename, varargin)
+function gridPlot(mode, configname, sys, varargin)
     switch lower(mode)
-        case 'ddsf'
-            if nargin < 6
-                error('For DDSF mode, you must provide: filename, u_hist, ul_hist, y_hist, yl_hist.');
-            end
-            
+        case {'u-ddsf', 'ddsf'}            
             u_hist = varargin{1};
             ul_hist = varargin{2};
+            
+            gridPlotDDSF(mode, configname, sys, u_hist, ul_hist);
+        case 'y-ddsf'            
             y_hist = varargin{3};
             yl_hist = varargin{4};
             
-            gridPlotDDSF(filename, u_hist, ul_hist, y_hist, yl_hist);
+            gridPlotDDSF(mode, configname, sys, y_hist, yl_hist);
             
         case 'deepc'
             if nargin < 4
@@ -88,7 +92,7 @@ function gridPlot(mode, filename, varargin)
             u_hist = varargin{1};
             y_hist = varargin{2};
             
-            gridPlotDeePC(filename, u_hist, y_hist);
+            gridPlotDeePC(configname, sys, u_hist, y_hist);
             
         otherwise
             error('Invalid mode. Supported modes are ''ddsf'' and ''deepc''.');
@@ -146,12 +150,14 @@ function plotdata = getDataDDSF(data, configs, m, T_sim)
     plotdata = struct('u', plotU, 'ul', plotUL, 'y', plotY, 'yl', plotYL, 'configurations', configs.');
 end
 
-function gridPlotDDSF(filename, val1, val2)
-    sysname = filename2sysname(filename);
-    sys = sysInit(sysname);
-    plotmode = (filename(1) == 'U');
+function gridPlotDDSF(plotmode, prefix, sys, val1, val2)
+    % Create output directory
+    output_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'outputs', 'plots');
+    if ~exist(output_dir, 'dir')
+        mkdir(output_dir);
+    end
     
-    if plotmode
+    if startsWith(plotmode, 'u') || startsWith(plotmode, 'd') 
         u_hist = val1;
         ul_hist = val2;
         time = 0:size(u_hist, 2) - 1;
@@ -184,10 +190,17 @@ function gridPlotDDSF(filename, val1, val2)
             hold off;
         end
         sgtitle('Learning Inputs vs. Safe Inputs');
-        saveas(gcf, strcat(filename, '_inputs.png'));
-        matlab2tikz(strcat(filename, '_inputs.tex'));
+        % Save plots
+        plot_file_base = fullfile(output_dir, prefix);
+        saveas(gcf, strcat(plot_file_base, '_plot.png')); % Save PNG
+        try
+            cleanfigure();
+            matlab2tikz(strcat(plot_file_base, '_plot.tex'), 'standalone', true);
+        catch ME
+            warning(ME.identifier,'%s', ME.message);
+        end
         close(gcf);
-    else
+    elseif startsWith(plotmode, 'y')
         y_hist = val1;
         yl_hist = val2;
         time = 0:size(y_hist, 2) - 1;
@@ -223,16 +236,23 @@ function gridPlotDDSF(filename, val1, val2)
             hold off;
         end
         sgtitle("Resulting Outputs");
-        saveas(gcf, strcat(filename, '_outputs.png'));
-        matlab2tikz(strcat(filename, '_outputs.tex'));
+        plot_file_base = fullfile(output_dir, prefix);
+        saveas(gcf, strcat(plot_file_base, '_plot.png')); % Save PNG
+        try
+            cleanfigure();
+            matlab2tikz(strcat(plot_file_base, '_plot.tex'), 'standalone', true);
+        catch ME
+            warning(ME.identifier,'%s', ME.message);
+        end
         close(gcf);
     end
 end
 
-function gridPlotDeePC(filename, val1, val2)
-    sysname = filename2sysname(filename);
-    % fprintf('Using sysname: %s', sysname);
-    sys = sysInit(sysname);      
+function gridPlotDeePC(prefix, sys, val1, val2)
+    output_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'outputs', 'plots');
+    if ~exist(output_dir, 'dir')
+        mkdir(output_dir);
+    end   
 
     u_hist = val1;
     y_hist = val2;
@@ -260,9 +280,15 @@ function gridPlotDeePC(filename, val1, val2)
         grid on; legend show; hold off;
     end
     sgtitle("Control inputs over time");
-    saveas(gcf, strcat(filename, '_outputs.png'));
-    %matlab2tikz(strcat(filename, '_outputs.tex'));
-    close(gcf); % Close the figure to prevent display
+    plot_file_base = fullfile(output_dir, prefix);
+    saveas(gcf, strcat(plot_file_base, '_plot.png')); % Save PNG
+    try
+        cleanfigure();
+        matlab2tikz(strcat(plot_file_base, '_plot.tex'), 'standalone', true);
+    catch ME
+        warning(ME.identifier,'%s', ME.message);
+    end
+    close(gcf);
 
     figure;
     m = size(u_hist, 1);
@@ -286,7 +312,13 @@ function gridPlotDeePC(filename, val1, val2)
         grid on; legend show; hold off;
     end
     sgtitle("Control Inputs Over Time");
-    saveas(gcf, strcat(filename, '_inputs.png'));
-    %matlab2tikz(strcat(filename, '_inputs.tex'));
-    close(gcf); 
+    plot_file_base = fullfile(output_dir, prefix);
+    saveas(gcf, strcat(plot_file_base, '_plot.png')); % Save PNG
+    try
+        cleanfigure();
+        matlab2tikz(strcat(plot_file_base, '_plot.tex'), 'standalone', true);
+    catch ME
+        warning(ME.identifier,'%s', ME.message);
+    end
+    close(gcf);
 end

@@ -4,13 +4,13 @@ function param = filename2param(filename, mode)
 
     switch lower(mode)
         case 'sys'
-            pattern = '-systype-(?<name>[^-]+)-';
+            pattern = '-systype-(?<name>[\w_]+)-';
         case 'alg'
             if startsWith(filename, 'U-ddsf')
-                param = 'ddsf';
+                param = 'u-ddsf';
                 return;
             elseif startsWith(filename, 'Y-ddsf')
-                param = 'ddsf';
+                param = 'y-ddsf';
                 return;
             elseif startsWith(filename, 'ddsf')
                 param = 'ddsf';
@@ -28,25 +28,27 @@ function param = filename2param(filename, mode)
         case 'n'
             pattern = '-N(?<value>\d+)-';
         case 'constr'
-            % pattern = '-constr_scale(?<value>\d+)-';
             pattern = '-constr_scale(?<value>[\d\.eE+-]+)-';
         case 'r'
             pattern = '-R(?<value>\d+)-';
         case 't'
-            pattern = '-T(?<value>\d+)-';
+            pattern = '-T(?<value>\d+)';
         otherwise
             error('Unsupported mode: %s. Valid modes are {alg, Tini, N, constr, R, T}.', mode);
     end
-    
-    %match = regexp(filename, pattern, 'names');
-    
+
+    % Match and extract the parameter
     if exist('pattern', 'var')
         match = regexp(filename, pattern, 'names');
-        if isempty(match) || ~isfield(match, 'value')
+        if isempty(match)
             warning('No match found for mode "%s" in the provided string.', mode);
-            param = []; 
+            param = [];
         else
-            param = str2double(match.value);
+            if isfield(match, 'name')
+                param = match.name; % Return string for 'sys' mode
+            elseif isfield(match, 'value')
+                param = str2double(match.value); % Return numeric value for others
+            end
         end
     end
 end

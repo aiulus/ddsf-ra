@@ -10,7 +10,6 @@
 % sequences as numeric arrays.
 
 function [data, configs] = csvFlexRead(filename)
-
     if nargin < 1 || isempty(filename) || ~ischar(filename)
         error('Filename must be a non-empty string.');
     end

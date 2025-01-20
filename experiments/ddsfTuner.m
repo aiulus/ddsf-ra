@@ -63,7 +63,7 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
                 fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', i, nruns);
                 if i > 1
                     elapsed = toc;
-                    %timeEstimator(elapsed, i, nruns);
+                    timeEstimator(elapsed, i, nruns);
                 end
                 for k=1:max_tries
                     try
@@ -171,7 +171,7 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
                     constr_j = constr(j);
                     for l=1:max(size(R))
                         R_l = R(l);
-                        d_i = sprintf('ddsfTuner-%s-Tini%d-N%d-constr_scale%d-R%s-systype-%s-T%d', mode, T_ini_i, N_i,constr_j, R_l, systype, T_sim);
+                        d_i = sprintf('ddsfTuner-%s-Tini%d-N%d-constr_scale%d-R%d-systype-%s-T%d', mode, T_ini_i, N_i,constr_j, R_l, systype, T_sim);
                         t = (i-1)*max(size(constr))+(j-1)*max(size(R))+l;
                         fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', t, nruns);
                         if t > 1
@@ -207,8 +207,8 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
     end
     
     if toggle_save
-        prefix_u = sprintf('U-ddsfTuner-%s-%s-T%d', mode, systype, T_sim);
-        prefix_y = sprintf('Y-ddsfTuner-%s-%s-T%d', mode, systype, T_sim);
+        prefix_u = sprintf('U-ddsfTuner-systype-%s-mode-%s-T%d', systype, mode, T_sim);
+        prefix_y = sprintf('Y-ddsfTuner-systype-%s-mode-%s-T%d', systype, mode, T_sim);
         % save2csv(u, ul, descriptions, prefix);
         csvFlexSave(prefix_u, u, ul, descriptions);
         csvFlexSave(prefix_y, y, yl, descriptions);

@@ -6,11 +6,11 @@ function sys = systemsDDSF(sys_type, discretize)
             params = struct( ...
                 'mass', 0.2, ... % Quadrotor mass [kg]
                 'g', 9.81, ... % Gravity constant
-                'dt', 0.1, ... % Time step for discretization 
+                'dt', 0.1, ... % Time step for discretization
                 'u_min', (100)*(-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
                 'u_max', (100)*[1; 0.1; 0.1; 0.1], ... % Maximum force
                 'y_min', (100)*(-1)*[0.2; 0.2; 0.2; 1; 1; 1], ... % Output constraints
-                'y_max', (100)*[0.2; 0.2; 0.2; 1; 1; 1], ...  % Output constraints                          
+                'y_max', (100)*[0.2; 0.2; 0.2; 1; 1; 1], ...  % Output constraints
                 'I', repmat(10^(-3), 3, 1), ... % Moment of inertia in x, y, z
                 'p', 6, ... % Output dimension (y € R^p)
                 'm', 4, ... % Input dimension (u € R^m)
@@ -18,40 +18,40 @@ function sys = systemsDDSF(sys_type, discretize)
                 'x_ini', zeros(12, 1), ...
                 'target', ones(6, 1) ... % TODO: Current value is just a placeholder
                 );
-
+    
             run_config = struct( ...
                 'T', 214, ... % Data length
                 'T_ini', 2, ... % Initial trajectory length
                 'N', 80, ... % Prediction horizon
                 's', 2 ... % Conservatism
-            );
-
+                );
+    
             %% State-space Matrices
             % Define state-space matrices as sparse for efficiency
             A_i = [1, 2, 3, 10, 11, 12, 8, 7];
             A_j = [4, 5, 6, 7, 8, 9, 1, 2];
             A_val = [ones(6, 1); params.g; -params.g];
             A = sparse(A_i, A_j, A_val, params.n, params.n);
-
+    
             B_i = [9, 4, 5, 6];
             B_j = [1, 2, 3, 4];
             B_val = [1/params.mass, 1/params.I(1), 1/params.I(2), 1/params.I(3)];
             B = sparse(B_i, B_j, B_val, params.n, params.m);
-
+    
             % Output matrices (position and orientation tracking)
             % Define the indices of x that correspond to y
             indices = [1, 2, 3, 10, 11, 12]; % Indices for ϕ, θ, ψ, x, y, z in x
-            
+    
             % Create C as a sparse matrix
             C = sparse(1:length(indices), indices, 1, length(indices), 12);
-
+    
             D = zeros(6, 4);
-
-        %% Example 2: Mass Spring Dampler
+    
+            %% Example 2: Mass Spring Dampler
         case 'dampler'
             params = struct( ...
-               'dt', 0.1, ... % Sampling time
-                'u_min', -inf, ... 
+                'dt', 0.1, ... % Sampling time
+                'u_min', -inf, ...
                 'u_max', inf, ...
                 'y_min', -5, ...
                 'y_max', 5, ...
@@ -61,26 +61,26 @@ function sys = systemsDDSF(sys_type, discretize)
                 'spring_constant', 1, ...
                 'damping_coeff', 0.2 ...
                 );
-
+    
             dt = params.dt;
             m = params.mass;
             b = params.damping_coeff;
             k = params.spring_constant;
-
+    
             % State-space matrices
             A = [1 dt; -k/m*dt 1 - b/m*dt];
             B = [0; dt/m];
             C = [1 0];
-            D = 0;    
-
+            D = 0;
+    
             run_config = struct( ...
                 'T', 49, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2 ... % Conservatism
-            );
-
-        %% Example 3: Inverted Pendulum
+                );
+    
+            %% Example 3: Inverted Pendulum
         case 'inverted_pendulum'
             params = struct( ...
                 'c_mass', 50, ... % Mass of the cart [kg]
@@ -98,39 +98,39 @@ function sys = systemsDDSF(sys_type, discretize)
                 'x_ini', [0.5; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
                 'state_name', {"Linear Position, Linear Velocity, Angular Position, Angular Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
-
+    
             M = params.c_mass;
             m = params.p_mass;
             I = params.I;
             l = params.l;
             b = params.b;
             g = params.g;
-
+    
             % Compute the state-space matrices
-
+    
             p = I*(M+m)+M*m*l^2; % denominator for the A and B matrices
-
+    
             A = [0      1              0           0;
-                 0 -(I+m*l^2)*b/p  (m^2*g*l^2)/p   0;
-                 0      0              0           1;
-                 0 -(m*l*b)/p       m*g*l*(M+m)/p  0];
+                0 -(I+m*l^2)*b/p  (m^2*g*l^2)/p   0;
+                0      0              0           1;
+                0 -(m*l*b)/p       m*g*l*(M+m)/p  0];
             B = [     0;
-                 (I+m*l^2)/p;
-                      0;
-                    m*l/p];
+                (I+m*l^2)/p;
+                0;
+                m*l/p];
             C = [1 0 0 0;
-                 0 0 1 0];
+                0 0 1 0];
             D = [0;
-                 0];
-
+                0];
+    
             run_config = struct( ...
                 'T', 490, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2 ... % Conservatism
-            );
-
-        %% Example 4: DC Motor
+                );
+    
+            %% Example 4: DC Motor
         case 'dc_motor'
             params = struct( ...
                 'J' , 0.01, ... % Inertia
@@ -146,26 +146,26 @@ function sys = systemsDDSF(sys_type, discretize)
                 'x_ini', [1; 1], ... % y_ini = x_ini(1)
                 'target', 10 ...
                 );
-                        
+    
             b = params.b;
             J = params.J;
             K = params.K;
             R = params.R;
             L = params.L;
-            
+    
             A = [-b/J K/J; -K/L -R/L];
             B = [0; 1/L];
             C = [1 0];
             D = 0;
-
+    
             run_config = struct( ...
                 'T', 49, ... % Data length
                 'T_ini', 15, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2 ... % Conservatism
-            );
-
-        %% Example 5: Cruise Control
+                );
+    
+            %% Example 5: Cruise Control
         case 'cruise_control'
             % System-specific parameters
             params = struct( ...
@@ -177,51 +177,51 @@ function sys = systemsDDSF(sys_type, discretize)
                 'y_min', -200, ... % Output constraint
                 'y_max', 200, ... % Output constraint
                 'target', 0, ... % Reference velocity [m/s]
-                'slack', 1e-2, ... % For relaxation  
+                'slack', 1e-2, ... % For relaxation
                 'x_ini', 0, ... % Currently not used
                 'state_name', {"Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
-
+    
             A = 1 - (params.damping * params.dt) / params.mass;
             B = params.dt / params.mass;
             C = 1;
             D = 0;
-            
+    
             run_config = struct( ...
                 'T', 50, ... % Data length
                 'T_ini', 10, ... % Initial trajectory length
                 'N', 30, ... % Prediction horizon
                 's', 1 ... % Conservatism; cannot exceed dims.m in the way this is used in the current implementation
-            );
-
-        %% Example 6: Adaptive Cruise Control with Time-Delay
+                );
+    
+            %% Example 6: Adaptive Cruise Control with Time-Delay
         case 'acc'
             params = struct( ...
-                            'mc', 1650, ... % Follower car mass [kg]
-                            'vl', 20, ... % Lead car velocity [m/s]
-                            'x_ini', 0.1, ... % Initial distance [km]
-                            'target', 0.2, ... % Target distance [km]
-                            'u_min', -2000, ... % Control input 
-                            'u_max', 2000, ...  % boundaries
-                            'y_min', -1, ... % Distance variation 
-                            'y_max', 1, ...  % boundaries
-                            'dt', 0.2, ... % Sampling time [s]
-                            'Td', 3 ... % Time delay / [dt]
-                           );
-
+                'mc', 1650, ... % Follower car mass [kg]
+                'vl', 20, ... % Lead car velocity [m/s]
+                'x_ini', 0.1, ... % Initial distance [km]
+                'target', 0.2, ... % Target distance [km]
+                'u_min', -2000, ... % Control input
+                'u_max', 2000, ...  % boundaries
+                'y_min', -1, ... % Distance variation
+                'y_max', 1, ...  % boundaries
+                'dt', 0.2, ... % Sampling time [s]
+                'Td', 3 ... % Time delay / [dt]
+                );
+    
             run_config = struct( ...
                 'T', 49, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2 ... % Conservatism
-            );
-
-            A = [0 1; 0 0]; 
+                );
+    
+            A = [0 1; 0 0];
             B = [0; (1/params.mc)];
             C = [1 0];
             D = 0;
-
-        %% Example 7: Ball & Beam
+    
+            %% Example 7: Ball & Beam
         case 'ballNbeam'
             params = struct( ...
                 'm', 0.11, ... % Mass of the ball [kg]
@@ -237,23 +237,23 @@ function sys = systemsDDSF(sys_type, discretize)
                 'y_min', 0, ...
                 'y_max', 1 ... % Must be the same as L
                 );
-
+    
             b21 = - (params.m * params.g * params.d) /(params.L * ...
                 (params.m + (params.J / (params.R^2))));
-
+    
             A = [0 1; 0 0];
             B = [0; b21];
             C = [1 0];
             D = 0;
-
+    
             run_config = struct( ...
                 'T', 490, ... % Data length
                 'T_ini', 1, ... % Initial trajectory length
                 'N', 5, ... % Prediction horizon
                 's', 2 ... % Conservatism
-            );
-
-        %% Example 8: Double Pendulum
+                );
+    
+            %% Example 8: Double Pendulum
         case 'double_pendulum'
             % System-specific parameters
             params = struct( ...
@@ -270,8 +270,8 @@ function sys = systemsDDSF(sys_type, discretize)
                 'u_max', inf, ...
                 'y_min', -inf, ...
                 'y_max', inf ...
-            );
-
+                );
+    
             % Extract parameters for clarity
             M = params.M;
             M1 = params.M1;
@@ -279,7 +279,7 @@ function sys = systemsDDSF(sys_type, discretize)
             L1 = params.L1;
             L2 = params.L2;
             g = params.g;
-
+    
             % State-space matrices
             A = sparse([
                 0, 0, 0, 1, 0, 0;
@@ -289,7 +289,7 @@ function sys = systemsDDSF(sys_type, discretize)
                 0, g*(L1*M1*(M + M1 +M2)+L2*M2*(M+M1))/(M*M1*L1^2), g*M2*(-L1*M+L2*(M+M1))/(M*M1*L1^2), 0, 0, 0;
                 0, -g*M2/(L1*M1), g*(L1*(M1+M2)-L2*M2)/(L1*L2*M1), 0, 0, 0
                 ]);
-
+    
             B = sparse([
                 0;
                 0;
@@ -297,39 +297,39 @@ function sys = systemsDDSF(sys_type, discretize)
                 1/M1;
                 -1/(L1*M);
                 0
-            ]);
-
+                ]);
+    
             C = sparse([
                 1, 0, 0, 0, 0, 0;
                 1, L1, 0, 0, 0, 0;
                 1, L1+L2, L2, 0, 0, 0
-            ]);
-
+                ]);
+    
             D = sparse(zeros(3, 1));
-
+    
             % Runtime configuration
             run_config = struct( ...
                 'T', 300, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 20, ... % Prediction horizon
                 's', 2 ... % Conservatism
-            );
-
-
+                );
+    
+    
     end
-
+    
     if discretize == true
         [A, B, C, D] = discretize_system(A, B, C, D, params.dt);
     end
+    
     % Collect all system properties in a single object
     sys = populate_system_struct(A, B, C, D, params);
     % Parse constraints
     sys = constraint_handler(sys, params);
-     % Perform checks on adherence to assumptions
-    
+    % Perform checks on adherence to assumptions
     sys.config = validate_config(run_config, A, C);
-  end
-
+end
+    
 function config = validate_config(config, A, C)
     if config.N <= config.T_ini
         error("Prediction Horizon (current value: N = %d) must be " + ...
@@ -344,5 +344,5 @@ function config = validate_config(config, A, C)
     min_length = config.N + 2*config.T_ini;
     config.T = (config.T < min_length)*min_length + (config.T >= min_length)*config.T;
 end
-
+    
 

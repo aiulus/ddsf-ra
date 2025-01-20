@@ -35,6 +35,7 @@ function csvFlexSave(prefix, varargin)
     filename = fullfile(output_dir, sprintf('%s.csv', prefix));
     try
         writematrix(d_csv, filename, 'Delimiter', ',', 'WriteMode', 'overwrite');
+        fprintf('File saved to: <PATH TO MATLAB>\DDSF\outputs\data\%s', filename);
     catch matrixME
         fprintf('WRITEMATRIFailed to write data to CSV: %s', matrixME.message);
         try
