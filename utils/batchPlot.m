@@ -22,7 +22,7 @@ function batchPlot(mode, filename, m , p)
                         ul_i_d = plotUL(d, lower:upper);
                         ul_vals_i = [ul_vals_i; ul_i_d];
                     end
-                    gridPlot(u_vals_i, ul_vals_i, config);
+                    gridPlot(u_vals_i, config, ul_vals_i);
                 end
             end
             if filename(1) == 'Y'
@@ -39,7 +39,7 @@ function batchPlot(mode, filename, m , p)
                         yl_i_d = plotUL(d, lower:upper);
                         yl_vals_i = [yl_vals_i; yl_i_d];
                     end
-                    gridPlot('ddsf', config, y_vals_i, yl_vals_i);
+                    gridPlot('ddsf', filename, y_vals_i, yl_vals_i);
                 end
             end
     
@@ -143,7 +143,7 @@ function plotdata = getDataDDSF(data, configs, m, T_sim)
     plotY = reshape(cell2mat(plotY), T_sim, []).';
     plotYL = reshape(cell2mat(plotYL), T_sim, []).';
 
-    plotdata = struct('u', plotU, 'ul', plotUL, 'y', plotY, 'yl', plotYL, configurations', configs.');
+    plotdata = struct('u', plotU, 'ul', plotUL, 'y', plotY, 'yl', plotYL, 'configurations', configs.');
 end
 
 function gridPlotDDSF(filename, val1, val2)
@@ -231,7 +231,7 @@ end
 
 function gridPlotDeePC(filename, val1, val2)
     sysname = filename2sysname(filename);
-    fprintf('Using sysname: %s', sysname);
+    % fprintf('Using sysname: %s', sysname);
     sys = sysInit(sysname);      
 
     u_hist = val1;

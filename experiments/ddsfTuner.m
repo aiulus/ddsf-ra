@@ -5,7 +5,7 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
     % descriptions -    n_runs x strings naming the respective parameter
     %                   configuration
     
-    max_tries = 3;
+    max_tries = 2;
     toggle_plot = false;
     
     if nargin < 4
@@ -13,6 +13,7 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
     end
     
     vals = struct( ...
+        'r', 10.^(-8:1:8), ...
         'NvsTini', [ ...
         1 * ones(6, 1), (5:5:30)'; ...
         2 * ones(6, 1), (5:5:30)'; ...
@@ -28,6 +29,9 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
         );
     
     switch lower(mode)
+        case 'r'
+            values = vals.r;
+            nruns = max(size(values));
         case {'nvstini', 'nt'}
             values = vals.NvsTini;
             nruns = max(size(values));
@@ -50,6 +54,41 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
     end
     
     switch mode
+        case 'r'
+            constraint_scaler = 2; T_ini = -1; N = -1;
+            tic;
+            for i=1:nruns
+                R_i = values(i);
+                d_i = sprintf('ddsfTuner-%s-N%d-Tini-%d-R%d-%s-T%d', mode, N, T_ini, R_i, systype, T_sim);
+                fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', i, nruns);
+                if i > 1
+                    elapsed = toc;
+                    %timeEstimator(elapsed, i, nruns);
+                end
+                for k=1:max_tries
+                    try
+                        [~, ~, logs] = runDDSF(systype, T_sim, N, T_ini, constraint_scaler, R_i, toggle_plot);
+    
+                        u_i = logs.u; % m x T_sim
+                        ul_i = logs.ul_t; % m x T_sim
+    
+                        u{i} = u_i;
+                        ul{i} = ul_i;
+    
+                        y_i = logs.y;
+                        yl_i = logs.yl;
+    
+                        y{i} = y_i;
+                        yl{i} = yl_i;
+    
+                        descriptions{i} = d_i;
+                        break;
+                    catch ME
+                        fprintf(['Attempt to run runDDSF.m (conf.: %s) failed at: %s\n ' ...
+                            'Message: = %s\n. Trying again...'], d_i, ME.stack(1).name, ME.message);
+                    end
+                end
+            end
         case {'NvsTini', 'nt'}
             constraint_scaler = 1; R = -1;
             tic;
@@ -60,7 +99,7 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
                 fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', i, nruns);
                 if i > 1
                     elapsed = toc;
-                    timeEstimator(elapsed, i, nruns);
+                    %timeEstimator(elapsed, i, nruns);
                 end
                 for k=1:max_tries
                     try
@@ -129,7 +168,7 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
                 T_ini_i = nt(i, 1);
                 N_i = nt(i, 2);
                 for j=1:max(size(constr))
-                    constr_j = constr(j);                    
+                    constr_j = constr(j);
                     for l=1:max(size(R))
                         R_l = R(l);
                         d_i = sprintf('ddsfTuner-%s-Tini%d-N%d-constr_scale%d-R%s-systype-%s-T%d', mode, T_ini_i, N_i,constr_j, R_l, systype, T_sim);
@@ -137,8 +176,8 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
                         fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', t, nruns);
                         if t > 1
                             elapsed = toc;
-                            timeEstimator(elapsed, t, nruns);
-                        end                        
+                            %timeEstimator(elapsed, t, nruns);
+                        end
                         for k=1:max_tries
                             try
                                 [~, ~, logs] = runDDSF(systype, T_sim, N_i, T_ini_i, constr_j, R_l, toggle_plot);

@@ -126,8 +126,8 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
             options = sdpsettings('solver', 'OSQP', ...
                   'verbose', verbose, ...             % Detailed solver output
                   'osqp.max_iter', 30000, ...   % Set maximum iterations
-                  'osqp.eps_abs', 1e-5, ...     % Absolute tolerance
-                  'osqp.eps_rel', 1e-5, ...     % Relative tolerance
+                  'osqp.eps_abs', 1e-1, ...     % Absolute tolerance
+                  'osqp.eps_rel', 1e-1, ...     % Relative tolerance
                   'warmstart', 0);             % Disable warm start
         case 'b'
             options = sdpsettings('solver', 'bmibnb', 'verbose', verbose);
