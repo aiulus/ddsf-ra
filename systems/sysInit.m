@@ -1,3 +1,35 @@
+% SYSINIT   Initializes predefined system configurations.
+%
+%    SYS = SYSINIT(SYS_TYPE) returns the state-space representation and
+%    configuration parameters for various predefined dynamic systems. The
+%    function is designed to simplify system setup for control design, 
+%    simulation, and experimentation.
+%
+%    Inputs:
+%       SYS_TYPE   - A string specifying the type of system to initialize.
+%                    Available options include
+%
+%                   'test'              - A basic example system for testing purposes.
+%                   'example0'          - A simple state-space example with predefined matrices.
+%                   'cruise_control'    - A system modeling a vehicle's velocity control.
+%                   'quadrotor'         - A 6-DOF quadrotor model for position and orientation tracking.
+%                   'inverted_pendulum' - An inverted pendulum on a cart for control dynamics.
+%                   'dc_motor'          - A DC motor system modeling electrical and mechanical dynamics.
+%                   'dampler'           - A mass-spring-damper system for vibration analysis.
+%                   'thermostat'        - A single-zone temperature control system.
+%                   'cstr'              - A Continuous Stirred-Tank Reactor for chemical process control.
+%
+%    Outputs:
+%       SYS        - A structure containing:
+%                      - A: State-transition matrix (state-space model).
+%                      - B: Control input matrix.
+%                      - C: Output matrix.
+%                      - D: Feedthrough matrix.
+%                      - params: System-specific parameters (e.g., mass,
+%                        damping, constraints, target states).
+%                      - config: Runtime configuration parameters (e.g., 
+%                        horizon lengths, trajectory lengths, conservatism).
+
 function sys = sysInit(sys_type)
     switch sys_type
         case 'test'

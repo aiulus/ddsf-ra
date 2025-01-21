@@ -14,9 +14,7 @@ function [u, y, descriptions] = deepcTunerFlex(mode, vals, systype, T_sim, toggl
     %   descriptions - Cell array of descriptions for parameter configurations.
 
     % Default value for toggle_save
-    if nargin < 5
-        toggle_save = false;
-    end
+    if nargin < 5, toggle_save = true; end    
 
     % Validate inputs
     validateInputs(mode, vals);

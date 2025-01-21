@@ -1,3 +1,62 @@
+% SYSTEMSDDSF   Initializes predefined system configurations for DDSF.
+%
+%    SYS = SYSTEMSDDSF(SYS_TYPE, DISCRETIZE) returns the state-space
+%    representation and configuration parameters for various predefined
+%    dynamic systems. The function provides a convenient way to set up
+%    systems for control design, simulation, or data-driven safety filter
+%    implementation.
+%
+%    Inputs:
+%       SYS_TYPE   - A string specifying the type of system to initialize.
+%                    Available options are:
+%                      - 'test': Minimal example system for testing.
+%                      - 'example0': Simple state-space model.
+%                      - 'cruise_control': Vehicle velocity control model.
+%                      - 'quadrotor': 6-DOF quadrotor dynamics.
+%                      - 'inverted_pendulum': Cart-pendulum stabilization.
+%                      - 'dc_motor': DC motor electrical-mechanical dynamics.
+%                      - 'dampler': Mass-spring-damper system.
+%                      - 'thermostat': Room temperature control.
+%                      - 'cstr': Continuous stirred-tank reactor (CSTR).
+%       DISCRETIZE - A boolean indicating whether the system should be
+%                    discretized using the sampling time (dt) provided in
+%                    system parameters. Set to true for discrete-time models.
+%
+%    Outputs:
+%       SYS        - A structure containing:
+%                      - A: State-transition matrix (state-space model).
+%                      - B: Control input matrix.
+%                      - C: Output matrix.
+%                      - D: Feedthrough matrix.
+%                      - params: System-specific parameters (e.g., mass,
+%                        damping, inertia, constraints).
+%                      - config: Runtime configuration (e.g., horizon lengths,
+%                        window lengths, conservatism).
+%
+%    Description of Options:
+%       - 'test': A basic 3-state test system with identity dynamics and
+%         example output/input matrices.
+%       - 'example0': A simple dynamic system for testing with known
+%         state evolution matrices.
+%       - 'cruise_control': Models a vehicle's velocity dynamics under
+%         applied force. Outputs include velocity limits and runtime settings.
+%       - 'quadrotor': A detailed model of a quadrotor with translational and
+%         rotational dynamics, including constraints on force and orientation.
+%       - 'inverted_pendulum': Cart-pendulum system modeled for stabilization
+%         control, with constraints on position and angular orientation.
+%       - 'dc_motor': A DC motor model combining electrical and mechanical
+%         dynamics with adjustable input voltage limits.
+%       - 'dampler': Mass-spring-damper system for vibration dynamics, with
+%         tunable mass, damping, and stiffness.
+%       - 'thermostat': Single-zone temperature control for heating systems.
+%       - 'cstr': Chemical process model of a stirred-tank reactor.
+%
+%    Example:
+%       sys = systemsDDSF('quadrotor', true);
+%       % Returns a discretized quadrotor system with state-space matrices.
+%
+%    See also: DISCRETIZE_SYSTEM, POPULATE_SYSTEM_STRUCT, CONSTRAINT_HANDLER.
+
 function sys = systemsDDSF(sys_type, discretize)
     switch sys_type
         %% Example 1: The Quadrotor

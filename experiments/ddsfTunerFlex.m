@@ -14,7 +14,7 @@ function [u, ul, y, yl, descriptions] = ddsfTunerFlex(mode, vals, systype, T_sim
     %   descriptions - Descriptions of each tuning configuration.
 
     % Default value for toggle_save
-    if nargin < 5, toggle_save = false; end
+    if nargin < 5, toggle_save = true; end
 
     % Validate inputs
     validateInputs(mode, vals);
