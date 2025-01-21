@@ -54,7 +54,7 @@ function [u, ul, y, yl, descriptions] = ddsfTunerFlex(mode, vals, systype, T_sim
 
     % Save results if toggle_save is enabled
     if toggle_save
-        saveResults(u, ul, y, yl, descriptions, systype, mode, T_sim);
+        filename = saveResults(u, ul, y, yl, descriptions, systype, mode, T_sim);
     end
 
     % Final output formatting

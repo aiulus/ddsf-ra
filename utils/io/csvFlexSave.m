@@ -1,4 +1,4 @@
-function csvFlexSave(prefix, varargin)
+function filename = csvFlexSave(prefix, varargin)
     %% Saves multiple sequences to a structured CSV file
     % Inputs:
     %   prefix: A string used as the base filename.

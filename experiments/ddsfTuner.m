@@ -212,7 +212,6 @@ function [u, ul, y, yl, descriptions] = ddsfTuner(mode, systype, T_sim, toggle_s
     if toggle_save
         prefix_u = sprintf('U-ddsfTuner-systype-%s-mode-%s-T%d', systype, mode, T_sim);
         prefix_y = sprintf('Y-ddsfTuner-systype-%s-mode-%s-T%d', systype, mode, T_sim);
-        % save2csv(u, ul, descriptions, prefix);
         csvFlexSave(prefix_u, u, ul, descriptions);
         csvFlexSave(prefix_y, y, yl, descriptions);
     end

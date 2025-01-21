@@ -10,7 +10,7 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                 stairs(0:max(size(ul_hist(i, :)))-1, ul_hist(i, :), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
                 hold on;
                 stairs(0:max(size(u_hist(i, :)))-1, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
-                addBounds(time, sys.constraints.U(i, :));
+                addBounds(time, sys.constraints.U(i, :), configname);
                 title(sprintf('Input %d', i)); xlabel('t'); ylabel(sprintf('u[%d]', i)); grid on; legend show;
                 hold off;
             end
@@ -25,7 +25,7 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                 stairs(0:max(size(yl_hist(i, :)))-1, yl_hist(i, :), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
                 hold on;
                 stairs(0:max(size(y_hist(i, :)))-1, y_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
-                addBounds(time, sys.constraints.U(i, :));
+                addBounds(time, sys.constraints.Y(i, :), configname);
                 title(sprintf('Input %d', i)); xlabel('t'); ylabel(sprintf('u[%d]', i)); grid on; legend show;
                 hold off;
             end
