@@ -1,8 +1,19 @@
 function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
+    % reg_params.reg_mode   -   OPTIONS
+    %                       - 'fro': Uses Frobenius norm + Tikhonov
+    %                                regularization on the Hankel matrix
+    %                       - 'svd': Uses SVD-low rank approximation on the
+    %                                Hankel matrix
+    % reg_params.lambda     -  Tikhonov regularization parameter -
+    %                          Only to be used in mode 'fro'
+    % reg_params.epsilon    -  For constraint relaxation 
+    % reg_params.ridge      -  Penalizes higher norm-values of alpha
+    
     reg_params = struct( ...
-        'lambda', 0.01, ... % For regularizing H
-        'epsilon', 0.5, ... % For constraint relaxation
-        'ridge', 0.1 ...   % Penalty on higher alpha-norms
+        'reg_mode', 'fro', ... % Regularization mode
+        'lambda', 0.01, ... 
+        'epsilon', 10, ... 
+        'ridge', 0.1 ...   
         );
 
     verbose = lookup.IO_params.verbose;
@@ -76,17 +87,23 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     if opt_params.regularize
         % H = regHankelDDSF(lookup.H_u, lookup.H_y);
         % num_cols = size(H, 2);
-        H = H / norm(H, 'fro'); % Normalize with Frobenius norm
-        lambda = reg_params.lambda;
-        H = H + lambda * eye(size(H)); % Tikhonov regularization
+        switch reg_params.reg_mode
+            case 'fro'
+                H = low_rank_appr(H);
+                H = H / norm(H, 'fro'); % Normalize with Frobenius norm
+                lambda = reg_params.lambda;
+                H = H + lambda * eye(size(H)); % Tikhonov regularization
+            case 'svd'
+                H = low_rank_appr(H);
+            otherwise
+                error('Unknown regularization type: %s', reg_params.reg_mode);
+        end
 
         ridge = reg_params.ridge;
         objective = objective + ridge * (alpha.' * alpha);
     end
 
     if lookup.opt_params.target_penalty
-        % FOR DEBUGGING 
-
         target = lookup.sys.params.target;
         target(isnan(target)) = 0;
         target = repmat(target, L, 1);        
@@ -103,24 +120,39 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     end
 
     constraints = traj_p_bar == H * alpha; 
+
+    if ~opt_params.regularize
+        epsilon = 0; 
+    else 
+        epsilon = reg_params.epsilon; 
+    end
+    
+    epsilon = epsilon / 2;
+    epsilon_u = epsilon .* (u_max - u_min);
+    epsilon_y = epsilon .* (y_max - y_min);
+
+    u_low = repmat(u_min, 1, N + 2 * T_ini) - repmat(epsilon_u, 1, N + 2 * T_ini);
+    u_high = repmat(u_max, 1, N + 2 * T_ini) + repmat(epsilon_u, 1, N + 2 * T_ini);
+    y_low = repmat(y_min, 1, N + 2 * T_ini) - repmat(epsilon_y, 1, N + 2 * T_ini);
+    y_high = repmat(y_max, 1, N + 2 * T_ini) + repmat(epsilon_y, 1, N + 2 * T_ini);    
     
     switch opt_params.constr_type
         case 's' % Just enforce system behavior
             % No additional constraints needed
         case 'u' % Just encode input constraints
             constraints = [constraints, ...
-                           control_u >= repmat(u_min, 1, N + 2 * T_ini), ...
-                           control_u <= repmat(u_max, 1, N + 2 * T_ini)];
+                           control_u >= u_low, ...
+                           control_u <= u_high];
         case 'y' % Just encode output constraints
             constraints = [constraints, ...
-                           control_y >= repmat(y_min, 1, N + 2 * T_ini), ...
-                           control_y <= repmat(y_max, 1, N + 2 * T_ini)];
+                           control_y >= y_low, ...
+                           control_y <= y_high];
         case 'f' % All constraints
             constraints = [constraints, ...
-                           control_u >= repmat(u_min, 1, N + 2 * T_ini), ...
-                           control_u <= repmat(u_max, 1, N + 2 * T_ini), ...
-                           control_y >= repmat(y_min, 1, N + 2 * T_ini), ...
-                           control_y <= repmat(y_max, 1, N + 2 * T_ini)];
+                           control_u >= u_low, ...
+                           control_u <= u_high, ...
+                           control_y >= y_low, ...
+                           control_y <= y_high];
     end
 
     %% Define solver settings and run optimization
@@ -178,10 +210,5 @@ function [u, y] = alpha2traj(H_u, H_y, alpha)
     y = reshape(y, lookup.dims.p, []);
 end
 
-function H = lra_svd(H)
-    [U, S, V] = svd(H);
-    rank_cutoff = floor(size(H, 2) * 0.9); % Retain 90% of singular values
-    S(rank_cutoff+1:end, rank_cutoff+1:end) = 0;
-    H = U * S * V'; % Reconstruct low-rank approximation
-end
+
 

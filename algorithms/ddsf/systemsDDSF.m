@@ -33,28 +33,6 @@
 %                      - config: Runtime configuration (e.g., horizon lengths,
 %                        window lengths, conservatism).
 %
-%    Description of Options:
-%       - 'test': A basic 3-state test system with identity dynamics and
-%         example output/input matrices.
-%       - 'example0': A simple dynamic system for testing with known
-%         state evolution matrices.
-%       - 'cruise_control': Models a vehicle's velocity dynamics under
-%         applied force. Outputs include velocity limits and runtime settings.
-%       - 'quadrotor': A detailed model of a quadrotor with translational and
-%         rotational dynamics, including constraints on force and orientation.
-%       - 'inverted_pendulum': Cart-pendulum system modeled for stabilization
-%         control, with constraints on position and angular orientation.
-%       - 'dc_motor': A DC motor model combining electrical and mechanical
-%         dynamics with adjustable input voltage limits.
-%       - 'dampler': Mass-spring-damper system for vibration dynamics, with
-%         tunable mass, damping, and stiffness.
-%       - 'thermostat': Single-zone temperature control for heating systems.
-%       - 'cstr': Chemical process model of a stirred-tank reactor.
-%
-%    Example:
-%       sys = systemsDDSF('quadrotor', true);
-%       % Returns a discretized quadrotor system with state-space matrices.
-%
 %    See also: DISCRETIZE_SYSTEM, POPULATE_SYSTEM_STRUCT, CONSTRAINT_HANDLER.
 
 function sys = systemsDDSF(sys_type, discretize)
@@ -66,10 +44,10 @@ function sys = systemsDDSF(sys_type, discretize)
                 'mass', 0.2, ... % Quadrotor mass [kg]
                 'g', 9.81, ... % Gravity constant
                 'dt', 0.1, ... % Time step for discretization
-                'u_min', (1)*(-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
-                'u_max', (1)*[1; 0.1; 0.1; 0.1], ... % Maximum force
-                'y_min', (1)*(-1)*[0.2; 0.2; 0.2; 1; 1; 1], ... % Output constraints
-                'y_max', (1)*[0.2; 0.2; 0.2; 1; 1; 1], ...  % Output constraints
+                'u_min', (1000)*(-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
+                'u_max', (1000)*[1; 0.1; 0.1; 0.1], ... % Maximum force
+                'y_min', (1000)*(-1)*[0.2; 0.2; 0.2; 1; 1; 1], ... % Output constraints
+                'y_max', (1000)*[0.2; 0.2; 0.2; 1; 1; 1], ...  % Output constraints
                 'I', repmat(10^(-3), 3, 1), ... % Moment of inertia in x, y, z
                 'p', 6, ... % Output dimension (y € R^p)
                 'm', 4, ... % Input dimension (u € R^m)

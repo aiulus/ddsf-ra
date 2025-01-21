@@ -44,7 +44,7 @@ function plotDDSF(time, logs, lookup)
     for i = 1:p
         nexttile; hold on;
         plot(time, y_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
-        stairs(0:size(yl_hist, 2) - 1, yl_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
+        stairs(0:size(yl_hist, 2) - 1, yl_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
         hold on;
 
         bounds = sys.constraints.Y(i, :);
