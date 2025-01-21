@@ -1,4 +1,4 @@
-function [u, y, descriptions] = deepcTunerFlex(mode, vals, systype, T_sim, toggle_save)
+function [u, y, descriptions, filename] = deepcTunerFlex(mode, vals, systype, T_sim, toggle_save)
     % Main entry point for the DeepC Tuner.
     %
     % INPUTS:
@@ -58,7 +58,7 @@ function [u, y, descriptions] = deepcTunerFlex(mode, vals, systype, T_sim, toggl
     % Save results if toggled
     if toggle_save
         prefix = sprintf('deepcTuner-%s-%s-T%d', mode, systype, T_sim);
-        csvFlexSave(prefix, u, y, descriptions);
+        filename = csvFlexSave(prefix, u, y, descriptions);
     end
 
     % Convert outputs to matrices

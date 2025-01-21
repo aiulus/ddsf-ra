@@ -14,8 +14,7 @@ function filename = csvFlexSave(prefix, varargin)
     end
     
     % Initialize structured data storage
-    nInputs = numel(varargin);
-    
+    nInputs = numel(varargin);    
     d_csv = [];
 
     % Preprocess and validate each input
@@ -25,14 +24,15 @@ function filename = csvFlexSave(prefix, varargin)
         d_csv = [d_csv, col_i];
     end
     
-    % Construct output directory
-    output_dir = fullfile(fileparts(mfilename('fullpath')), '..', 'outputs', 'data');
-    if ~exist(output_dir, 'dir')
-        mkdir(output_dir);
+
+    % Construct the full filename (add .csv extension if not included)
+    if ~endsWith(prefix, '.csv')
+        filename = sprintf('%s.csv', prefix);
+    else
+        filename = prefix;
     end
-    
-    % Write data to CSV
-    filename = fullfile(output_dir, sprintf('%s.csv', prefix));
+
+    % Write data to CSV    
     try
         writematrix(d_csv, filename, 'Delimiter', ',', 'WriteMode', 'overwrite');
         fprintf('File saved to: <PATH TO MATLAB>\DDSF\outputs\data\%s', filename);

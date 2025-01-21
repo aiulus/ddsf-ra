@@ -36,4 +36,6 @@ T_sim = 10;
 % - configured to be true by default in deepcTunerFlex.m
 toggle_save = 1;
 
-[u, y, descriptions] = deepcTunerFlex(mode, vals, systype, T_sim, toggle_save);
+[u, y, descriptions, filename] = deepcTunerFlex(mode, vals, systype, T_sim, toggle_save);
+
+batchplot(filename);

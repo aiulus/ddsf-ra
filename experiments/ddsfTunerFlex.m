@@ -1,4 +1,4 @@
-function [u, ul, y, yl, descriptions] = ddsfTunerFlex(mode, vals, systype, T_sim, toggle_save)
+function [u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals, systype, T_sim, toggle_save)
     % DDSF Tuner: A function to optimize parameters for DDSF.
     % 
     % INPUTS:
@@ -13,6 +13,7 @@ function [u, ul, y, yl, descriptions] = ddsfTunerFlex(mode, vals, systype, T_sim
     %   y, yl       - Resultant system outputs.
     %   descriptions - Descriptions of each tuning configuration.
 
+    fprintf("\n------------------- BREAK POINT 1 -------------------\n");
     % Default value for toggle_save
     if nargin < 5, toggle_save = true; end
 
@@ -51,7 +52,8 @@ function [u, ul, y, yl, descriptions] = ddsfTunerFlex(mode, vals, systype, T_sim
             end
         end
     end
-
+    
+    filename = '';
     % Save results if toggle_save is enabled
     if toggle_save
         filename = saveResults(u, ul, y, yl, descriptions, systype, mode, T_sim);
@@ -66,7 +68,8 @@ end
 
 function validateInputs(mode, vals)
     % Validate user inputs for mode and vals.
-    valid_modes = {'r', 'nvstini', 'nt', 'constraints', 'constr', 'mixed'};
+    fprintf("\n------------------- BREAK POINT 2 -------------------\n");
+    valid_modes = {'r', 'nvstini', 'nt', 'constraints', 'constr', 'mixed'};    
     if ~ischar(mode) || ~ismember(lower(mode), valid_modes)
         error("Invalid mode. Supported modes are: %s", strjoin(valid_modes, ', '));
     end
@@ -138,10 +141,32 @@ function [u, ul, y, yl, desc] = executeDDSF(systype, T_sim, params, desc)
     yl = logs.yl;
 end
 
-function saveResults(u, ul, y, yl, descriptions, systype, mode, T_sim)
+function filename = saveResults(u, ul, y, yl, descriptions, systype, mode, T_sim)
     % Save results to CSV files.
-    prefix_u = sprintf('U-ddsfTuner-systype-%s-mode-%s-T%d', systype, mode, T_sim);
-    prefix_y = sprintf('Y-ddsfTuner-systype-%s-mode-%s-T%d', systype, mode, T_sim);
-    csvFlexSave(prefix_u, u, ul, descriptions);
-    csvFlexSave(prefix_y, y, yl, descriptions);
+    
+    % Define the base output directory
+    currentFilePath = mfilename('fullpath');
+    currentFolder = fileparts(currentFilePath);
+    parentFolder = fileparts(currentFolder);
+    base_output_dir = fullfile(parentFolder, 'outputs', 'data'); % Adjusted path construction
+
+    % Ensure the directory exists
+    if ~exist(base_output_dir, 'dir')
+        mkdir(base_output_dir); % Create the directory if it doesn't exist
+    end
+
+    % Construct prefixes for filenames
+    prefix_u = fullfile(base_output_dir, sprintf('U-ddsfTuner-systype-%s-mode-%s-T%d', systype, mode, T_sim));
+    prefix_y = fullfile(base_output_dir, sprintf('Y-ddsfTuner-systype-%s-mode-%s-T%d', systype, mode, T_sim));
+
+    % Use csvFlexSave to save the data
+    uname = csvFlexSave(prefix_u, u, ul, descriptions);
+    yname = csvFlexSave(prefix_y, y, yl, descriptions);
+
+    % Return the filenames as a struct
+    filename = struct( ...
+        'u', uname, ...
+        'y', yname ...
+    );
 end
+

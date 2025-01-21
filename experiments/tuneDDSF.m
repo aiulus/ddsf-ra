@@ -7,6 +7,7 @@
 %                     }
 mode = 'nt';
 
+% Example definition of value ranges, extensive
 vals = struct( ...
     'r', 10.^(-8:1:8), ... % value range for mode 'r'
     'NvsTini', [ ... % value range for mode 'nt'
@@ -23,6 +24,21 @@ vals = struct( ...
                     ) ...
     );
 
+% Example definition of value ranges, smaller
+vals_small = struct( ...
+    'r', 10.^(-2:1:2), ... % value range for mode 'r'
+    'NvsTini', [ ... % value range for mode 'nt'
+    2 * ones(6, 1), (5:5:30)'; ...
+    5 * ones(5, 1), (10:5:30)'; .....
+    ], ...
+    'constraints', [0.1, 0.5,2], ... % value ranges for mode 'constr'
+    'mixed', struct( ...
+                    'nt', [repelem([2; 3], 4), repmat(5:5:20, 1, 2)'], ...
+                    'constr', [0.1, 0.5,2], ...
+                    'R', 10.^(-2:1:2) ...
+                    ) ...
+    );
+
 % systype   - Options: {'quadrotor', 'dampler', 'inverted_pendulum', 'dc_motor', 
 %                        'cruise_control', 'acc', 'ballNbeam', 'double_pendulum'}
 %
@@ -31,10 +47,16 @@ vals = struct( ...
 systype = 'dampler';
 
 % Number of simulation steps to be performed by (ddsfTunerFlex >) runDDSF.m
-T_sim = 10;
+T_sim = 5;
 
 % Whether the output CSV-file (containing simulation data) should be saved
 % - configured to be true by default in ddsfTunerFlex.m
 toggle_save = 1;
 
-[u, ul, y, yl, descriptions] = ddsfTunerFlex(mode, vals, systype, T_sim, toggle_save);
+[u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals_small, systype, T_sim, toggle_save);
+
+%filename_inputs = filename.u;
+%filename_outputs = filename.y;
+
+%batchplot(filename_inputs);
+%batchplot(filename_outputs);

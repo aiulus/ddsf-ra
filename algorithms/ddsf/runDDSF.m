@@ -35,7 +35,8 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
                        );
 
     sys = systemsDDSF(run_options.system_type, opt_params.discretize);     
-    [sys.constraints.U, sys.constraints.Y] = updateBounds(sys.constraints.U, sys.constraints.Y, scale_constraints);
+    sys.constraints.U = updateBounds(sys.constraints.U, scale_constraints);
+    sys.constraints.Y = updateBounds(sys.constraints.Y, scale_constraints);
     dims = sys.dims;
 
     if T_ini == -1 || N == -1
