@@ -24,6 +24,7 @@ as well as a custom version of **Model Predictive Control (MPC)** that pairs wit
 │   ├── io/                  # I/O functions
 │   ├── linalg/              # Algebraic functions
 │   ├── mis/                 # Miscellaneous functions
+│   ├── systems/             # Functions that initialize systems
 ├── docs/                    # Documentation files
 └── README.md                # Repository documentation
 
