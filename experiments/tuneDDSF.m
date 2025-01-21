@@ -7,8 +7,10 @@
 %                     }
 mode = 'nt';
 
-% systype   - Options: {'quadrotor', 'dampler', 'inverted_pendulum', 'dc_motor', 
-%                        'cruise_control', 'acc', 'ballNbeam', 'double_pendulum'}
+% systype   -   OPTIONS:
+%               linear: {'quadrotor', 'dampler', 'inverted_pendulum', 'dc_motor', 
+%                        'cruise_control', 'acc', 'ballNbeam', 'double_pendulum'},
+%               nonlinear: {'test_nonlinear', 'van_der_pol', 'nonlinear_pendulum'}
 %
 %            - Specifies the type of system for which the DDSF is being designed.
 %           -  See algorithms\ddsf\systemsDDSF.m for details.

@@ -133,11 +133,6 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     u_high = repmat(u_max + delta_u, 1, L);
     y_low = repmat(y_min - delta_y, 1, L);
     y_high = repmat(y_max + delta_y, 1, L);
-
-    %u_low = repmat(u_min, 1, N + 2 * T_ini) - repmat(epsilon_u, 1, N + 2 * T_ini);
-    %u_high = repmat(u_max, 1, N + 2 * T_ini) + repmat(epsilon_u, 1, N + 2 * T_ini);
-    %y_low = repmat(y_min, 1, N + 2 * T_ini) - repmat(epsilon_y, 1, N + 2 * T_ini);
-    %y_high = repmat(y_max, 1, N + 2 * T_ini) + repmat(epsilon_y, 1, N + 2 * T_ini);    
     
     switch opt_params.constr_type
         case 's' % Just enforce system behavior

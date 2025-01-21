@@ -34,9 +34,13 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
                         'init', true, ... % Encode initial condition
                         'R', 10 ...
                        );
-
-    sys = systemsDDSF(run_options.system_type, opt_params.discretize);
-
+    
+    if ismember(systype, {'test_nonlinear', 'van_der_pol', 'nonlinear_pendulu'})
+        sys = nonlinearSysInit(systype);
+    else
+        sys = systemsDDSF(systype, opt_params.discretize);
+    end
+    
     sys.constraints.U = updateBounds(sys.constraints.U, scale_constraints);
     sys.constraints.Y = updateBounds(sys.constraints.Y, scale_constraints);
 
