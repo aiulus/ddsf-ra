@@ -26,6 +26,8 @@ function sys = nonlinearSysInit(sys_type)
                 'N', 15 ...               % Prediction horizon
             );
 
+            opt_params = struct('Q', 1, 'R', 1);
+
         %% Van der Pol Oscillator
         case 'van_der_pol'
             params = struct( ...
@@ -49,6 +51,8 @@ function sys = nonlinearSysInit(sys_type)
                 'T_ini', 20, ...         % Initial trajectory length
                 'N', 30 ...              % Prediction horizon
             );
+
+            opt_params = struct('Q', 1, 'R', 1);
 
         %% Nonlinear Pendulum
         case 'nonlinear_pendulum'
@@ -75,13 +79,15 @@ function sys = nonlinearSysInit(sys_type)
                 'N', 20 ...              % Prediction horizon
             );
 
+            opt_params = struct('Q', 1, 'R', 1);
+
         otherwise
             error('Unknown system type specified.');
     end
 
     % Populate system with parameters and configuration
     sys = struct('A', Ad, 'B', Bd, 'C', Cd, 'D', Dd);
-    sys = populate_system(sys, params, config);
+    sys = populate_system(sys, params, opt_params, config);
 end
 
 function [Ad, Bd, Cd, Dd] = c2d_nonlinear(f, h, Ts, delay)
