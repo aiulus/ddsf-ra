@@ -5,7 +5,14 @@
 %                                   input/output constraints with a scalar,
 %                       'mixed':    vary all of the above simulteneously
 %                     }
-mode = 'nt';
+mode = 'mixed';
+
+% systype   - Options: {'quadrotor', 'dampler', 'inverted_pendulum', 'dc_motor', 
+%                        'cruise_control', 'acc', 'ballNbeam', 'double_pendulum'}
+%
+%            - Specifies the type of system for which the DDSF is being designed.
+%           -  See algorithms\ddsf\systemsDDSF.m for details.
+systype = 'quadrotor';
 
 % Example definition of value ranges, extensive
 vals = struct( ...
@@ -39,22 +46,15 @@ vals_small = struct( ...
                     ) ...
     );
 
-% systype   - Options: {'quadrotor', 'dampler', 'inverted_pendulum', 'dc_motor', 
-%                        'cruise_control', 'acc', 'ballNbeam', 'double_pendulum'}
-%
-%            - Specifies the type of system for which the DDSF is being designed.
-%           -  See algorithms\ddsf\systemsDDSF.m for details.
-systype = 'dampler';
-
 % Number of simulation steps to be performed by (ddsfTunerFlex >) runDDSF.m
-T_sim = 5;
+T_sim = 2;
 
 % Whether the output CSV-file (containing simulation data) should be saved
 % - configured to be true by default in ddsfTunerFlex.m
 toggle_save = 1;
 
 % Run (and save) the experiment with the given parameter configuration
-% [u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals_small, systype, T_sim, toggle_save);
+[u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals_small, systype, T_sim, toggle_save);
 
 % Extract the full path of the data files
 filename_inputs = filename.u;

@@ -34,6 +34,9 @@ function [u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals, syst
     % Main loop for configurations
     tic;
     for i = 1:nruns
+        disp('Current values.R:');
+        disp(values.R);
+
         [param_desc, param_values] = buildDescription(mode, param_settings, values, i, systype, T_sim);
         fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', i, nruns);
 
@@ -67,7 +70,7 @@ end
 
 function validateInputs(mode, vals)
     % Validate user inputs for mode and vals.
-    fprintf("\n------------------- BREAK POINT 2 -------------------\n");
+   
     valid_modes = {'r', 'nvstini', 'nt', 'constraints', 'constr', 'mixed'};    
     if ~ischar(mode) || ~ismember(lower(mode), valid_modes)
         error("Invalid mode. Supported modes are: %s", strjoin(valid_modes, ', '));
@@ -97,7 +100,7 @@ function [values, nruns, param_settings] = resolveMode(mode, vals)
             param_settings = struct('T_ini', -1, 'N', -1, 'R', -1, 'max_tries', 2);
         case 'mixed'
             values = vals.mixed;
-            nruns = numel(values.nt) * numel(values.constr) * numel(values.R);
+            nruns = size(values.nt, 1) * numel(values.constr) * numel(values.R);
             param_settings = struct('max_tries', 2);
         otherwise
             error("Unsupported mode.");
@@ -123,7 +126,8 @@ function [param_desc, param_values] = buildDescription(mode, param_settings, val
             param_values = struct('N', param_settings.N, 'T_ini', param_settings.T_ini, ...
                 'constraint_scaler', values(index), 'R', param_settings.R);
         case 'mixed'
-            [i, j, l] = ind2sub([numel(values.nt), numel(values.constr), numel(values.R)], index);
+            [i, j, l] = ind2sub([size(values.nt, 1), numel(values.constr), numel(values.R)], index);
+            % fprintf('Run %d: i = %d, j = %d, l = %d\n', index, i, j, l);
             param_desc = sprintf('ddsfTuner-%s-Tini%d-N%d-constr_scale%d-R%d-systype-%s-T%d', ...
                 mode, values.nt(i, 1), values.nt(i, 2), values.constr(j), values.R(l), systype, T_sim);
             param_values = struct('N', values.nt(i, 2), 'T_ini', values.nt(i, 1), ...
@@ -131,9 +135,9 @@ function [param_desc, param_values] = buildDescription(mode, param_settings, val
     end
 end
 
-function [u, ul, y, yl, desc] = executeDDSF(systype, T_sim, params, desc)
+function [u, ul, y, yl, desc] = executeDDSF(systype, T_sim, param_values, desc)
     % Execute the DDSF process and extract logs.
-    [~, ~, logs] = runDDSF(systype, T_sim, params.N, params.T_ini, params.constraint_scaler, params.R, false);
+    [~, ~, logs] = runDDSF(systype, T_sim, param_values.N, param_values.T_ini, param_values.constraint_scaler, param_values.R, false);
     u = logs.u;
     ul = logs.ul_t;
     y = logs.y;

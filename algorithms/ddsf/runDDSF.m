@@ -34,9 +34,11 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
                         'R', 1 ...
                        );
 
-    sys = systemsDDSF(run_options.system_type, opt_params.discretize);     
+    sys = systemsDDSF(run_options.system_type, opt_params.discretize);
+
     sys.constraints.U = updateBounds(sys.constraints.U, scale_constraints);
     sys.constraints.Y = updateBounds(sys.constraints.Y, scale_constraints);
+
     dims = sys.dims;
 
     if T_ini == -1 || N == -1
@@ -68,7 +70,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
 
     lookup.sys.config.N = N;
     lookup.sys.config.T_ini = T_ini;    
-    
+
     %% Step 2: Generate data & Hankel matrices
     [u_d, y_d, ~, ~, ~] = gendataDDSF(lookup); 
     
@@ -124,12 +126,10 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
         [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini);
         
         loss_t = get_loss(lookup, ul_t, u_opt, y_opt);
-
     
         u_next = u_opt(:, 1 + T_ini);
         y_next = y_opt(:, 1 + T_ini);
-        
-        
+                
         logs.ul(:, :, t) = u_l;
         logs.u(:, t) = u_next;
         logs.y(:, t) = y_next;
@@ -158,52 +158,6 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
         plotDDSF(time, logs, lookup)
     end
     
-    % Should this use the same policy as data generation?
-    function u_l = learning_policy(lookup)
-        m = lookup.sys.dims.m;
-        % L = lookup.config.N + 2 * lookup.config.T_ini;
-        Np = lookup.config.N;
-        mode = lookup.data_options.datagen_mode;
-    
-        lb = sys.constraints.U(:, 1);
-        lb(lb == -inf) = 1;
-        ub = sys.constraints.U(:, 2);
-        ub(ub == inf) = 1;
-    
-        switch mode
-            case 'scaled_gaussian'
-                scale = 1.25;
-                ub = (ub > 0) .* (scale .* ub) + (ub < 0) .* ((scale^(-1)) .* ub) + (ub == 0) .* (10^scale);
-                lb = (lb < 0) .* (scale .* lb) + (lb > 0) .* ((scale^(-1)) .* lb) + (lb == 0) .* (- 10^scale);
-                ub = (ub > 0) .* (scale .* ub) + (ub < 0) .* ((scale^(-1)) .* ub);
-                lb = (lb < 0) .* (scale .* lb) + (lb > 0) .* ((scale^(-1)) .* lb);
-                u_l = lb + (ub - lb) .* rand(m, Np);
-                % DEBUG STATEMENT
-                % u_l = ones(m, L);
-                %fprintf("2. <learning_policy> Relaxed lower and Upper bounds: [%d, %d]\n", lb, ub);
-            case 'rbs'
-                u_l = idinput([m, Np], 'rbs', [0, 1], [-1,1]); 
-            case 'scaled_rbs'            
-                lower = 0.5;
-                upper = 0.8;
-                num = 10;
-                probs = (1/num) * ones(1, num);
-                factors = linspace(lower, upper, num);
-                scaler = randsample(factors, Np, true, probs);
-                lb = lb .* scaler;
-                ub = ub .* scaler;
-    
-                u_l = idinput([m, Np], 'rbs', [0, 1], [-1,1]); 
-                u_l = u_l .* (lb + (ub - lb) .* rand(1));
-        end
-    end
-    
-    %   Can later be changed to:
-    %       u_l = learning_policy(y, y_d)
-    %
-    %   INPUTS:
-    %       y   - Current system output (px1)
-    %       y_d - Desired system output
     
     function loss = get_loss(lookup, u_l, u_opt, y_opt)
         R = lookup.opt_params.R;

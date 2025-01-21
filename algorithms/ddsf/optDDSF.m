@@ -80,6 +80,8 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     objective = delta_u.' * kron(eye(N), R) * delta_u;
 
     if lookup.opt_params.target_penalty
+        % FOR DEBUGGING 
+
         target = lookup.sys.params.target;
         target(isnan(target)) = 0;
         target = repmat(target, L, 1);        
@@ -141,6 +143,7 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
         u_opt = value(control_u);
         y_opt = value(control_y);
     else
+        % fprintf('\n---------------------------- OPTIMIZER FAILED ----------------------------\n');
         disp(diagnostics.problem); % Solver exit code
         disp(diagnostics.info);    % Detailed solver feedback        
     end
