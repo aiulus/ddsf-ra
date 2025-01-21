@@ -12,14 +12,20 @@ as well as a custom version of **Model Predictive Control (MPC)** that pairs wit
 ```plaintext
 .
 ├── algorithms/
-│   ├── ddpc/       # DeePC implementation
-│   ├── ddsc/       # DDSF implementation
-│   ├── mpc/        # MPC implementation
+│   ├── ddpc/                # DeePC implementation
+│   ├── ddsc/                # DDSF implementation
+│   ├── mpc/                 # MPC implementation
 ├── experiments/   
-├── systems/        # System definitions used by algorithms/mpc and algorithms/deepc
-├── utils/          # Helper functions
-├── docs/           # Documentation files
-└── README.md       # Repository documentation
+├── systems/                 # System definitions used by algorithms/mpc and algorithms/deepc
+├── utils/                   # Helper functions
+│   ├── bst/                 # Functions related to behavioral systems theory
+│   ├── data_handling/       # Functions related to data generation and handling
+│   ├── dynsys/              # Functions related to dynamical systems
+│   ├── io/                  # I/O functions
+│   ├── linalg/              # Algebraic functions
+│   ├── mis/                 # Miscellaneous functions
+├── docs/                    # Documentation files
+└── README.md                # Repository documentation
 
 ```
 
