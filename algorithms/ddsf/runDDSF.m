@@ -1,4 +1,5 @@
 function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constraints, R, toggle_plot)
+    % TODO: scale_constraints must be the last input argument
     if nargin < 6
         scale_constraints = 1;
     end
@@ -26,12 +27,12 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     % TODO: Add information on various the configuration options
     opt_params = struct( ...
                         'discretize', false, ... 
-                        'regularize', false, ...
+                        'regularize', true, ...
                         'constr_type', 'f', ...
                         'solver_type', 'o', ...
                         'target_penalty', false, ...    
                         'init', true, ... % Encode initial condition
-                        'R', 1 ...
+                        'R', 10 ...
                        );
 
     sys = systemsDDSF(run_options.system_type, opt_params.discretize);
@@ -82,16 +83,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     lookup.H = [H_u; H_y];
     lookup.H_u = H_u; lookup.H_y = H_y;
     lookup.dims.hankel_cols = size(H_u, 2);
-    
-    % START DEBUG STATEMENTS
-    % lookup.config.R = 150;
-    %lookup.config.T = 100;
-    epsilon = 0.01;
-    lookup.H_u = H_u + epsilon * eye(size(H_u)); 
-    lookup.H_y = H_y + epsilon * eye(size(H_y));
-    lookup.H = [H_u; H_y];
-    % END DEBUG STATEMENTS
-    
+        
     %% Initialize objects to log simulation history
     T_ini = lookup.config.T_ini;
     logs = struct( ...
@@ -139,7 +131,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
             yl_next = dataBasedU2Y(ul_t, logs.u(:, t-1),logs.y(:, t-1), H_u_2, H_y_2);
             logs.yl(:, t-T_ini) = yl_next;
         catch ME
-            warning('Failed to execute dataBasedU2Y at time step %d: %s', t-T_ini, ME.message);
+            fprintf('Failed to execute dataBasedU2Y at time step %d: %s', t-T_ini, ME.message);
         end
     
         % Add recursively feasible points to the safe terminal set

@@ -5,7 +5,7 @@
 %                                   input/output constraints with a scalar,
 %                       'mixed':    vary all of the above simulteneously
 %                     }
-mode = 'mixed';
+mode = 'nt';
 
 % systype   - Options: {'quadrotor', 'dampler', 'inverted_pendulum', 'dc_motor', 
 %                        'cruise_control', 'acc', 'ballNbeam', 'double_pendulum'}

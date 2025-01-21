@@ -1,4 +1,10 @@
 function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
+    reg_params = struct( ...
+        'lambda', 0.01, ... % For regularizing H
+        'epsilon', 0.5, ... % For constraint relaxation
+        'ridge', 0.1 ...   % Penalty on higher alpha-norms
+        );
+
     verbose = lookup.IO_params.verbose;
     %% Extract parameters
     opt_params = lookup.opt_params;
@@ -32,14 +38,6 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     u_eq = lookup.sys.S_f.u_eq(1);
     y_eq = lookup.sys.S_f.y_eq(1);
 
-    % DEBUG STATEMENT - START
-    %u_eq = zeros(m, 1);
-    %y_eq = zeros(p, 1);
-    %u_eq = ones(m, 1);
-    %y_eq = 200*ones(p, 1);
-    % DEBUG STATEMENT - END
-
-
     if iscell(u_eq)
         u_eq = cell2mat(u_eq);
     end
@@ -47,10 +45,7 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
         y_eq = cell2mat(y_eq);
     end
 
-    if opt_params.regularize
-        H = regHankelDDSF(lookup.H_u, lookup.H_y);
-        num_cols = size(H, 2);
-    end
+
 
     %% TODO: S_f can be used to encode a desired target state
 
@@ -58,7 +53,6 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     alpha = sdpvar(num_cols, 1);
     control_u = sdpvar(m, L);
     control_y = sdpvar(p, L);
-    % traj_p = [control_u; control_y];
     
     %% Populate the initial and terminal parts of the trajectory
     % Replaces the encodings in constraints
@@ -78,6 +72,17 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     
     delta_u = reshape(control_u(:, 1+T_ini:end-T_ini) - u_l, [], 1);
     objective = delta_u.' * kron(eye(N), R) * delta_u;
+
+    if opt_params.regularize
+        % H = regHankelDDSF(lookup.H_u, lookup.H_y);
+        % num_cols = size(H, 2);
+        H = H / norm(H, 'fro'); % Normalize with Frobenius norm
+        lambda = reg_params.lambda;
+        H = H + lambda * eye(size(H)); % Tikhonov regularization
+
+        ridge = reg_params.ridge;
+        objective = objective + ridge * (alpha.' * alpha);
+    end
 
     if lookup.opt_params.target_penalty
         % FOR DEBUGGING 
@@ -127,10 +132,15 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
         case 'o'
             options = sdpsettings('solver', 'OSQP', ...
                   'verbose', verbose, ...             % Detailed solver output
-                  'osqp.max_iter', 30000, ...   % Set maximum iterations
-                  'osqp.eps_abs', 1e-2, ...     % Absolute tolerance
-                  'osqp.eps_rel', 1e-2, ...     % Relative tolerance
-                  'warmstart', 0);             % Disable warm start
+                  'osqp.max_iter', 20000, ...         % Set maximum iterations
+                  'osqp.eps_abs', 1e-3, ...           % Absolute tolerance
+                  'osqp.eps_rel', 1e-3, ...           % Relative tolerance
+                  'osqp.adaptive_rho', true, ...      % Enable adaptive rho
+                  'osqp.adaptive_rho_interval', 50, ...
+                  'osqp.adaptive_rho_tolerance', 1, ...
+                  'osqp.polish_refine_iter', 2, ...
+                  'osqp.scaling', 10, ...             % Number of scaling iterations
+                  'warmstart', 0);                    % Disable warm start
         case 'b'
             options = sdpsettings('solver', 'bmibnb', 'verbose', verbose);
     end
@@ -159,7 +169,7 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
 
 end
 
-%% Helper method
+%% Helper methods
 function [u, y] = alpha2traj(H_u, H_y, alpha)
     u = H_u * value(alpha);
     u = reshape(u, lookup.dims.m, []);
@@ -167,3 +177,11 @@ function [u, y] = alpha2traj(H_u, H_y, alpha)
     y = H_y * value(alpha);
     y = reshape(y, lookup.dims.p, []);
 end
+
+function H = lra_svd(H)
+    [U, S, V] = svd(H);
+    rank_cutoff = floor(size(H, 2) * 0.9); % Retain 90% of singular values
+    S(rank_cutoff+1:end, rank_cutoff+1:end) = 0;
+    H = U * S * V'; % Reconstruct low-rank approximation
+end
+

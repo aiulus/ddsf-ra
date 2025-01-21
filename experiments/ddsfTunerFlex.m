@@ -19,8 +19,10 @@ function [u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals, syst
     % Validate inputs
     validateInputs(mode, vals);
 
+    max_tries = 5; % Allows for re-runs under the current configuration
+
     % Resolve mode and parameter configurations
-    [values, nruns, param_settings] = resolveMode(mode, vals);
+    [values, nruns, param_settings] = resolveMode(mode, vals, max_tries);
 
     % Initialize output variables
     u = cell(1, nruns); ul = cell(1, nruns); 
@@ -34,9 +36,6 @@ function [u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals, syst
     % Main loop for configurations
     tic;
     for i = 1:nruns
-        disp('Current values.R:');
-        disp(values.R);
-
         [param_desc, param_values] = buildDescription(mode, param_settings, values, i, systype, T_sim);
         fprintf('("------------------- Trying parameter conf. %d / %d -------------------\n', i, nruns);
 
@@ -83,25 +82,25 @@ function validateInputs(mode, vals)
     end
 end
 
-function [values, nruns, param_settings] = resolveMode(mode, vals)
+function [values, nruns, param_settings] = resolveMode(mode, vals, max_tries)
     % Resolve mode-specific configurations and parameter settings.
     switch lower(mode)
         case 'r'
             values = vals.r;
             nruns = numel(values);
-            param_settings = struct('constraint_scaler', 2, 'T_ini', -1, 'N', -1, 'max_tries', 2);
+            param_settings = struct('constraint_scaler', 2, 'T_ini', -1, 'N', -1, 'max_tries', max_tries);
         case {'nvstini', 'nt'}
             values = vals.NvsTini;
             nruns = size(values, 1);
-            param_settings = struct('constraint_scaler', 1, 'R', -1, 'max_tries', 2);
+            param_settings = struct('constraint_scaler', 1, 'R', -1, 'max_tries', max_tries);
         case {'constraints', 'constr'}
             values = vals.constraints;
             nruns = numel(values);
-            param_settings = struct('T_ini', -1, 'N', -1, 'R', -1, 'max_tries', 2);
+            param_settings = struct('T_ini', -1, 'N', -1, 'R', -1, 'max_tries', max_tries);
         case 'mixed'
             values = vals.mixed;
             nruns = size(values.nt, 1) * numel(values.constr) * numel(values.R);
-            param_settings = struct('max_tries', 2);
+            param_settings = struct('max_tries', max_tries);
         otherwise
             error("Unsupported mode.");
     end
