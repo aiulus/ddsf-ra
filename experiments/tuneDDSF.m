@@ -53,10 +53,13 @@ T_sim = 5;
 % - configured to be true by default in ddsfTunerFlex.m
 toggle_save = 1;
 
-[u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals_small, systype, T_sim, toggle_save);
+% Run (and save) the experiment with the given parameter configuration
+% [u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals_small, systype, T_sim, toggle_save);
 
-%filename_inputs = filename.u;
-%filename_outputs = filename.y;
+% Extract the full path of the data files
+filename_inputs = filename.u;
+filename_outputs = filename.y;
 
-%batchplot(filename_inputs);
-%batchplot(filename_outputs);
+% Construct (and save) plots from the data files
+batchplot(filename_inputs);
+batchplot(filename_outputs);

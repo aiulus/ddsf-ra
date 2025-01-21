@@ -13,7 +13,6 @@ function [u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals, syst
     %   y, yl       - Resultant system outputs.
     %   descriptions - Descriptions of each tuning configuration.
 
-    fprintf("\n------------------- BREAK POINT 1 -------------------\n");
     % Default value for toggle_save
     if nargin < 5, toggle_save = true; end
 

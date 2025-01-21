@@ -57,8 +57,9 @@ function [u, y, descriptions, filename] = deepcTunerFlex(mode, vals, systype, T_
 
     % Save results if toggled
     if toggle_save
-        prefix = sprintf('deepcTuner-%s-%s-T%d', mode, systype, T_sim);
-        filename = csvFlexSave(prefix, u, y, descriptions);
+        prefix = sprintf('deepcTuner-mode-%s-systype-%s-T%d', mode, systype, T_sim);
+        fullpath = getFullPath(prefix);
+        filename = csvFlexSave(fullpath, u, y, descriptions);
     end
 
     % Convert outputs to matrices
@@ -147,8 +148,8 @@ function [u_i, y_i] = executeWithRetries(systype, T_sim, params, d_i)
     for k = 1:max_tries
         try
             logs = runParamDPC(systype, params.Q, params.R, params.T_ini, params.N, T_sim);
-            u_i = logs.u_sim;
-            y_i = logs.y_sim;
+            u_i = logs.u;
+            y_i = logs.y;
             return;
         catch ME
             fprintf(['Attempt to run runParamDPC.m (conf.: %s) failed at: %s\n ' ...
@@ -156,4 +157,21 @@ function [u_i, y_i] = executeWithRetries(systype, T_sim, params, d_i)
         end
     end
     error('Failed after %d attempts for configuration "%s".', max_tries, d_i);
+end
+
+function fullpath = getFullPath(prefix)    
+    % Define the base output directory
+    currentFilePath = mfilename('fullpath');
+    currentFolder = fileparts(currentFilePath);
+    parentFolder = fileparts(currentFolder);
+    base_output_dir = fullfile(parentFolder, 'outputs', 'data'); % Adjusted path construction
+
+    % Ensure the directory exists
+    if ~exist(base_output_dir, 'dir')
+        mkdir(base_output_dir); % Create the directory if it doesn't exist
+    end
+
+    % Construct prefixes for filenames
+    % prefix_u = fullfile(base_output_dir, prefix);
+    fullpath = fullfile(base_output_dir, prefix);
 end
