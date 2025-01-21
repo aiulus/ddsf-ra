@@ -35,7 +35,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
                         'R', 10 ...
                        );
     
-    if ismember(systype, {'test_nonlinear', 'van_der_pol', 'nonlinear_pendulu'})
+    if ismember(systype, {'test_nonlinear', 'van_der_pol', 'nonlinear_pendulum'})
         sys = nonlinearSysInit(systype);
     else
         sys = systemsDDSF(systype, opt_params.discretize);

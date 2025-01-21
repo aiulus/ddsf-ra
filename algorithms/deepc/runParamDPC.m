@@ -1,7 +1,7 @@
 function logs = runParamDPC(systype, Qnew, Rnew, T_ini, N, T_sim)
     %% Define the system
     
-    if ismember(systype, {'test_nonlinear', 'van_der_pol', 'nonlinear_pendulu'})
+    if ismember(systype, {'test_nonlinear', 'van_der_pol', 'nonlinear_pendulum'})
         sys = nonlinearSysInit(systype);
     else
         sys = sysInit(systype);
