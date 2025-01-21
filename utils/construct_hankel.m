@@ -29,19 +29,12 @@ function [H, H_flat] = construct_hankel(data, order)
             H{l, k} = data(:, l + k - 1);
         end
     end
-
     % Create H_flat
     H_flat = zeros(order * m, num_columns); % Preallocate H_flat
     for k = 1:num_columns
-        % Extract column blocks and vertically stack them
-        %column_block = cell2mat(H(:, k)); % Convert column block to matrix
-        %H_flat(:, k) = column_block(:);  % Flatten and store in H_flat
         H_flat(:, k) = reshape(cell2mat(H(:, k)), [], 1);
     end
-
-    disp("(construct_hankel) H_y size: "); disp(size(H)); % DEBUG STATEMENT
-    %disp("(construct_hankel) H_y content: "); disp(H); % DEBUG STATEMENT
-
+    fprintf('Constructed Hankel matrix of size %d x %d\n', size(H, 1), size(H, 2));
 end
 
 
