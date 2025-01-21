@@ -8,8 +8,7 @@ function plotDDSF(time, logs, lookup)
         
     figure(1);
     m = size(u_hist, 1);
-    tiledlayout(m, 1); % Use tiled layout for better control
-  
+    tiledlayout(m, 1); % Use tiled layout for better control  
     
     % Plot learning vs safe inputs
     for i = 1:m

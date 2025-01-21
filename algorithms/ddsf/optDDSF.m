@@ -22,7 +22,7 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
 
     % Lengths and dimensions
     T_ini = lookup.config.T_ini;
-    N = lookup.config.N;
+    N = lookup.config.N;    
     L = N + 2 * T_ini;
     s = lookup.config.s;
     m = lookup.dims.m;
@@ -55,8 +55,6 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     if iscell(y_eq)
         y_eq = cell2mat(y_eq);
     end
-
-
 
     %% TODO: S_f can be used to encode a desired target state
 
@@ -128,13 +126,18 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     end
     
     epsilon = epsilon / 2;
-    epsilon_u = epsilon .* (u_max - u_min);
-    epsilon_y = epsilon .* (y_max - y_min);
+    delta_u = epsilon .* (u_max - u_min);
+    delta_y = epsilon .* (y_max - y_min);    
 
-    u_low = repmat(u_min, 1, N + 2 * T_ini) - repmat(epsilon_u, 1, N + 2 * T_ini);
-    u_high = repmat(u_max, 1, N + 2 * T_ini) + repmat(epsilon_u, 1, N + 2 * T_ini);
-    y_low = repmat(y_min, 1, N + 2 * T_ini) - repmat(epsilon_y, 1, N + 2 * T_ini);
-    y_high = repmat(y_max, 1, N + 2 * T_ini) + repmat(epsilon_y, 1, N + 2 * T_ini);    
+    u_low = repmat(u_min - delta_u, 1, L);
+    u_high = repmat(u_max + delta_u, 1, L);
+    y_low = repmat(y_min - delta_y, 1, L);
+    y_high = repmat(y_max + delta_y, 1, L);
+
+    %u_low = repmat(u_min, 1, N + 2 * T_ini) - repmat(epsilon_u, 1, N + 2 * T_ini);
+    %u_high = repmat(u_max, 1, N + 2 * T_ini) + repmat(epsilon_u, 1, N + 2 * T_ini);
+    %y_low = repmat(y_min, 1, N + 2 * T_ini) - repmat(epsilon_y, 1, N + 2 * T_ini);
+    %y_high = repmat(y_max, 1, N + 2 * T_ini) + repmat(epsilon_y, 1, N + 2 * T_ini);    
     
     switch opt_params.constr_type
         case 's' % Just enforce system behavior
