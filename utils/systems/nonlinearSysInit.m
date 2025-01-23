@@ -74,6 +74,7 @@ function sys = nonlinearSysInit(sys_type)
                 'l', 1, ...              % Length of pendulum
                 'r', 2, ...
                 'x_ini', [pi/4; 0], ...  % Initial angle and angular velocity
+                'target', 0, ...
                 'u_min', -2, ...
                 'u_max', 2 ...
             );
@@ -264,6 +265,7 @@ function sys = nonlinearSysInit(sys_type)
     sys = constraint_handler(sys, params);
     sys.dt = 0.1; % Time step size [s]
     sys.config.s = 1; % Receding horizon-step size
+    sys.target = sys.params.target;
 end
 
 %% Helper Functions
