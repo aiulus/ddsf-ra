@@ -1,23 +1,15 @@
 function sys = nonlinearSysInit(sys_type)
-    % Initialize the system based on the specified type
     switch sys_type
-        %% Nonlinear Test System (m=1, p=1, with delay)
-        case 'test_nonlinear'
+        case 'logmap'
+            % TODO
             params = struct( ...
-                'x_ini', 0.5, ...    % Initial state
-                'target', 1, ...     % Target state
-                'u_min', -10, ...    % Min input
-                'u_max', 10 ...      % Max input
+                'mu', 1, ...             % Nonlinearity parameter
+                'x_ini', [2; 0], ...     % Initial state
+                'u_min', -5, ...
+                'u_max', 5 ...
             );
-
-            % Define nonlinear dynamics and output functions
-            f = @(x, u) -0.5 * x^2 + u;   % Nonlinear dynamics
-            h = @(x) 2 * x;               % Nonlinear output
-
-            % Incorporate input delay and discretization
-            delay = 1;                    % Delay of 1 sample
-            Ts = 0.1;                     % Sampling time
-            [Ad, Bd, Cd, Dd] = c2d_nonlinear(f, h, Ts, delay);
+            
+            % TODO
 
             % System configuration
             config = struct( ...
@@ -36,15 +28,10 @@ function sys = nonlinearSysInit(sys_type)
                 'u_min', -5, ...
                 'u_max', 5 ...
             );
-
-            % Define nonlinear dynamics and output functions
-            f = @(x, u) [x(2); params.mu * (1 - x(1)^2) * x(2) - x(1) + u];
-            h = @(x) x(1);               % Output is the first state
-
-            % Discretization
-            Ts = 0.05;                   % Sampling time
-            [Ad, Bd, Cd, Dd] = c2d_nonlinear(f, h, Ts, 0); % No delay
-
+        
+            % TODO
+           
+                
             % System configuration
             config = struct( ...
                 'T', 100, ...            % Time horizon
@@ -64,13 +51,21 @@ function sys = nonlinearSysInit(sys_type)
                 'u_max', 2 ...
             );
 
-            % Define nonlinear dynamics and output functions
-            f = @(x, u) [x(2); -(params.g / params.l) * sin(x(1)) + u];
-            h = @(x) x(1);               % Output is the angle
+            statevars = struct( ...
+                'x1', sdpvar(1), ... % Angle
+                'x2', sdpvar(1) ...  % Angular velocity
+                );
 
-            % Discretization
-            Ts = 0.1;                    % Sampling time
-            [Ad, Bd, Cd, Dd] = c2d_nonlinear(f, h, Ts, 0); % No delay
+            inputvars = struct( ...
+                'u', sdpvar(1) ... % Force
+                );
+
+            f1 = @(x1, x2) x2;
+            f2 = @(x1, x2) -r*x2 - (g/l)*sin(x1);
+            g1 = @(x1, x2) x1;
+
+            Fx = [f1; f2]; % Dynamics functions
+            Gx = [g1]; % Measurement functions
 
             % System configuration
             config = struct( ...
@@ -86,44 +81,63 @@ function sys = nonlinearSysInit(sys_type)
     end
 
     % Populate system with parameters and configuration
-    sys = struct('A', Ad, 'B', Bd, 'C', Cd, 'D', Dd);
-    sys = populate_system(sys, params, opt_params, config);
+    [A, B, C, D] = linearize(Fx, Gx, statevars, inputvars);
+    sys.A = A; sys.B = B; sys.C = C; sys.D = D;
+    sys.config = config; sys.opt_params = opt_params;
 end
 
-function [Ad, Bd, Cd, Dd] = c2d_nonlinear(f, h, Ts, delay)
-    % Approximate discrete-time state-space matrices for a nonlinear system
-    x_eq = 0;  % Equilibrium state
-    u_eq = 0;  % Equilibrium input
+function [A, B, C, D] = linearize(Fx, Gx, x, u)
+    [x_e, u_e] = getEquilibrium(Fx, x, u);
+    Asym = computeJacobian(Fx, x);
+    Bsym = computeJacobian(Fx, u);
+    Csym = computeJacobian(Gx, x);
+    Dsym = computeJacobian(Gx, u);
 
-    % Linearization at equilibrium
-    A = numerical_jacobian(@(x) f(x, u_eq), x_eq);
-    B = numerical_jacobian(@(u) f(x_eq, u), u_eq);
-    C = numerical_jacobian(@(x) h(x), x_eq);
-    D = 0;  % Assuming no feedthrough
-
-    % Discretize using sampling time
-    Ad = expm(A * Ts);
-    Bd = integral_discretize(A, B, Ts, delay);
-    Cd = C;
-    Dd = D;
+    A = evaluateJacobian(Asym, x_e);
+    B = evaluateJacobian(Bsym, u_e);
+    C = evaluateJacobian(Csym, x_e);
+    D = evaluateJacobian(Dsym, u_e);
 end
 
-function J = numerical_jacobian(fun, x)
-    % Compute numerical Jacobian
-    delta = 1e-6;
-    n = length(x);
-    J = zeros(n, n);
-    for i = 1:n
-        x_perturbed = x;
-        x_perturbed(i) = x_perturbed(i) + delta;
-        J(:, i) = (fun(x_perturbed) - fun(x)) / delta;
+function [x_e, u_e] = getEquilibrium(Fx, x, u)
+    x_e = zeros(max(size(Fx)), 1); u_e = zeros(max(size(Gx)), 1);
+    for i=1:max(size(Fx))
+        fi = Fx(i);
+        [xei, uei] = solve(fi, [x, u]); % Solve for fi(x, u) = 0 for all i 
+        x_e(i) = xei; u_e(i) = uei;
     end
 end
 
-function Bd = integral_discretize(A, B, Ts, delay)
-    % Discretize B matrix with delay
-    Bd = expm(A * Ts) * B;  % Zero-order hold assumption
-    if delay > 0
-        Bd = [zeros(size(B, 1), delay), Bd];
+function Asym = computeJacobian(Fx, x)
+    % Fx: A collection of N functions f: R^{N+m} --> 1
+    N1 = max(size(Fx)); N2 = max(size(x));
+    J = zeros(N1, N2);
+    for i=1:N1
+        fi = Fx(i);
+        delta_fi = multivariate_derivative(fi, x); % Returns a 1xN - row vector
+        J(i, :) = delta_fi; 
+    end
+end
+
+function A = evaluateJacobian(Asym, x_e)
+    A = zeros(size(Asym));
+    for i=1:size(A, 1)
+        fi = Asym(i, :);
+        for j=1:size(A, 2)
+            xej = x_e(j);
+            dfi_dxj = fi(j);
+            A(i, j) = subs(dfi_dxj, xj, xej);
+            A(i, j) = value(A(i, j));
+        end        
+    end
+end
+
+function delta_fi = multivariate_derivative(fi, x)
+    N = max(size(x));
+    delta_fi = zeros(1, N);
+    for j=1:N
+        xj = x(j);
+        dfi_dxj = derive(fi, xj);
+        delta_fi(j) = dfi_dxj;
     end
 end

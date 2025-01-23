@@ -5,7 +5,7 @@
 %                                   input/output constraints with a scalar,
 %                       'mixed':    vary all of the above simulteneously
 %                     }
-mode = 'nt';
+mode = 'mixed';
 
 % systype   -   OPTIONS:
 %               linear: {'quadrotor', 'dampler', 'inverted_pendulum', 'dc_motor', 
@@ -14,7 +14,8 @@ mode = 'nt';
 %
 %            - Specifies the type of system for which the DDSF is being designed.
 %           -  See algorithms\ddsf\systemsDDSF.m for details.
-systype = 'test_nonlinear';
+systype = 'van_der_pol';
+%systype = 'quadrotor';
 
 % Example definition of value ranges, extensive
 vals = struct( ...
@@ -49,7 +50,7 @@ vals_small = struct( ...
     );
 
 % Number of simulation steps to be performed by (ddsfTunerFlex >) runDDSF.m
-T_sim = 2;
+T_sim = 1;
 
 % Whether the output CSV-file (containing simulation data) should be saved
 % - configured to be true by default in ddsfTunerFlex.m

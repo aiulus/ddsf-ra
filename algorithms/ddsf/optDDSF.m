@@ -160,6 +160,7 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
         case 'f'
             options = sdpsettings('verbose', verbose, 'solver', 'fmincon');
         case 'o'
+            % DEFAULT
             options = sdpsettings('solver', 'OSQP', ...
                   'verbose', verbose, ...             % Detailed solver output
                   'osqp.max_iter', 20000, ...         % Set maximum iterations
