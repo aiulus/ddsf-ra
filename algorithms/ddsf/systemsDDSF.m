@@ -44,10 +44,10 @@ function sys = systemsDDSF(sys_type, discretize)
                 'mass', 0.2, ... % Quadrotor mass [kg]
                 'g', 9.81, ... % Gravity constant
                 'dt', 0.1, ... % Time step for discretization
-                'u_min', (1000)*(-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
-                'u_max', (1000)*[1; 0.1; 0.1; 0.1], ... % Maximum force
-                'y_min', (1000)*(-1)*[0.2; 0.2; 0.2; 1; 1; 1], ... % Output constraints
-                'y_max', (1000)*[0.2; 0.2; 0.2; 1; 1; 1], ...  % Output constraints
+                'u_min', (1)*(-1)*[1; 0.1; 0.1; 0.1], ... % Minimum force
+                'u_max', (1)*[1; 0.1; 0.1; 0.1], ... % Maximum force
+                'y_min', (1)*(-1)*[0.2; 0.2; 0.2; 1; 1; 1], ... % Output constraints
+                'y_max', (1)*[0.2; 0.2; 0.2; 1; 1; 1], ...  % Output constraints
                 'I', repmat(10^(-3), 3, 1), ... % Moment of inertia in x, y, z
                 'p', 6, ... % Output dimension (y € R^p)
                 'm', 4, ... % Input dimension (u € R^m)
