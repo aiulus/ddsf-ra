@@ -7,7 +7,7 @@ function result = vectorFilter(testarr, x_e)
         % Check if the entry in x_eq is symbolic
         entry_class = string(class(x_e(i)));
         entry_value = string(value(x_e(i)));
-        if entry_class == "sym" && startsWith(entry_value, 'z')
+        if (entry_class == "sym") && (startsWith(entry_value, 'z') || startsWith(entry_value, '-z'))
             % Keep the corresponding entry from x_eval
             result{i} = testarr(i);
         elseif startsWith(entry_value, 'k')

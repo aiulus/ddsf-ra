@@ -225,7 +225,7 @@ function sys = systemsDDSF(sys_type, discretize)
             D = 0;
     
             run_config = struct( ...
-                'T', 50, ... % Data length
+                'T', 150, ... % Data length
                 'T_ini', 10, ... % Initial trajectory length
                 'N', 30, ... % Prediction horizon
                 's', 1 ... % Conservatism; cannot exceed dims.m in the way this is used in the current implementation

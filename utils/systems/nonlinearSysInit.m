@@ -263,6 +263,7 @@ function sys = nonlinearSysInit(sys_type)
     sys.dims = getDims(A, B, C, D);
     sys = constraint_handler(sys, params);
     sys.dt = 0.1; % Time step size [s]
+    sys.config.s = 1; % Receding horizon-step size
 end
 
 %% Helper Functions

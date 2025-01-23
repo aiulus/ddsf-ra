@@ -121,7 +121,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     
         [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini);
         
-        %loss_t = get_loss(lookup, ul_t, u_opt, y_opt);
+        loss_t = get_loss(lookup, ul_t, u_opt, y_opt);
     
         u_next = u_opt(:, 1 + T_ini);
         y_next = y_opt(:, 1 + T_ini);

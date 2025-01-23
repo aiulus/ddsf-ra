@@ -53,8 +53,8 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     u_e = lookup.sys.S_f.symbolic_solution.u_e;
     y_e = lookup.sys.S_f.symbolic_solution.y_e;
 
-    u_eq = vectorFilter(u_ini, u_e);
-    y_eq = vectorFilter(y_ini, y_e);
+    u_eq = vectorFilter(u_ini(:, end - m + 1: end), u_e);
+    y_eq = vectorFilter(y_ini(:, end - p + 1: end), y_e);
 
     if iscell(u_eq)
         u_eq = cell2mat(u_eq);
