@@ -254,7 +254,8 @@ function sys = nonlinearSysInit(sys_type)
     end
     
     % Assign the system-specific parameters
-    sys.config = config; sys.opt_params = opt_params;
+    sys.params = params; sys.config = config; sys.opt_params = opt_params;
+    sys.functions = struct('F', Fx_handle, 'G', Gx_handle);
     
     try
         sys.S_f = getEquilibriumNonlinear(Fx, statevars, inputvars);
@@ -288,6 +289,3 @@ function [y_e_triv, y_e] = populateYs(S_f, C, D)
     y_e = C*x_e + D*u_e;    
 end
 
-function f_eval = createFunctionHandle(f_sym, vars)
-    f_eval = cellfun(@(f) matlabFunction(f, 'Vars', {vars}), f_sym, 'UniformOutput', false);
-end
