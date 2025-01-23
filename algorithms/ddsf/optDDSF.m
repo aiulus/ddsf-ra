@@ -45,16 +45,18 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     % Initial trajectory and equilibrium states
     u_ini = traj_ini(1:m, :);
     y_ini = traj_ini(m+1:end, :);
-    
-    % Extract trivial equilibria
-    % u_0 = lookup.sys.S_f.trivial_solution.u_e;
-    % y_0 = lookup.sys.S_f.trivial_solution.y_e;
 
     u_e = lookup.sys.S_f.symbolic_solution.u_e;
     y_e = lookup.sys.S_f.symbolic_solution.y_e;
 
-    u_eq = vectorFilter(u_ini(:, end - m + 1: end), u_e);
-    y_eq = vectorFilter(y_ini(:, end - p + 1: end), y_e);
+    u_eq = vectorFilter(u_ini(:, end), u_e);
+    y_eq = vectorFilter(y_ini(:, end), y_e);
+
+    % Extract trivial equilibria
+    %u_0 = lookup.sys.S_f.trivial_solution.u_e;
+    %y_0 = lookup.sys.S_f.trivial_solution.y_e;
+    %u_eq = u_0;
+    %y_eq = y_0;
 
     if iscell(u_eq)
         u_eq = cell2mat(u_eq);

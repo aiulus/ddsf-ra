@@ -14,8 +14,8 @@ mode = 'nt';
 %
 %            - Specifies the type of system for which the DDSF is being designed.
 %           -  See algorithms\ddsf\systemsDDSF.m for details.
-systype = 'nonlinear_pendulum';
-%systype = 'quadrotor';
+%systype = 'nonlinear_pendulum';
+systype = 'quadrotor';
 
 % Example definition of value ranges, extensive
 vals = struct( ...
