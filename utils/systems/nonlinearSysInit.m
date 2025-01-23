@@ -8,9 +8,23 @@ function sys = nonlinearSysInit(sys_type)
                 'u_min', -5, ...
                 'u_max', 5 ...
             );
-            
-            % TODO
 
+            syms x u            
+            % Dynamics
+            f1 = params.mu * x * (1-x) + 0 * u;
+            g1 = x;            
+
+            Fx = {f1}; % Dynamics functions
+            Gx = {g1}; % Measurement functions
+
+            statevars = x;
+            inputvars = u;
+
+            % Logistic map has equilibria at x = 0 or x = (1 - 1/mu) if mu > 1
+            if params.mu <= 0
+                error('Parameter mu must be greater than 0 for the logistic map.');
+            end
+            
             % System configuration
             config = struct( ...
                 'T', 50, ...              % Time horizon
@@ -28,9 +42,18 @@ function sys = nonlinearSysInit(sys_type)
                 'u_min', -5, ...
                 'u_max', 5 ...
             );
-        
-            % TODO
-           
+                   
+            % Dynamics
+            syms x1 x2 u
+            f1 = 0 * x1 + x2 + 0 * u;
+            f2 = params.mu * (1 - x1^2) * x2 - x1 + u; 
+            g1 = x1 + 0 * x2 + 0 * u;
+
+            Fx = {f1, f2}; % Dynamics functions
+            Gx = {g1}; % Measurement functions
+
+            statevars = {x1, x2};
+            inputvars = {u};
                 
             % System configuration
             config = struct( ...
@@ -51,21 +74,17 @@ function sys = nonlinearSysInit(sys_type)
                 'u_max', 2 ...
             );
 
-            statevars = struct( ...
-                'x1', sdpvar(1), ... % Angle
-                'x2', sdpvar(1) ...  % Angular velocity
-                );
+            % Dynamics
+            syms x1 x2 u
+            f1 = 0 * x1 + x2 + 0 * u;
+            f2 = -(params.g / params.l) * sin(x1) + 0 * x2  + u;
+            g1 = x1 + 0 * x2 + 0 * u;
 
-            inputvars = struct( ...
-                'u', sdpvar(1) ... % Force
-                );
-
-            f1 = @(x1, x2) x2;
-            f2 = @(x1, x2) -r*x2 - (g/l)*sin(x1);
-            g1 = @(x1, x2) x1;
-
-            Fx = [f1; f2]; % Dynamics functions
-            Gx = [g1]; % Measurement functions
+            Fx = {f1, f2}; % Dynamics functions
+            Gx = {g1}; % Measurement functions
+            
+            statevars = {x1, x2};
+            inputvars = {u};
 
             % System configuration
             config = struct( ...
@@ -99,8 +118,9 @@ function [A, B, C, D] = linearize(Fx, Gx, x, u)
     D = evaluateJacobian(Dsym, u_e);
 end
 
+
 function [x_e, u_e] = getEquilibrium(Fx, x, u)
-    x_e = zeros(max(size(Fx)), 1); u_e = zeros(max(size(Gx)), 1);
+    x_e = zeros(size(x)); u_e = zeros(size(u));
     for i=1:max(size(Fx))
         fi = Fx(i);
         [xei, uei] = solve(fi, [x, u]); % Solve for fi(x, u) = 0 for all i 
@@ -108,7 +128,8 @@ function [x_e, u_e] = getEquilibrium(Fx, x, u)
     end
 end
 
-function Asym = computeJacobian(Fx, x)
+
+function J = computeJacobian(Fx, x)
     % Fx: A collection of N functions f: R^{N+m} --> 1
     N1 = max(size(Fx)); N2 = max(size(x));
     J = zeros(N1, N2);
