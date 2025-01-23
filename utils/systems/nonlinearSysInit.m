@@ -242,124 +242,16 @@ function sys = nonlinearSysInit(sys_type)
        
     sys.config = config; sys.opt_params = opt_params;
 
-    sys.S_f = getEquilibrium(Fx, statevars, inputvars);
+    sys.S_f = getEquilibriumNonlinear(Fx, statevars, inputvars);
 
-    x_e_default = sys.S_f.trivial_sol.x_e;
-    u_e_default = sys.S_f.trivial_sol.u_e;
+    x_e_default = sys.S_f.trivial_solution.x_e;
+    u_e_default = sys.S_f.trivial_solution.u_e;
     [A, B, C, D] = linearize(Fx, Gx, statevars, inputvars, x_e_default, u_e_default);
     sys.A = A; sys.B = B; sys.C = C; sys.D = D;
 
     [y_e_triv, y_e] = populateYs(sys.S_f, C, D);
     sys.S_f.trivial_solution.y_e = y_e_triv;
     sys.S_f.symbolic_solution.y_e = y_e;   
-
-end
-
-
-%% Linearization Function
-function [A, B, C, D] = linearize(Fx, Gx, x, u, x_e, u_e)
-    % Initialize symbolic Jacobians
-    A_sym = [];
-    B_sym = [];
-    for i = 1:length(Fx)
-        % Compute Jacobians for each dynamic equation in Fx
-        A_sym = [A_sym; jacobian(Fx{i}, x)]; % State Jacobian
-        B_sym = [B_sym; jacobian(Fx{i}, u)]; % Input Jacobian
-    end
-
-    % Measurement Jacobians
-    C_sym = [];
-    D_sym = [];
-    for i = 1:length(Gx)
-        % Compute Jacobians for each measurement equation in Gx
-        C_sym = [C_sym; jacobian(Gx{i}, x)]; % State Jacobian
-        D_sym = [D_sym; jacobian(Gx{i}, u)]; % Input Jacobian
-    end
-
-    % Ensure dimensions of substitution match
-    if numel([x; u]) ~= numel([x_e; u_e])
-        error('Mismatch in dimensions of variables and equilibrium values.');
-    end
-
-    % Evaluate Jacobians numerically at equilibrium
-    A = double(subs(A_sym, [x; u], [x_e; u_e]));
-    B = double(subs(B_sym, [x; u], [x_e; u_e]));
-    C = double(subs(C_sym, [x; u], [x_e; u_e]));
-    D = double(subs(D_sym, [x; u], [x_e; u_e]));
-end
-
-%% Equilibrium Computation
-function S_f = getEquilibrium(Fx, x, u)
-    % Construct equilibrium equations
-    eqns = [];
-    for i = 1:length(Fx)
-        eqns = [eqns; Fx{i} == 0];
-    end
-    
-    % Solve for equilibrium
-    vars = [x(:); u(:)]; % Combine state and input variables
-
-    %% EXTRACT TRIVIAL SOLUTION
-    trivial_sol = solve(eqns, vars, 'Real', true);
-
-    % Check if the solution is empty
-    if isempty(trivial_sol)
-        error('No real equilibrium solution found.');
-    end
-
-    % Extract the solution into numeric arrays
-    if isstruct(trivial_sol)
-        % Single solution: Convert structure fields to array
-        trivial_sol_vals = struct2array(trivial_sol); % Extract all variables in order
-    elseif iscell(trivial_sol)
-        % Multiple solutions: Use the first one
-        trivial_sol_vals = struct2array(trivial_sol{1});
-    else
-        error('Unexpected solution format from solve.');
-    end
-
-    % Split into state and input equilibrium values
-    num_states = numel(x); % Number of state variables
-    num_inputs = numel(u); % Number of input variables
-    trivial_x_e = double(trivial_sol_vals(1:num_states));   % Extract state equilibrium
-    trivial_u_e = double(trivial_sol_vals(num_states+1:num_states+num_inputs)); % Extract input equilibrium
-
-    % Reshape to match the dimensions of symbolic variables
-    trivial_x_e = reshape(trivial_x_e, size(x));
-    trivial_u_e = reshape(trivial_u_e, size(u));
-
-    %% EXTRACT PARAMETRIZED SOLUTION
-    
-    sol = solve(eqns, vars, 'Real', false, 'ReturnConditions', true);
-
-    % Check if the solution is empty
-    if isempty(sol)
-        error('No real equilibrium solution found.');
-    end
-
-    % Extract the solution into numeric arrays
-    if isstruct(sol)
-        % Single solution: Convert structure fields to array
-        sol_vals = struct2array(sol); % Extract all variables in order
-    elseif iscell(sol)
-        % Multiple solutions: Use the first one
-        sol_vals = struct2array({1});
-    else
-        error('Unexpected solution format from solve.');
-    end
-
-    x_e = sym(sol_vals(1:num_states));   % Extract state equilibrium
-    u_e = sym(sol_vals(num_states+1:num_states+num_inputs)); % Extract input equilibrium
-
-    % Reshape to match the dimensions of symbolic variables
-    x_e = reshape(x_e, size(x));
-    u_e = reshape(u_e, size(u));
-
-    % Package equilibrium points into a struct
-    S_f = struct( ...
-            'trivial_solution', struct('x_e', trivial_x_e, 'u_e', trivial_u_e), ...
-            'symbolic_solution', struct('x_e', x_e, 'u_e', u_e) ...
-    );
 end
 
 function [y_e_triv, y_e] = populateYs(S_f, C, D)
