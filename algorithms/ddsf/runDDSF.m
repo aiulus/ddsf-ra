@@ -121,7 +121,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     
         [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini);
         
-        loss_t = get_loss(lookup, ul_t, u_opt, y_opt);
+        %loss_t = get_loss(lookup, ul_t, u_opt, y_opt);
     
         u_next = u_opt(:, 1 + T_ini);
         y_next = y_opt(:, 1 + T_ini);
@@ -137,10 +137,6 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
         catch ME
             fprintf('Failed to execute dataBasedU2Y at time step %d: %s', t-T_ini, ME.message);
         end
-    
-        % Add recursively feasible points to the safe terminal set
-        lookup.sys.S_f.u_eq = [lookup.sys.S_f.u_eq, u_next];
-        lookup.sys.S_f.y_eq = [lookup.sys.S_f.y_eq, y_next];
     end
     
     % Store the final simulation results
@@ -152,16 +148,16 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     time = 1:T_sim;
     if toggle_plot
         plotDDSF(time, logs, lookup)
-    end
+    end 
+
+end
+
+function loss = get_loss(lookup, u_l, u_opt, y_opt)
+    R = lookup.opt_params.R;
+    y_target = lookup.sys.params.target;
+
+    loss1 = det(R) * norm(u_l - u_opt);    
+    loss2 = loss1 + norm(y_target - y_opt);
     
-    
-    function loss = get_loss(lookup, u_l, u_opt, y_opt)
-        R = lookup.opt_params.R;
-        y_target = lookup.sys.params.target;
-    
-        loss1 = det(R) * norm(u_l - u_opt);    
-        loss2 = loss1 + norm(y_target - y_opt);
-        
-        loss = [loss1; loss2];
-    end
+    loss = [loss1; loss2];
 end
