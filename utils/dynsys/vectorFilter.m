@@ -10,8 +10,11 @@ function result = vectorFilter(testarr, x_e)
         if entry_class == "sym" && startsWith(entry_value, 'z')
             % Keep the corresponding entry from x_eval
             result{i} = testarr(i);
-        else
-            % Replace with the interval [-inf, +inf]
+        elseif startsWith(entry_value, 'k')
+            syms k
+            x_e(i) = subs(x_e(i), k, 1);
+            result{i} = double(x_e(i));
+        else            
             result{i} = double(x_e(i));
         end
     end

@@ -1,17 +1,6 @@
 function sys = constraint_handler(sys, params)
-     % Assign system-specific parameters
-    sys.params = params;
-
-    % Assign dimensions
-    dims = struct( ...
-        'n', size(sys.A, 1), ... % System state dim.
-        'm', size(sys.B, 2), ... % Input dim.
-        'p', size(sys.C, 1), ... % Output shape
-        'q', size(sys.B, 2) + size(sys.C, 1) ... % #I/O variables
-    );
-
-    sys.dims = dims;
-    largeval = 1e+30;
+    dims = sys.dims;
+    largeval = 1e+8;
 
     % Assign constraints
     if isfield(params, 'u_min')

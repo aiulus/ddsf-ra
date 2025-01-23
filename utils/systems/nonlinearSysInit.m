@@ -18,6 +18,10 @@ function sys = nonlinearSysInit(sys_type)
             Fx = {f1}; % Dynamics functions
             Gx = {g1}; % Measurement functions
 
+            % Create evaluable versions of dynamics and outputs
+            Fx_handle = createFunctionHandle(Fx, [x; u]);
+            Gx_handle = createFunctionHandle(Gx, [x; u]);
+
             % Use symbolic variables
             statevars = x;
             inputvars = u;
@@ -54,6 +58,10 @@ function sys = nonlinearSysInit(sys_type)
             Fx = {f1, f2}; % Dynamics functions
             Gx = {g1};     % Measurement functions
 
+            % Create evaluable versions of dynamics and outputs
+            Fx_handle = createFunctionHandle(Fx, [x1; x2; u]);
+            Gx_handle = createFunctionHandle(Gx, [x1; x2; u]);
+
             % Use symbolic variables
             statevars = [x1; x2];
             inputvars = u;
@@ -86,6 +94,10 @@ function sys = nonlinearSysInit(sys_type)
 
             Fx = {f1, f2}; % Dynamics functions
             Gx = {g1};     % Measurement functions
+
+            % Create evaluable versions of dynamics and outputs
+            Fx_handle = createFunctionHandle(Fx, [x1; x2; u]);
+            Gx_handle = createFunctionHandle(Gx, [x1; x2; u]);
 
             % Use symbolic variables
             statevars = [x1; x2];
@@ -122,9 +134,10 @@ function sys = nonlinearSysInit(sys_type)
             f4 = (g*sin(theta) - cos(theta)*f3) / l;
 
             g1 = x; % Cart position (output)
+            g2 = theta;
 
             Fx = {f1, f2, f3, f4}; % Dynamics functions
-            Gx = {g1}; % Measurement functions
+            Gx = {g1, g2}; % Measurement functions
 
             statevars = [x; theta; dx; dtheta];
             inputvars = u;
@@ -239,10 +252,15 @@ function sys = nonlinearSysInit(sys_type)
         otherwise
             error('Unknown system type specified.');
     end
-       
+    
+    % Assign the system-specific parameters
     sys.config = config; sys.opt_params = opt_params;
-
-    sys.S_f = getEquilibriumNonlinear(Fx, statevars, inputvars);
+    
+    try
+        sys.S_f = getEquilibriumNonlinear(Fx, statevars, inputvars);
+    catch ME
+        error('<< getEquilibriumNonlinear >>\n<< Message: >> %s \n', ME.message);
+    end
 
     x_e_default = sys.S_f.trivial_solution.x_e;
     u_e_default = sys.S_f.trivial_solution.u_e;
@@ -252,7 +270,14 @@ function sys = nonlinearSysInit(sys_type)
     [y_e_triv, y_e] = populateYs(sys.S_f, C, D);
     sys.S_f.trivial_solution.y_e = y_e_triv;
     sys.S_f.symbolic_solution.y_e = y_e;   
+    
+    sys.functions = struct('F', Fx_handle, 'G', Gx_handle);
+
+    sys.dims = getDims(A, B, C, D);
+    sys = constraint_handler(sys, params);
 end
+
+%% Helper Functions
 
 function [y_e_triv, y_e] = populateYs(S_f, C, D)
     x_e_triv = S_f.trivial_solution.x_e;
@@ -263,3 +288,6 @@ function [y_e_triv, y_e] = populateYs(S_f, C, D)
     y_e = C*x_e + D*u_e;    
 end
 
+function f_eval = createFunctionHandle(f_sym, vars)
+    f_eval = cellfun(@(f) matlabFunction(f, 'Vars', {vars}), f_sym, 'UniformOutput', false);
+end
