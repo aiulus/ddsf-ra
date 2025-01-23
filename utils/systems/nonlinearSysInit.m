@@ -18,10 +18,6 @@ function sys = nonlinearSysInit(sys_type)
             Fx = {f1}; % Dynamics functions
             Gx = {g1}; % Measurement functions
 
-            % Create evaluable versions of dynamics and outputs
-            Fx_handle = createFunctionHandle(Fx, [x; u]);
-            Gx_handle = createFunctionHandle(Gx, [x; u]);
-
             % Use symbolic variables
             statevars = x;
             inputvars = u;
@@ -58,10 +54,6 @@ function sys = nonlinearSysInit(sys_type)
             Fx = {f1, f2}; % Dynamics functions
             Gx = {g1};     % Measurement functions
 
-            % Create evaluable versions of dynamics and outputs
-            Fx_handle = createFunctionHandle(Fx, [x1; x2; u]);
-            Gx_handle = createFunctionHandle(Gx, [x1; x2; u]);
-
             % Use symbolic variables
             statevars = [x1; x2];
             inputvars = u;
@@ -93,11 +85,7 @@ function sys = nonlinearSysInit(sys_type)
             g1 = x1;
 
             Fx = {f1, f2}; % Dynamics functions
-            Gx = {g1};     % Measurement functions
-
-            % Create evaluable versions of dynamics and outputs
-            Fx_handle = createFunctionHandle(Fx, [x1; x2; u]);
-            Gx_handle = createFunctionHandle(Gx, [x1; x2; u]);
+            Gx = {g1};     % Measurement functions            
 
             % Use symbolic variables
             statevars = [x1; x2];
@@ -255,7 +243,7 @@ function sys = nonlinearSysInit(sys_type)
     
     % Assign the system-specific parameters
     sys.params = params; sys.config = config; sys.opt_params = opt_params;
-    sys.functions = struct('F', Fx_handle, 'G', Gx_handle);
+    [sys.functions.Fh, sys.functions.Gh] = getHandles(Fx, Gx, statevars, inputvars);
     
     try
         sys.S_f = getEquilibriumNonlinear(Fx, statevars, inputvars);
@@ -271,11 +259,10 @@ function sys = nonlinearSysInit(sys_type)
     [y_e_triv, y_e] = populateYs(sys.S_f, C, D);
     sys.S_f.trivial_solution.y_e = y_e_triv;
     sys.S_f.symbolic_solution.y_e = y_e;   
-    
-    sys.functions = struct('F', Fx_handle, 'G', Gx_handle);
 
     sys.dims = getDims(A, B, C, D);
     sys = constraint_handler(sys, params);
+    sys.dt = 0.1; % Time step size [s]
 end
 
 %% Helper Functions
@@ -287,5 +274,19 @@ function [y_e_triv, y_e] = populateYs(S_f, C, D)
     u_e =  S_f.symbolic_solution.u_e;
     y_e_triv = C*x_e_triv + D*u_e_triv;
     y_e = C*x_e + D*u_e;    
+end
+
+function [Fh, Gh] = getHandles(Fx, Gx, x, u)
+    Fh = cell(size(Fx)); Gh = cell(size(Gx));
+    for i=1:numel(Fx)
+        fi = Fx{i};
+        fi_handle =  matlabFunction(fi, 'Vars', {x, u});
+        Fh{i} = fi_handle;
+    end
+    for j=1:numel(Gx)
+        gj = Gx{j};
+        gj_handle =  matlabFunction(gj, 'Vars',{x, u});
+        Gh{j} = gj_handle;
+    end
 end
 
