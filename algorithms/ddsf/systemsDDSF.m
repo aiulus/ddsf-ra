@@ -363,6 +363,7 @@ function sys = systemsDDSF(sys_type, discretize)
     sys = constraint_handler(sys, params);
     % Perform checks on adherence to assumptions
     sys.config = validate_config(run_config, A, C);
+    sys.S_f = setEquilibriaDDSF(sys);
 end
     
 function config = validate_config(config, A, C)

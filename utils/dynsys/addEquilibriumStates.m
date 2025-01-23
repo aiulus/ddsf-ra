@@ -1,3 +1,4 @@
+%% TODO: NOT IN USE !!! - REMOVE 
 function sys = addEquilibriumStates(sys)
     U = sys.constraints.U; % Input constraints set
     Y = sys.constraints.Y; % Output constraints set

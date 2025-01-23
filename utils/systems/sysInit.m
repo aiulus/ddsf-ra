@@ -448,7 +448,7 @@ function sys = sysInit(sys_type)
     end
   
     sys = populate_system(sys, params, opt_params, config);
-
+    sys.S_f = setEquilibriaDDSF(sys);
 end
 
 
