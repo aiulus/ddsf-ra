@@ -30,13 +30,17 @@ as well as a custom version of **Model Predictive Control (MPC)** that pairs wit
 
 ```
 
-## Key Features
+### Algorithms
 
 - **DDSF: ([1][ddsflink])** Ensures safe operation through system-behavioral filtering of suggested control inputs
 - **DeePC: ([2][deepclink])** System-behavioral predictive control
-- **Experiments:** Experiments on parameter tuning and performance comparison
 
-## Getting Started
+### Experiments
+- Experiments on parameter tuning and performance comparison
+
+### Utility Functions
+
+### Getting Started
 
 ### Prerequisites
 
