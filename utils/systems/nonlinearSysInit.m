@@ -99,6 +99,142 @@ function sys = nonlinearSysInit(sys_type)
             );
 
             opt_params = struct('Q', 1, 'R', 1);
+         %% Inverted Pendulum on a Cart
+        case 'inverted_pendulum'
+            params = struct( ...
+                'g', 9.81, ...         % Gravity
+                'l', 1.0, ...          % Length of pendulum
+                'm', 0.5, ...          % Mass of pendulum
+                'M', 1.0, ...          % Mass of cart
+                'x_ini', [0; pi/6; 0; 0], ... % Initial [cart position; pendulum angle; cart velocity; angular velocity]
+                'u_min', -10, ...
+                'u_max', 10 ...
+            );
+
+            % Dynamics
+            syms x theta dx dtheta u
+            m = params.m; M = params.M; l = params.l; g = params.g;
+
+            % Equations of motion
+            f1 = dx;
+            f2 = dtheta;
+            f3 = (u + m*l*dtheta^2*sin(theta) - m*g*cos(theta)*sin(theta)) / (M + m - m*cos(theta)^2);
+            f4 = (g*sin(theta) - cos(theta)*f3) / l;
+
+            g1 = x; % Cart position (output)
+
+            Fx = {f1, f2, f3, f4}; % Dynamics functions
+            Gx = {g1}; % Measurement functions
+
+            statevars = [x; theta; dx; dtheta];
+            inputvars = u;
+
+            config = struct( ...
+                'T', 50, ...          % Time horizon
+                'T_ini', 10, ...      % Initial trajectory length
+                'N', 15 ...           % Prediction horizon
+            );
+
+            opt_params = struct('Q', 1, 'R', 1);
+
+        %% Nonlinear Cruise Control with Time Delay
+        case 'nonlinear_cruise'
+            params = struct( ...
+                'tau', 2, ...         % Time delay
+                'a', 0.5, ...         % Acceleration gain
+                'b', 0.1, ...         % Nonlinear damping
+                'x_ini', 20, ...      % Initial velocity
+                'u_min', -2, ...
+                'u_max', 2 ...
+            );
+
+            syms v u u_tau
+            % Dynamics with time delay
+            f1 = v + params.a*u_tau - params.b*v^2;
+            g1 = v; % Output velocity
+
+            Fx = {f1}; % Dynamics functions
+            Gx = {g1}; % Measurement functions
+
+            statevars = v; % Current velocity
+            inputvars = [u; u_tau]; % Control input and delayed input
+
+            config = struct( ...
+                'T', 100, ...         % Time horizon
+                'T_ini', 20, ...      % Initial trajectory length
+                'N', 30 ...           % Prediction horizon
+            );
+
+            opt_params = struct('Q', 1, 'R', 1);
+
+        %% Quadcopter with Coupled Nonlinear Dynamics
+        case 'quadcopter'
+            params = struct( ...
+                'g', 9.81, ...        % Gravity
+                'm', 0.5, ...         % Mass of quadcopter
+                'x_ini', zeros(12,1), ... % Initial state (6 position + 6 velocity states)
+                'u_min', -5, ...
+                'u_max', 5 ...
+            );
+
+            syms x y z phi theta ppsi dx dy dz dphi dtheta dppsi u1 u2 u3 u4
+            g = params.g; m = params.m;
+
+            % Dynamics
+            f1 = dx; % Velocity in x
+            f2 = dy; % Velocity in y
+            f3 = dz; % Velocity in z
+            f4 = (u1/m) * (cos(phi)*cos(theta)) - g; % z-direction acceleration
+            f5 = u2; % Roll dynamics
+            f6 = u3; % Pitch dynamics
+            f7 = u4; % Yaw dynamics
+
+            Fx = {f1, f2, f3, f4, f5, f6, f7}; % Dynamics functions
+            Gx = {x, y, z}; % Position outputs
+
+            statevars = [x; y; z; phi; theta; ppsi; dx; dy; dz; dphi; dtheta; dppsi];
+            inputvars = [u1; u2; u3; u4];
+
+            config = struct( ...
+                'T', 100, ...         % Time horizon
+                'T_ini', 20, ...      % Initial trajectory length
+                'N', 25 ...           % Prediction horizon
+            );
+
+            opt_params = struct('Q', 1, 'R', 1);
+
+        %% Nonlinear Mass-Spring-Damper
+        case 'mass_spring_damper'
+            params = struct( ...
+                'k', 2, ...           % Spring constant
+                'c', 1, ...           % Damping coefficient
+                'm', 1, ...           % Mass
+                'x_ini', [1; 0], ...  % Initial displacement and velocity
+                'u_min', -10, ...
+                'u_max', 10 ...
+            );
+
+            syms x dx u
+            k = params.k; c = params.c; m = params.m;
+
+            % Dynamics
+            f1 = dx; % Velocity
+            f2 = -(k/m)*x - (c/m)*dx^2 + u/m; % Acceleration
+            g1 = x; % Displacement output
+
+            Fx = {f1, f2}; % Dynamics functions
+            Gx = {g1}; % Measurement functions
+
+            statevars = [x; dx];
+            inputvars = u;
+
+            config = struct( ...
+                'T', 60, ...          % Time horizon
+                'T_ini', 10, ...      % Initial trajectory length
+                'N', 15 ...           % Prediction horizon
+            );
+
+            opt_params = struct('Q', 1, 'R', 1);
 
         otherwise
             error('Unknown system type specified.');
@@ -108,19 +244,13 @@ function sys = nonlinearSysInit(sys_type)
     [A, B, C, D] = linearize(Fx, Gx, statevars, inputvars);
     sys.A = A; sys.B = B; sys.C = C; sys.D = D;
     sys.config = config; sys.opt_params = opt_params;
+    sys.eq = populateEquilibriumSet(Fx, statevars, inputvars, C, D);
 end
 
 %% Linearization Function
 function [A, B, C, D] = linearize(Fx, Gx, x, u)
     % Compute equilibrium
     [x_e, u_e] = getEquilibrium(Fx, x, u);
-
-    % Debug sizes of x, u, x_e, u_e
-    disp('x_e:'); disp(x_e); disp('u_e:'); disp(u_e);
-    disp('Size of x_e:'); disp(size(x_e));
-    disp('Size of u_e:'); disp(size(u_e));
-    disp('Size of x:'); disp(size(x));
-    disp('Size of u:'); disp(size(u));
 
     % Initialize symbolic Jacobians
     A_sym = [];
@@ -130,7 +260,7 @@ function [A, B, C, D] = linearize(Fx, Gx, x, u)
         A_sym = [A_sym; jacobian(Fx{i}, x)]; % State Jacobian
         B_sym = [B_sym; jacobian(Fx{i}, u)]; % Input Jacobian
     end
-    
+
     % Measurement Jacobians
     C_sym = [];
     D_sym = [];
@@ -151,8 +281,6 @@ function [A, B, C, D] = linearize(Fx, Gx, x, u)
     C = double(subs(C_sym, [x; u], [x_e; u_e]));
     D = double(subs(D_sym, [x; u], [x_e; u_e]));
 end
-
-
 
 %% Equilibrium Computation
 function [x_e, u_e] = getEquilibrium(Fx, x, u)
@@ -193,3 +321,8 @@ function [x_e, u_e] = getEquilibrium(Fx, x, u)
     u_e = reshape(u_e, size(u));
 end
 
+function eq = populateEquilibriumSet(Fx, x, u, C, D)
+    [x_e, u_e] = getEquilibrium(Fx, x, u);
+    y_e = C * x_e +  D * u_e;
+    eq = struct('x_e', x_e, 'u_e', u_e, 'y_e', y_e);
+end

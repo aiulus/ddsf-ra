@@ -350,9 +350,7 @@ function sys = systemsDDSF(sys_type, discretize)
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 20, ... % Prediction horizon
                 's', 2 ... % Conservatism
-                );
-    
-    
+                );        
     end
     
     if discretize == true
