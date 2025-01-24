@@ -38,11 +38,38 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                     grid on;
                     legend show;
                 end
+                saveAndClose(output_dir, sprintf('%s_fig%d', configname, fig));
+            end          
+                case 'y-ddsf'
+            y_hist = sorted.y; yl_hist = sorted.yl;
+            T_sim = size(sorted.y, 3); time = 0:T_sim-1;
+            p = sys.dims.p;
+    
+            output_dir = prepareOutputDir();
+            plots_per_figure = 3; % Max number of plots per figure
+            num_figures = ceil(p / plots_per_figure);
+    
+            for fig = 1:num_figures
+                figure('Position', [100, 100, 800, 600]); % Set figure size
+                tiledlayout(plots_per_figure, 1); % Max plots per figure
+    
+                for sub = 1:plots_per_figure
+                    i = (fig - 1) * plots_per_figure + sub; % Global plot index
+                    if i > p, break; end % Stop if we exceed the total number of plots
+    
+                    nexttile; hold on;
+                    y_i_hist = y_hist(:, i, :); yl_i_hist = yl_hist(:, i, :);
+    
+                    stairs(time, squeeze(y_i_hist), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
+                    stairs(time, squeeze(yl_i_hist), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
+    
+                    addBounds(time, sys.constraints.Y(i, :), configname);
+                    hold off;
+                    title(sprintf('Output %d', i)); xlabel('t'); ylabel(sprintf('y[%d]', i)); grid on; legend show;
+                end
+                saveAndClose(output_dir, printf('%s_fig%d', configname, fig));
             end
-    
-            % Save and close the figure
-            saveAndClose(output_dir, sprintf('%s_fig%d', configname, fig));
-    
+            
         case 'UUU-ddsf'
             u_hist = sorted.u; ul_hist = sorted.ul;
             T_sim = size(sorted.u, 3); time = 0:T_sim-1;
@@ -83,35 +110,6 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                 hold off;
                 hold(ax, 'off');
                 title(sprintf('Input %d', i)); xlabel('t'); ylabel(sprintf('y[%d]', i)); grid on; legend show;
-            end
-            saveAndClose(output_dir, configname);
-        case 'y-ddsf'
-            y_hist = sorted.y; yl_hist = sorted.yl;
-            T_sim = size(sorted.y, 3); time = 0:T_sim-1;
-            p = sys.dims.p;
-    
-            output_dir = prepareOutputDir();
-            plots_per_figure = 3; % Max number of plots per figure
-            num_figures = ceil(p / plots_per_figure);
-    
-            for fig = 1:num_figures
-                figure('Position', [100, 100, 800, 600]); % Set figure size
-                tiledlayout(plots_per_figure, 1); % Max plots per figure
-    
-                for sub = 1:plots_per_figure
-                    i = (fig - 1) * plots_per_figure + sub; % Global plot index
-                    if i > p, break; end % Stop if we exceed the total number of plots
-    
-                    nexttile; hold on;
-                    y_i_hist = y_hist(:, i, :); yl_i_hist = yl_hist(:, i, :);
-    
-                    stairs(time, squeeze(y_i_hist), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
-                    stairs(time, squeeze(yl_i_hist), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
-    
-                    addBounds(time, sys.constraints.Y(i, :), configname);
-                    hold off;
-                    title(sprintf('Output %d', i)); xlabel('t'); ylabel(sprintf('y[%d]', i)); grid on; legend show;
-                end
             end
             saveAndClose(output_dir, configname);
     end
