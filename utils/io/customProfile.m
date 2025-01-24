@@ -52,7 +52,7 @@ function customProfile(p, timeThreshold)
     set(h, 'EdgeColor', 'k'); % Set edge color for better visibility
 
     % Step 5: Save Results
-    outputFile = sprintf('filtered_call_hierarchy_threshold_%.3f.png', timeThreshold); % Dynamic file name
+    outputFile = sprintf('DEEPC_filtered_call_hierarchy_threshold_%.3f.png', timeThreshold); % Dynamic file name
     disp(['Saving visualization to ', outputFile, '...']);
     saveas(gcf, outputFile); % Save the figure as an image
     disp('Filtered call hierarchy visualization saved.');
