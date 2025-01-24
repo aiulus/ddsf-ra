@@ -31,7 +31,7 @@ function gridPlotDDSF(mode, configname, sys, sorted)
 
             figure; tiledlayout(p, 1);
         
-            for i = 1:size(y_hist, 1)
+            for i = 1:p
                 nexttile; hold on;
                 y_i_hist = y_hist(:, i, :); yl_i_hist = yl_hist(:, i, :);              
                 
