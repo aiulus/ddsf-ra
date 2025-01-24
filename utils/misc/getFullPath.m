@@ -1,6 +1,6 @@
 function fullpath = getFullPath(prefix)    
     % Define the base output directory
-    output_dir = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'outputs', 'plots');
+    output_dir = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'outputs', 'data');
     if ~exist(output_dir, 'dir'), mkdir(output_dir); end
 
     % Ensure the directory exists

@@ -1,38 +1,48 @@
 function gridPlotDDSF(mode, configname, sys, sorted)
     switch mode
-        case {'u-ddsf', 'ddsf'}
-            u_hist = sorted.u; ul_hist = sorted.ul; time = 0:size(u_hist, 2) - 1;
-            output_dir = prepareOutputDir();
-            figure; tiledlayout(size(u_hist, 1), 1);
-        
-            for i = 1:size(u_hist, 1)
-                nexttile;
-                stairs(0:max(size(ul_hist(i, :)))-1, ul_hist(i, :), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
-                hold on;
-                stairs(0:max(size(u_hist(i, :)))-1, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+        case {'u-ddsf', 'ddsf'}             
+            u_hist = sorted.u; ul_hist = sorted.ul; 
+            T_sim = size(sorted.u, 3); time = 0:T_sim-1;
+            m = sys.dims.m;
 
-                fprintf('gridPlotDDSF.m >> TIME STEP %d / %d Passing constraint U as: ', i, size(u_hist, 1)); disp(sys.constraints.U(i, :));
-                fprintf('gridPlotDDSF.m >> TIME STEP %d / %d Passing config as: ', i, size(u_hist, 1)); disp(configname);
+            output_dir = prepareOutputDir();
+           
+            figure; tiledlayout(m, 1);
+        
+            for i = 1:m
+                nexttile;
+                u_i_hist = u_hist(:, i, :); ul_i_hist = ul_hist(:, i, :);
+                hold on;
+                stairs(time, u_i_hist, 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));                
+                stairs(time, ul_i_hist, 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+
+                %fprintf('gridPlotDDSF.m >> TIME STEP %d / %d Passing constraint U as: ', i, size(u_hist, 1)); disp(sys.constraints.U(i, :));
+                %fprintf('gridPlotDDSF.m >> TIME STEP %d / %d Passing config as: ', i, size(u_hist, 1)); disp(configname);
                 addBounds(time, sys.constraints.U(i, :), configname);
-               
-                title(sprintf('Input %d', i)); xlabel('t'); ylabel(sprintf('u[%d]', i)); grid on; legend show;
                 hold off;
+                title(sprintf('Input %d', i)); xlabel('t'); ylabel(sprintf('u[%d]', i)); grid on; legend show;                
             end
             saveAndClose(output_dir, configname);
         case 'y-ddsf'
-            y_hist = sorted.y; yl_hist = sorted.yl; time = 0:size(y_hist, 2) - 1;
+            y_hist = sorted.y; yl_hist = sorted.yl; 
+            T_sim = size(sorted.y, 3); time = 0:T_sim-1;
+            p = sys.dims.p;
             output_dir = prepareOutputDir();
+
             figure; tiledlayout(size(y_hist, 1), 1);
         
             for i = 1:size(y_hist, 1)
-                nexttile;
-                stairs(0:max(size(yl_hist(i, :)))-1, yl_hist(i, :), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
-                hold on;
-                stairs(0:max(size(y_hist(i, :)))-1, y_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+                nexttile; hold on;
+                y_i_hist = y_hist(:, i, :); yl_i_hist = yl_hist(:, i, :);              
+                
+                stairs(time, y_i_hist, 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
+                stairs(time, yl_i_hist, 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));                
+                
                 addBounds(time, sys.constraints.Y(i, :), configname);
-                title(sprintf('Input %d', i)); xlabel('t'); ylabel(sprintf('u[%d]', i)); grid on; legend show;
                 hold off;
+                title(sprintf('Input %d', i)); xlabel('t'); ylabel(sprintf('y[%d]', i)); grid on; legend show;                
             end
+            
             saveAndClose(output_dir, configname);
     end
 end
