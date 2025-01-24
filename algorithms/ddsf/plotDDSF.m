@@ -8,74 +8,91 @@ function plotDDSF(time, logs, lookup)
         
     figure(1);
     m = sys.dims.m;
-    tiledlayout(m, 1); % Use tiled layout for better control  
+    plots_per_figure = 3; % Max number of plots per figure
+    num_figures = ceil(m / plots_per_figure); % Number of figures needed
     
-    % Plot learning vs safe inputs
-    for i = 1:m
-        nexttile;
-        stairs(time, ul_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
-        hold on;
-        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+    for fig = 1:num_figures
+        figure('Position', [100, 100, 800, 600]); % Fixed figure size
+                tiledlayout(plots_per_figure, 1); % Max 3 subplots per figure
     
-        bounds = sys.constraints.U(i, :);
-    
-        % Plot boundaries
-        if bounds(1) ~= -inf
-            plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');
-        end
-        if bounds(2) ~= inf
-            plot(time, bounds(2) * ones(size(time)), 'm--', 'DisplayName', 'Upper Bound');
-        end
-    
-        title(sprintf('Learning vs Safe Input %d', i));
-        xlabel('t');
-        ylabel(sprintf('Input %d', i));
-        grid on;
-        legend show;
-        hold off;
+            for sub = 1:plots_per_figure
+                i = (fig - 1) * plots_per_figure + sub; % Global index for subplot
+                if i > m, break; end % Stop if no more subplots are needed
+
+                nexttile;
+                stairs(time, ul_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
+                hold on;
+                stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+            
+                bounds = sys.constraints.U(i, :);
+            
+                % Plot boundaries
+                if bounds(1) ~= -inf
+                    plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');
+                end
+                if bounds(2) ~= inf
+                    plot(time, bounds(2) * ones(size(time)), 'm--', 'DisplayName', 'Upper Bound');
+                end
+            
+                title(sprintf('Learning vs Safe Input %d', i));
+                xlabel('t');
+                ylabel(sprintf('Input %d', i));
+                grid on;
+                legend show;
+                hold off;
+            end
+            sgtitle('Learning Inputs vs. Safe Inputs');
     end        
-    sgtitle('Learning Inputs vs. Safe Inputs');
+    
 
     figure(2);
     p = sys.dims.p;
-    tiledlayout(p, 1); % Combine all inputs into a single layout
+    plots_per_figure = 3; % Max number of plots per figure
+    num_figures = ceil(p / plots_per_figure);
 
-    for i = 1:p
-        nexttile; hold on;
-        plot(time, y_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
-        stairs(time, yl_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
-        hold on;
+    for fig = 1:num_figures
+        figure('Position', [100, 100, 800, 600]); % Set figure size
+        tiledlayout(plots_per_figure, 1); % Max plots per figure
 
-        bounds = sys.constraints.Y(i, :);
+        for sub = 1:plots_per_figure
+            i = (fig - 1) * plots_per_figure + sub; % Global plot index
+            if i > p, break; end % Stop if we exceed the total number of plots
+
+            nexttile; hold on;
+            plot(time, y_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
+            stairs(time, yl_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
+            hold on;
     
-        % Plot boundaries
-        if bounds(1) ~= -inf
-            plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');
+            bounds = sys.constraints.Y(i, :);
+        
+            % Plot boundaries
+            if bounds(1) ~= -inf
+                plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');
+            end
+            if bounds(2) ~= inf
+                plot(time, bounds(2) * ones(size(time)), 'm--', 'DisplayName', 'Upper Bound');
+            end
+            if lookup.opt_params.target_penalty
+                pi = sys.params.target(i);
+                plot(time, pi * ones(size(time)), 'g--', 'DisplayName', 'Target');
+            end
+        
+            title(sprintf('System Output %d', i));
+            xlabel('t');
+            ylabel(sprintf('Output %d', i));
+            grid on;
+            legend show;
+            hold off;
         end
-        if bounds(2) ~= inf
-            plot(time, bounds(2) * ones(size(time)), 'm--', 'DisplayName', 'Upper Bound');
-        end
-        if lookup.opt_params.target_penalty
-            pi = sys.params.target(i);
-            plot(time, pi * ones(size(time)), 'g--', 'DisplayName', 'Target');
-        end
-    
-        title(sprintf('System Output %d', i));
-        xlabel('t');
-        ylabel(sprintf('Output %d', i));
-        grid on;
-        legend show;
-        hold off;
+        sgtitle("Resulting Outputs");
     end
-    sgtitle("Resulting Outputs");
-
-
-    figure(3);
-    hold on;
-    plot(0:size(loss_hist, 2) - 1, loss_hist(1, :), 'r', 'LineWidth', 1.25, 'DisplayName', 'delta_u');
-    plot(0:size(loss_hist, 2) - 1, loss_hist(2, :), 'b', 'LineWidth', 1.25, 'DisplayName', 'delta_u + distance to target convergence point');
-    grid on; legend show; hold off;
-    sgtitle('Losses');
+    
+    %figure(3);
+    %hold on;
+    %plot(0:size(loss_hist, 2) - 1, loss_hist(1, :), 'r', 'LineWidth', 1.25, 'DisplayName', 'delta_u');
+    %plot(0:size(loss_hist, 2) - 1, loss_hist(2, :), 'b', 'LineWidth', 1.25, 'DisplayName', 'delta_u + distance to target convergence point');
+    %grid on; legend show; hold off;
+    %sgtitle('Losses');
 
     output_dir = prepareOutputDir();
     prefix = sprintf(strcat('U-ddsf-', lookup.systype, '-singlerun','.tex'));

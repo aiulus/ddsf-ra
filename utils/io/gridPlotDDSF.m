@@ -39,8 +39,8 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                     legend show;
                 end
                 saveAndClose(output_dir, sprintf('%s_fig%d', configname, fig));
-            end          
-                case 'y-ddsf'
+            end
+        case 'y-ddsf'
             y_hist = sorted.y; yl_hist = sorted.yl;
             T_sim = size(sorted.y, 3); time = 0:T_sim-1;
             p = sys.dims.p;
@@ -69,7 +69,7 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                 end
                 saveAndClose(output_dir, printf('%s_fig%d', configname, fig));
             end
-            
+    
         case 'UUU-ddsf'
             u_hist = sorted.u; ul_hist = sorted.ul;
             T_sim = size(sorted.u, 3); time = 0:T_sim-1;
@@ -84,8 +84,8 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                 u_i_hist = u_hist(:, i, :); ul_i_hist = ul_hist(:, i, :);
                 hold on;
                 stairs(time, squeeze(u_i_hist), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
-                stairs(time, squeeze(ul_i_hist), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));    
-                
+                stairs(time, squeeze(ul_i_hist), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+    
                 addBounds(time, sys.constraints.U(i, :), configname);
                 hold off;
                 title(sprintf('Input %d', i)); xlabel('t'); ylabel(sprintf('u[%d]', i)); grid on; legend show;

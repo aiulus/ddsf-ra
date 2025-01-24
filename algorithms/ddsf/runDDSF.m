@@ -1,4 +1,5 @@
 function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constraints, R, toggle_plot)
+    toggle_save = true;
     % TODO: scale_constraints must be the last input argument
     if nargin < 6
         scale_constraints = 1;
@@ -61,6 +62,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     % Create struct object 'lookup' for central and extensive parameter passing.
     lookup = struct( ...
                     'sys', sys, ...
+                    'systype', systype, ...
                     'opt_params', opt_params, ...
                     'config', sys.config, ...
                     'dims', dims, ...
@@ -149,7 +151,16 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     if toggle_plot
         plotDDSF(time, logs, lookup)
     end 
-
+    if toggle_save
+        prefix_u = sprintf(strcat('U-ddsf-', systype, '-single_run'));
+        prefix_y = sprintf(strcat('Y-ddsf-', systype, '-single_run'));
+        output_dir = fullfile(fileparts(mfilename('fullpath')), '..', '..', 'outputs', 'data');
+        if ~exist(output_dir, 'dir'), mkdir(output_dir); end
+        fullpath_u = fullfile(output_dir, prefix_u);
+        fullpath_y = fullfile(output_dir, prefix_y);
+        csvFlexSave(fullpath_u, logs.u, logs.ul_t);
+        csvFlexSave(fullpath_y, logs.y, logs.yl);
+    end
 end
 
 function loss = get_loss(lookup, u_l, u_opt, y_opt)
