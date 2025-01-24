@@ -2,7 +2,7 @@
 
 ## Overview
 
-This repository implements data-driven, optimization-based control algorithms, featuring:
+This repository implements following algorithms, based on the papers listed under references.
 - **Data-Driven Safety Filter (DDSF)** ([1][ddsflink])
 - **Data-Enabled Predictive Control (DeePC)** ([2][deepclink])
 as well as a custom version of **Model Predictive Control (MPC)** that pairs with the DeePC implementation.
@@ -69,8 +69,14 @@ Navigate to one of the folders (/algorithms/ddsf, /algorithms/deepc, /algorithms
    Coulson, J., Lygeros, J., & Dörfler, F. (2019). *Data-Enabled Predictive Control: In the Shallows of the DeePC*.  
    [arXiv:1811.05890][deepclink]
 
-[ddsflink]: https://arxiv.org/abs/2309.00189
-[deepclink]: https://arxiv.org/abs/1811.05890
+   [ddsflink]: https://arxiv.org/abs/2309.00189
+   [deepclink]: https://arxiv.org/abs/1811.05890
+
+## Disclaimer 
+
+This project is primarily an academic exercise. While I’ve done my best to faithfully implement the ideas from these papers, please keep in mind:
+- **There may be bugs or inaccuracies.** The code hasn’t been extensively validated and might differ in some details from the original papers.
+- **Use at your own discretion.**
 
 ## Feedback
 
