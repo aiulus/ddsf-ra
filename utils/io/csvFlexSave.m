@@ -22,8 +22,7 @@ function filename = csvFlexSave(prefix, varargin)
         col_i = varargin{i};
         col_i = col_i(:);    
         d_csv = [d_csv, col_i];
-    end
-    
+    end    
 
     % Construct the full filename (add .csv extension if not included)
     if ~endsWith(prefix, '.csv')

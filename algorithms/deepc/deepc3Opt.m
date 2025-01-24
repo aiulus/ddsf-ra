@@ -61,7 +61,7 @@ function [u, y] = deepc3Opt(lookup, H, u_ini, y_ini)
     
     objective = delta' * Qext_cut * delta + u' * kron(eye(N), R) * u;
 
-        if opt_params.regularize
+    if lookup.opt_params.regularize
         % H = regHankelDDSF(lookup.H_u, lookup.H_y);
         % num_cols = size(H, 2);
         switch reg_params.reg_mode
@@ -82,9 +82,10 @@ function [u, y] = deepc3Opt(lookup, H, u_ini, y_ini)
     
     u_min = U(:, 1); u_max = U(:, 2);
     y_min = Y(:, 1); y_max = Y(:, 2);    
+    u_min(isinf(u_min)) = 1e+8; u_max(isinf(u_max)) = 1e+8;
+    y_min(isinf(y_min)) = 1e+8; y_max(isinf(y_max)) = 1e+8;
 
-
-    if ~opt_params.regularize
+    if ~lookup.opt_params.regularize
         epsilon = 0; 
     else 
         epsilon = reg_params.epsilon; 
@@ -105,19 +106,8 @@ function [u, y] = deepc3Opt(lookup, H, u_ini, y_ini)
             Yp * g == y_ini, ...
             Uf * g == u, ...
             Yf * g == y, ...
-            u_lb <= u & u <= u_ub, ...
-            y_lb <= y & y <= y_ub ...
-            ];
-    elseif lower(constr_type) == 'r'       % Regularized
-        Ux = [Up; Uf]; Yx = [Yp; Yf];
-        order = size(Ux, 1);
-        Ux = svdHankel(Ux, order);
-        Yx = svdHankel(Yx, order);
-        gr = sdpvar(order, 1);
-        objective = objective + gr' * (lambda_g * eye(length(gr))) * gr;
-        constraints = [[Ux; Yx] * gr == [u_ini; u; y_ini; y], ...
-            u_lb <= u & u <= u_ub, ...
-            y_lb <= y & y <= y_ub ...
+            u_lb <= u, u <= u_ub, ...
+            y_lb <= y, y <= y_ub ...
             ];
     elseif lower(constr_type) == 's'       % Simple, just models the system
         constraints = [Up * g == u_ini, ...% dynamics - same as setting

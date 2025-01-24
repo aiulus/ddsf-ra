@@ -42,10 +42,10 @@ vals_small = struct( ...
 %                        'thermostat', 'cstr'}
 %           - Specifies the type of system to initialize.
 %           - See systems\sysInit.m for details.
-systype = 'dampler';
+systype = 'cruise_control';
 
 % #Simulation steps to be performed by (deepcTunerFlex >) runParamDPC.m
-T_sim = 5;
+T_sim = 2;
 
 % Whether the output CSV-file (containing simulation data) should be saved
 % - configured to be true by default in deepcTunerFlex.m

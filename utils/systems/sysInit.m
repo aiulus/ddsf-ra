@@ -446,7 +446,7 @@ function sys = sysInit(sys_type)
                 's', 2 ...      % Sliding length
             );
     end
-    
+    sys.params = params;
     sys.dims = getDims(sys.A, sys.B, sys.C, sys.D);
     sys = populate_system(sys, params, opt_params, config);
     sys.S_f = setEquilibriaDDSF(sys);
