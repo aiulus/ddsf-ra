@@ -7,15 +7,15 @@ function plotDDSF(time, logs, lookup)
     loss_hist = logs.loss;
         
     figure(1);
-    m = size(u_hist, 1);
+    m = sys.dims.m;
     tiledlayout(m, 1); % Use tiled layout for better control  
     
     % Plot learning vs safe inputs
     for i = 1:m
         nexttile;
-        stairs(0:size(ul_hist, 2) - 1, ul_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
+        stairs(time, ul_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
         hold on;
-        stairs(0:size(u_hist, 2) - 1, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+        stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
     
         bounds = sys.constraints.U(i, :);
     
@@ -37,13 +37,13 @@ function plotDDSF(time, logs, lookup)
     sgtitle('Learning Inputs vs. Safe Inputs');
 
     figure(2);
-    p = size(y_hist, 1);
+    p = sys.dims.p;
     tiledlayout(p, 1); % Combine all inputs into a single layout
 
     for i = 1:p
         nexttile; hold on;
         plot(time, y_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
-        stairs(0:size(yl_hist, 2) - 1, yl_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
+        stairs(time, yl_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
         hold on;
 
         bounds = sys.constraints.Y(i, :);
@@ -77,8 +77,14 @@ function plotDDSF(time, logs, lookup)
     grid on; legend show; hold off;
     sgtitle('Losses');
 
+    output_dir = prepareOutputDir();
+    prefix = sprintf(strcat('U-ddsf-', lookup.systype, '-singlerun','.tex'));
+    fullname_inputs = fullfile(output_dir, prefix);
+    prefix = sprintf(strcat('Y-ddsf-', lookup.systype, '-singlerun','.tex'));
+    fullname_outputs = fullfile(output_dir, prefix);
+
     figure(1);
-    matlab2tikz('quad_inputs_t50.tex');
+    matlab2tikz(fullname_inputs);
     figure(2);
-    matlab2tikz('quad_outputs_t50.tex');
+    matlab2tikz(fullname_outputs);
 end

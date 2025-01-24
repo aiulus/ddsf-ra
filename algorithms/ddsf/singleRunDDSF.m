@@ -1,4 +1,4 @@
-function [lookup, time, logs] = singleRunDDSF(systype, T_sim,scale_constraints, toggle_plot)
+function [lookup, time, logs] = singleRunDDSF(systype, T_sim, toggle_plot)
     %% Step 1: Configuration
     data_options = struct( ...
         'datagen_mode', 'scaled_rbs', ...
@@ -34,20 +34,14 @@ function [lookup, time, logs] = singleRunDDSF(systype, T_sim,scale_constraints, 
         sys = nonlinearSysInit(systype);
     else
         sys = systemsDDSF(systype, opt_params.discretize);
-    end
-    
-    sys.constraints.U = updateBounds(sys.constraints.U, scale_constraints);
-    sys.constraints.Y = updateBounds(sys.constraints.Y, scale_constraints);
+    end    
 
     dims = sys.dims;
-
-
-
-    opt_params.R = opt_params.R * eye(dims.m);
-    
+    opt_params.R = opt_params.R * eye(dims.m);    
     
     % Create struct object 'lookup' for central and extensive parameter passing.
     lookup = struct( ...
+                    'systype', systype, ...
                     'sys', sys, ...
                     'opt_params', opt_params, ...
                     'config', sys.config, ...
