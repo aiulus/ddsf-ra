@@ -99,8 +99,8 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
                 H = low_rank_appr(H);
                 H = H / norm(H, 'fro'); % Normalize with Frobenius norm
                 lambda = reg_params.lambda;
-                H = H + lambda * eye(size(H)); % Tikhonov regularization
-            case 'svd'
+                H = H + lambda * eye(size(H)); 
+            case 'lra' % DOESN'T PRESERVE RANK!!
                 H = low_rank_appr(H);
             otherwise
                 error('Unknown regularization type: %s', reg_params.reg_mode);
