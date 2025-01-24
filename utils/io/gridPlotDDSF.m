@@ -13,8 +13,8 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                 nexttile;
                 u_i_hist = u_hist(:, i, :); ul_i_hist = ul_hist(:, i, :);
                 hold on;
-                stairs(time, u_i_hist, 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));                
-                stairs(time, ul_i_hist, 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+                stairs(time, squeeze(u_i_hist), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));                
+                stairs(time, squeeze(ul_i_hist), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
 
                 %fprintf('gridPlotDDSF.m >> TIME STEP %d / %d Passing constraint U as: ', i, size(u_hist, 1)); disp(sys.constraints.U(i, :));
                 %fprintf('gridPlotDDSF.m >> TIME STEP %d / %d Passing config as: ', i, size(u_hist, 1)); disp(configname);
@@ -29,14 +29,14 @@ function gridPlotDDSF(mode, configname, sys, sorted)
             p = sys.dims.p;
             output_dir = prepareOutputDir();
 
-            figure; tiledlayout(size(y_hist, 1), 1);
+            figure; tiledlayout(p, 1);
         
             for i = 1:size(y_hist, 1)
                 nexttile; hold on;
                 y_i_hist = y_hist(:, i, :); yl_i_hist = yl_hist(:, i, :);              
                 
-                stairs(time, y_i_hist, 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
-                stairs(time, yl_i_hist, 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));                
+                stairs(time, squeeze(y_i_hist), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
+                stairs(time, squeeze(yl_i_hist), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));                
                 
                 addBounds(time, sys.constraints.Y(i, :), configname);
                 hold off;
