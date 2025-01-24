@@ -35,38 +35,20 @@ function u = inputSignalGenerator(lookup, length)
 
     % Generate input signals based on the specified mode
     switch mode
-        case 'rbs'
+        case 'prbs'
             % Random Binary Signal
-            u = idinput([length, m], 'rbs', [0, 1], [-1, 1])';
-        case 'scaled_sinusoid'
+            u = idinput([length, m], 'prbs', [0, 1], [-1, 1])';
+        case 'sinusoid'
             u = customSinusoid(sys, length, scale, 1e2);
         case 'scaled_gaussian'
             % Scaled Gaussian Signal
             for i = 1:m
                 u(i, :) = lb(i) + (ub(i) - lb(i)) .* randn(1, length);
             end        
-        case 'gendata_ddsf'
-            ub = sys.constraints.U(:, 2);
-            ub(ub == inf) = 1;
-            lb = sys.constraints.U(:, 1);
-            lb(lb == -inf) = 0;
-
-            PE_input = idinput([m, length], 'rbs', [0, 1], [0, 1]);
-            for i = 1:m
-                PE_input(:, i) = lb(i) + (ub(i) - lb(i)) * PE_input(:, i);
-            end
-        case 'scaled_rbs'            
-            lower = 0.5;
-            upper = 0.8;
-            num = 10;
-            probs = (1/num) * ones(1, num);
-            factors = linspace(lower, upper, num);
-            scaler = randsample(factors, length, true, probs);
-            lb = lb .* scaler;
-            ub = ub .* scaler;
-
-            u = idinput([m, length], 'rbs', [0, 1], [-1,1]); 
-            u = u .* (lb + (ub - lb) .* rand(1));
+        case 'scaled_uniform'            
+            u = scaledUniform(scale, lb, ub, m, length);
+        case 'custom_uniform'
+            u = customUniform(scale, lb, ub, m, length);
         otherwise
             error(['Unsupported mode. Choose from ''rbs'',' ...
                 ' ''scaled_rbs'', or ''scaled_gaussian''.']);

@@ -11,6 +11,7 @@ function u_l = learning_policy(lookup)
     % L = lookup.config.N + 2 * lookup.config.T_ini;
     Np = lookup.config.N;
     mode = lookup.data_options.datagen_mode;
+    scale = lookup.data_options.scale;
     
     lb = sys.constraints.U(:, 1);
     lb(lb == -inf) = 1;
@@ -18,31 +19,17 @@ function u_l = learning_policy(lookup)
     ub(ub == inf) = 1;
     
     switch mode
-        case 'scaled_gaussian'
-            scale = 1.25;
-            ub = (ub > 0) .* (scale .* ub) + (ub < 0) .* ((scale^(-1)) .* ub) + (ub == 0) .* (10^scale);
-            lb = (lb < 0) .* (scale .* lb) + (lb > 0) .* ((scale^(-1)) .* lb) + (lb == 0) .* (- 10^scale);
-            ub = (ub > 0) .* (scale .* ub) + (ub < 0) .* ((scale^(-1)) .* ub);
-            lb = (lb < 0) .* (scale .* lb) + (lb > 0) .* ((scale^(-1)) .* lb);
-            u_l = lb + (ub - lb) .* rand(m, Np);
-            % DEBUG STATEMENT
-            % u_l = ones(m, L);
-            %fprintf("2. <learning_policy> Relaxed lower and Upper bounds: [%d, %d]\n", lb, ub);
-        case 'rbs'
-            u_l = idinput([m, Np], 'rbs', [0, 1], [-1,1]);
-        case 'scaled_rbs'
-            lower = 0.5;
-            upper = 0.8;
-            num = 10;
-            probs = (1/num) * ones(1, num);
-            factors = linspace(lower, upper, num);
-            scaler = randsample(factors, Np, true, probs);
-            lb = lb .* scaler;
-            ub = ub .* scaler;
-    
-            u_l = idinput([m, Np], 'rbs', [0, 1], [-1,1]);
-            u_l = u_l .* (lb + (ub - lb) .* rand(1));
+        case 'custom_uniform'
+            u_l = customUniform(scale, lb, ub, m, Np);
+        case 'scaled_uniform'
+            u_l = scaledUniform(scale, lb, ub, m, Np);
+        case 'prbs'
+            u_l = idinput([m, Np], 'prbs', [0, 1], [-1,1]);
+        case 'sinusoid'
+            u_l = customSinusoid(lookup.sys, lookup.T_sim, scale, 1e+8);
     end
 end
 
-    % Should this use the same policy as data generation?
+
+
+
