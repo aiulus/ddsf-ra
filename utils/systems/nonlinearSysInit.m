@@ -238,7 +238,57 @@ function sys = nonlinearSysInit(sys_type)
             );
 
             opt_params = struct('Q', 1, 'R', 1);
+        %% Another Nonlinear Cruise Control with Delay
+        case 'acc'
+            % System-specific parameters
+            params = struct( ...
+                'mass', 1000, ...        % Vehicle mass [kg]
+                'drag_coeff', 0.32, ...  % Nonlinear drag coefficient
+                'dt', 0.1, ...           % Sampling time [s]
+                'time_delay', 1, ...   % Variable delay [s]
+                'u_min', 0, ...          % Minimum throttle input
+                'u_max', 2000, ...       % Maximum throttle input
+                'y_min', 0, ...          % Minimum velocity [m/s]
+                'y_max', 40, ...         % Maximum velocity [m/s]
+                'x_ini', 5, ...          % Initial speed [m/s]
+                'target', 20 ...         % Desired speed [m/s]
+            );
+        
+            % Define symbolic variables for state and input
+            syms v u u_tau  % Velocity (v), Throttle input (u), Delayed input (u_tau)
+        
+            % Nonlinear dynamics including delay
+            f1 = (u_tau - params.drag_coeff * v^2) / params.mass; % Dynamics
+            g1 = v; % Output (velocity)
+        
+            Fx = {f1}; % Dynamics function
+            Gx = {g1}; % Measurement function
+        
+            statevars = v; % Velocity as the state variable
+            inputvars = [u; u_tau]; % Current and delayed inputs
+        
+            % Linearized system matrices around the desired speed
+            v_eq = params.target; % Equilibrium speed
+            A = -2 * params.drag_coeff * v_eq / params.mass;
+            B = 1 / params.mass;
+            C = 1;
+            D = 0;
+        
+            % Create the linearized continuous-time system
+            delayss = ss(A, B, C, D);
+        
+            % Add delay to the linearized system
+            delayss.InputDelay = params.time_delay;
+            params.delayss = delayss;
 
+            % Define configuration and optimization parameters
+            config = struct( ...
+                'T', 50, ...          % Time horizon
+                'T_ini', 10, ...      % Initial trajectory length
+                'N', 15 ...           % Prediction horizon
+            );
+        
+            opt_params = struct('Q', 1, 'R', 1);
         otherwise
             error('Unknown system type specified.');
     end

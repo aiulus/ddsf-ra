@@ -35,10 +35,11 @@
 %
 %    See also: DISCRETIZE_SYSTEM, POPULATE_SYSTEM_STRUCT, CONSTRAINT_HANDLER.
 
-function sys = systemsDDSF(sys_type, discretize)
+function sys = systemsDDSF(sys_type)
     switch sys_type
         %% Example 1: The Quadrotor
         case 'quadrotor'
+            discretize = false;
             % System-specific parameters
             params = struct( ...
                 'mass', 0.2, ... % Quadrotor mass [kg]
@@ -68,12 +69,12 @@ function sys = systemsDDSF(sys_type, discretize)
             A_i = [1, 2, 3, 10, 11, 12, 8, 7];
             A_j = [4, 5, 6, 7, 8, 9, 1, 2];
             A_val = [ones(6, 1); params.g; -params.g];
-            A = sparse(A_i, A_j, A_val, params.n, params.n);
+            A = sparse(A_i, A_j, A_val, params.n, params.n);     
     
             B_i = [9, 4, 5, 6];
             B_j = [1, 2, 3, 4];
             B_val = [1/params.mass, 1/params.I(1), 1/params.I(2), 1/params.I(3)];
-            B = sparse(B_i, B_j, B_val, params.n, params.m);
+            B = sparse(B_i, B_j, B_val, params.n, params.m);                              
     
             % Output matrices (position and orientation tracking)
             % Define the indices of x that correspond to y
@@ -83,9 +84,10 @@ function sys = systemsDDSF(sys_type, discretize)
             C = sparse(1:length(indices), indices, 1, length(indices), 12);
     
             D = zeros(6, 4);
-    
-            %% Example 2: Mass Spring Dampler
+        
+        %% Example 2: Mass Spring Dampler
         case 'dampler'
+            discretize = false;
             params = struct( ...
                 'dt', 0.1, ... % Sampling time
                 'u_min', -inf, ...
@@ -119,6 +121,7 @@ function sys = systemsDDSF(sys_type, discretize)
     
             %% Example 3: Inverted Pendulum
         case 'inverted_pendulum'
+            discretize = true;
             params = struct( ...
                 'c_mass', 50, ... % Mass of the cart [kg]
                 'p_mass', 2, ... % Mass of the pendulum [kg]
@@ -169,6 +172,7 @@ function sys = systemsDDSF(sys_type, discretize)
     
             %% Example 4: DC Motor
         case 'dc_motor'
+            discretize = true;
             params = struct( ...
                 'J' , 0.01, ... % Inertia
                 'b', 0.1, ... % Damping coefficient
@@ -176,10 +180,10 @@ function sys = systemsDDSF(sys_type, discretize)
                 'R', 1, ... % Resistance
                 'L', 0.5, ... % Inductance
                 'dt', 0.1, ... % Sampling time
-                'u_min', -inf, ... % Voltage limits
-                'u_max', inf, ... % Voltage limits
-                'y_min', -inf, ... % Speed limits
-                'y_max', inf, ... % Speed limits
+                'u_min', 0, ... % Voltage limits
+                'u_max', 24, ... % Voltage limits
+                'y_min', 0, ... % Speed limits
+                'y_max', 300, ... % Speed limits
                 'x_ini', [1; 1], ... % y_ini = x_ini(1)
                 'target', 10 ...
                 );
@@ -197,13 +201,14 @@ function sys = systemsDDSF(sys_type, discretize)
     
             run_config = struct( ...
                 'T', 49, ... % Data length
-                'T_ini', 15, ... % Initial trajectory length
+                'T_ini', 2, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2 ... % Conservatism
                 );
     
             %% Example 5: Cruise Control
         case 'cruise_control'
+            discretize = false;
             % System-specific parameters
             params = struct( ...
                 'mass', 1000, ... % Vehicle mass [kg]
@@ -233,15 +238,16 @@ function sys = systemsDDSF(sys_type, discretize)
     
             %% Example 6: Adaptive Cruise Control with Time-Delay
         case 'acc'
+            discretize = true;
             params = struct( ...
                 'mc', 1650, ... % Follower car mass [kg]
                 'vl', 20, ... % Lead car velocity [m/s]
                 'x_ini', 0.1, ... % Initial distance [km]
                 'target', 0.2, ... % Target distance [km]
-                'u_min', -2000, ... % Control input
+                'u_min', 0, ... % Control input
                 'u_max', 2000, ...  % boundaries
-                'y_min', -1, ... % Distance variation
-                'y_max', 1, ...  % boundaries
+                'y_min', 0.2, ... % Distance variation
+                'y_max', 100, ...  % boundaries
                 'dt', 0.2, ... % Sampling time [s]
                 'Td', 3 ... % Time delay / [dt]
                 );
@@ -260,6 +266,7 @@ function sys = systemsDDSF(sys_type, discretize)
     
             %% Example 7: Ball & Beam
         case 'ballNbeam'
+            discretize = true;
             params = struct( ...
                 'm', 0.11, ... % Mass of the ball [kg]
                 'R', 0.015, ... % Radius of the ball [m]
@@ -282,7 +289,7 @@ function sys = systemsDDSF(sys_type, discretize)
             B = [0; b21];
             C = [1 0];
             D = 0;
-    
+
             run_config = struct( ...
                 'T', 490, ... % Data length
                 'T_ini', 1, ... % Initial trajectory length
@@ -290,8 +297,9 @@ function sys = systemsDDSF(sys_type, discretize)
                 's', 2 ... % Conservatism
                 );
     
-            %% Example 8: Double Pendulum
+        %% Example 8: Double Pendulum
         case 'double_pendulum'
+            discretize = true;
             % System-specific parameters
             params = struct( ...
                 'M', 100, ... % Base mass [kg]
@@ -350,20 +358,20 @@ function sys = systemsDDSF(sys_type, discretize)
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 20, ... % Prediction horizon
                 's', 2 ... % Conservatism
-                );        
+                );                  
     end
-    
-    if discretize == true
+
+    if discretize
         [A, B, C, D] = discretize_system(A, B, C, D, params.dt);
     end
     
-    % Collect all system properties in a single object
-    sys = populate_system_struct(A, B, C, D, params);
-    % Parse constraints
-    sys = constraint_handler(sys, params);
-    % Perform checks on adherence to assumptions
-    sys.config = validate_config(run_config, A, C);
-    sys.S_f = setEquilibriaDDSF(sys);
+    sys = populate_system_struct(A, B, C, D, params); % Collect all system properties in a single object
+    
+    sys = constraint_handler(sys, params); % Parse constraints
+   
+    sys.config = validate_config(run_config, A, C);  % Perform checks on adherence to assumptions
+
+    sys.S_f = setEquilibriaDDSF(sys); % Populate the terminal safe set
 end
     
 function config = validate_config(config, A, C)
