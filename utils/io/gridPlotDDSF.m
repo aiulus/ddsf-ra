@@ -67,7 +67,7 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                     hold off;
                     title(sprintf('Output %d', i)); xlabel('t'); ylabel(sprintf('y[%d]', i)); grid on; legend show;
                 end
-                saveAndClose(output_dir, printf('%s_fig%d', configname, fig));
+                saveAndClose(output_dir, sprintf('%s_fig%d', configname, fig));
             end
     
         case 'UUU-ddsf'

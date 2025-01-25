@@ -51,14 +51,14 @@ vals_small = struct( ...
     );
 
 % Number of simulation steps to be performed by (ddsfTunerFlex >) runDDSF.m
-T_sim = 25;
+T_sim = 2;
 
 % Whether the output CSV-file (containing simulation data) should be saved
 % - configured to be true by default in ddsfTunerFlex.m
 toggle_save = 1;
 
 % Run (and save) the experiment with the given parameter configuration
-[u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals, systype, T_sim, toggle_save);
+[u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals_small, systype, T_sim, toggle_save);
 
 % Extract the full path of the data files
 filename_inputs = filename.u;
