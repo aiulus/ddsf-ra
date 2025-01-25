@@ -1,8 +1,12 @@
 function [lookup, time, logs] = singleRunDDSF(systype, T_sim, toggle_plot)
+    % Input signal generation options:
+    % {'prbs', 'sinusoid', 'sinusoidal_sweep', 'uniform', 
+    % 'custom_uniform', 'controlled_random', 'white_noise'}
+
     %% Step 1: Configuration
     data_options = struct( ...
-        'datagen_mode', 'scaled_uniform', ...
-        'scale', 1, ...
+        'datagen_mode', 'scaled_random', ...
+        'scale', 1.5, ... % Constraint relaxation for the learning agent
         'safe', false ... % Set 1/true to sample from safe input set
         );
     

@@ -15,6 +15,7 @@ function u = inputSignalGenerator(lookup, length)
 
     sys = lookup.sys; 
     mode = lookup.data_options.datagen_mode;
+    scale = lookup.data_options.scale;
 
     % Extract system dimensions and constraints
     m = sys.dims.m;
@@ -34,8 +35,8 @@ function u = inputSignalGenerator(lookup, length)
             u = customSinusoid(sys, length, scale, 1e2);
         case 'sinusoidal_sweep'
             u = sinusoidal_sweep(lookup, lb, ub, m, length);      
-        case 'scaled_uniform'            
-            u = scaledUniform(scale, lb, ub, m, length);
+        case 'uniform'            
+            u = uniform(lb, ub, m, length);
         case 'custom_uniform'
             u = customUniform(scale, lb, ub, m, length);
         case 'controlled_random'
@@ -43,8 +44,8 @@ function u = inputSignalGenerator(lookup, length)
         case 'white_noise'
             u = white_noise(lb, ub, m, length);
         otherwise
-            error(['Unsupported mode. Choose from ''rbs'',' ...
-                ' ''scaled_rbs'', or ''scaled_gaussian''.']);
+            error(['Unsupported mode: %s\n Please choose from ''prbs'', ''sinusoid'', ''sinusoidal_sweep'', ''uniform'', ' ...
+                   '''custom_uniform'', ''controlled_random'', ''white_noise''.'], mode);
     end
 
     % Ensure signals are within relaxed bounds

@@ -11,9 +11,9 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
     
     reg_params = struct( ...
         'reg_mode', 'fro', ... % Regularization mode
-        'lambda', 0.01, ... 
-        'epsilon', 10, ... 
-        'ridge', 0.1 ...   
+        'lambda', 0.01, ...  % Pre-conditioning of the Hankel matrix
+        'epsilon', 0.001, ... % For constraint relaxation
+        'ridge', 0.01 ...   % Ridge-penalty on norm(alpha, 2)
         );
 
     verbose = lookup.IO_params.verbose;
@@ -62,7 +62,7 @@ function [u_opt, y_opt] = optDDSF(lookup, u_l, traj_ini)
         u_eq = cell2mat(u_eq);
     end
     if iscell(y_eq)
-        y_eq = cell2mat(y_eq);
+        y_eq = cell2mat(y_eq);ep
     end
 
     %% TODO: S_f can be used to encode a desired target state

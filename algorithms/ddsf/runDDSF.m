@@ -1,15 +1,15 @@
 function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constraints, R, toggle_plot)
     toggle_save = true;
-    % TODO: scale_constraints must be the last input argument
-    if nargin < 6
-        scale_constraints = 1;
-    end
+
+    % Input signal generation options:
+    % {'prbs', 'sinusoid', 'sinusoidal_sweep', 'uniform', 
+    % 'custom_uniform', 'controlled_random', 'white_noise'}
 
     %% Step 1: Configuration
     data_options = struct( ...
-        'datagen_mode', 'scaled_uniform', ...
-        'scale', 1.25, ...
-        'safe', false ... % Set 1/true to sample from safe input set
+        'datagen_mode', 'controlled_random', ... 
+        'scale', 1, ... % Constraint relaxation for the learning agent
+        'safe', false ... % Set 1/true to ensure the safety of u_d
         );
     
     run_options = struct( ...
@@ -41,21 +41,26 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     else
         sys = systemsDDSF(systype, opt_params.discretize);
     end
-    
-    sys.constraints.U = updateBounds(sys.constraints.U, scale_constraints);
-    sys.constraints.Y = updateBounds(sys.constraints.Y, scale_constraints);
 
     dims = sys.dims;
 
+    % Reasign safety boundaries if specidied in the input
+    if scale_constraints ~= -1
+        sys.constraints.U = updateBounds(sys.constraints.U, scale_constraints);
+        sys.constraints.Y = updateBounds(sys.constraints.Y, scale_constraints);
+    end
+
+    % Match T_ini, N to default values if not specified in the input
     if T_ini == -1 || N == -1
         T_ini = sys.config.T_ini;
         N = sys.config.N;
     end
 
+    % Reassign weight matrix if specified in the input
     if R ~= -1
         opt_params.R = R;
     end
-
+    % Upscale to correct dimensions
     opt_params.R = opt_params.R * eye(dims.m);
     
     

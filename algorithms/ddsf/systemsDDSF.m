@@ -59,7 +59,7 @@ function sys = systemsDDSF(sys_type, discretize)
             run_config = struct( ...
                 'T', 214, ... % Data length
                 'T_ini', 2, ... % Initial trajectory length
-                'N', 80, ... % Prediction horizon
+                'N', 20, ... % Prediction horizon
                 's', 2 ... % Conservatism
                 );
     

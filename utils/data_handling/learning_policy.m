@@ -28,8 +28,8 @@ function u_l = learning_policy(lookup)
             u_l = customSinusoid(lookup.sys, lookup.T_sim, scale, 1e+8);
          case 'sinusoidal_sweep'
             u_l = sinusoidal_sweep(lookup, lb, ub, m, Np);       
-        case 'scaled_uniform'
-            u_l = scaledUniform(scale, lb, ub, m, Np);
+        case 'uniform'
+            u_l = uniform(lb, ub, m, Np);
         case 'custom_uniform'
             u_l = customUniform(scale, lb, ub, m, Np);
         case 'controlled_random'

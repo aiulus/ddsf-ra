@@ -4,8 +4,9 @@ function plotDDSF(time, logs, lookup)
     u_hist = logs.u;
     y_hist = logs.y;
     yl_hist = logs.yl;
-    loss_hist = logs.loss;
-        
+    output_dir = prepareOutputDir();
+
+    % --- Plot Learning Inputs vs Safe Inputs ---        
     figure(1);
     m = sys.dims.m;
     plots_per_figure = 3; % Max number of plots per figure
@@ -42,9 +43,15 @@ function plotDDSF(time, logs, lookup)
                 hold off;
             end
             sgtitle('Learning Inputs vs. Safe Inputs');
-    end        
-    
 
+             % Save the current figure
+            prefix = sprintf('U-ddsf-%s-fig%d', lookup.systype, fig);
+            saveas(gcf, fullfile(output_dir, strcat(prefix, '-plot.png')));
+            matlab2tikz(fullfile(output_dir, strcat(prefix, '.tex')));
+            close(gcf); 
+    end        
+
+    % --- Plot Resulting Outputs ---    
     figure(2);
     p = sys.dims.p;
     plots_per_figure = 3; % Max number of plots per figure
@@ -57,51 +64,63 @@ function plotDDSF(time, logs, lookup)
         for sub = 1:plots_per_figure
             i = (fig - 1) * plots_per_figure + sub; % Global plot index
             if i > p, break; end % Stop if we exceed the total number of plots
-
-            nexttile; hold on;
-            plot(time, y_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
-            stairs(time, yl_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
-            hold on;
     
-            bounds = sys.constraints.Y(i, :);
-        
-            % Plot boundaries
+            nexttile; hold on;
+    
+            % Evaluate dynamic bounds
+            lower_bound = 2 * bounds(1);
+            upper_bound = 2 * bounds(2);
+    
+            % Filter out-of-bound values
+            yl_temp = yl_hist(i, :); % Temporary copy for filtering
+            out_of_bounds = (yl_temp < lower_bound) | (yl_temp > upper_bound); % Out-of-bound indices
+            yl_temp(out_of_bounds) = NaN; % Replace out-of-bound values with NaN for plotting
+            
+            % Plot `y_hist`
+            stairs(time, y_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
+            
+            % Plot `yl_hist` with filtered values
+            stairs(time, yl_temp, 'r', 'LineStyle', ':', 'LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
+    
+            % Add markers for out-of-bound points
+            if any(out_of_bounds)
+                % Indices of out-of-bound points
+                out_of_bounds_idx = find(out_of_bounds);
+    
+                % Mark the lower bound breaches
+                below_bounds_idx = out_of_bounds_idx(yl_hist(i, out_of_bounds_idx) < lower_bound);
+                if ~isempty(below_bounds_idx)
+                    plot(time(below_bounds_idx), lower_bound * ones(size(below_bounds_idx)), ...
+                        'kv', 'MarkerFaceColor', 'r', 'DisplayName', 'Out of Bounds (Below)');
+                end
+    
+                % Mark the upper bound breaches
+                above_bounds_idx = out_of_bounds_idx(yl_hist(i, out_of_bounds_idx) > upper_bound);
+                if ~isempty(above_bounds_idx)
+                    plot(time(above_bounds_idx), upper_bound * ones(size(above_bounds_idx)), ...
+                        'k^', 'MarkerFaceColor', 'g', 'DisplayName', 'Out of Bounds (Above)');
+                end
+            end
+    
             if bounds(1) ~= -inf
                 plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');
             end
             if bounds(2) ~= inf
                 plot(time, bounds(2) * ones(size(time)), 'm--', 'DisplayName', 'Upper Bound');
             end
+    
+            % Annotate dynamic bounds and optional targets
             if lookup.opt_params.target_penalty
                 pi = sys.params.target(i);
                 plot(time, pi * ones(size(time)), 'g--', 'DisplayName', 'Target');
             end
-        
-            title(sprintf('System Output %d', i));
-            xlabel('t');
-            ylabel(sprintf('Output %d', i));
-            grid on;
-            legend show;
-            hold off;
         end
         sgtitle("Resulting Outputs");
+
+        % Save the current figure
+        prefix = sprintf('Y-ddsf-%s-fig%d', lookup.systype, fig);
+        saveas(gcf, fullfile(output_dir, strcat(prefix, '-plot.png')));
+        matlab2tikz(fullfile(output_dir, strcat(prefix, '.tex')));
+        close(gcf); 
     end
-    
-    %figure(3);
-    %hold on;
-    %plot(0:size(loss_hist, 2) - 1, loss_hist(1, :), 'r', 'LineWidth', 1.25, 'DisplayName', 'delta_u');
-    %plot(0:size(loss_hist, 2) - 1, loss_hist(2, :), 'b', 'LineWidth', 1.25, 'DisplayName', 'delta_u + distance to target convergence point');
-    %grid on; legend show; hold off;
-    %sgtitle('Losses');
-
-    output_dir = prepareOutputDir();
-    prefix = sprintf(strcat('U-ddsf-', lookup.systype, '-singlerun','.tex'));
-    fullname_inputs = fullfile(output_dir, prefix);
-    prefix = sprintf(strcat('Y-ddsf-', lookup.systype, '-singlerun','.tex'));
-    fullname_outputs = fullfile(output_dir, prefix);
-
-    figure(1);
-    matlab2tikz(fullname_inputs);
-    figure(2);
-    matlab2tikz(fullname_outputs);
 end
