@@ -12,8 +12,8 @@ function [u, y] = deepc3Opt(lookup, H, u_ini, y_ini)
     reg_params = struct( ...
         'reg_mode', 'fro', ... % Regularization mode
         'lambda', 0.01, ...
-        'epsilon', 10, ...
-        'ridge', 0.1 ...
+        'epsilon', 0.01, ...
+        'ridge', 0.01 ...
         );    
     
     verbose = false; % Toggle debug mode
@@ -24,7 +24,6 @@ function [u, y] = deepc3Opt(lookup, H, u_ini, y_ini)
     % TODO: Line 8 gets interpreted as a function call by the b&b solver
     Q = lookup.deepc.Q;
     R = lookup.deepc.R;
-    lambda_g = lookup.deepc.lambda_g;
     
     % Extract dimensions
     m = lookup.dims.m;
@@ -66,7 +65,6 @@ function [u, y] = deepc3Opt(lookup, H, u_ini, y_ini)
         % num_cols = size(H, 2);
         switch reg_params.reg_mode
             case 'fro'
-                H = low_rank_appr(H);
                 H = H / norm(H, 'fro'); % Normalize with Frobenius norm
                 lambda = reg_params.lambda;
                 H = H + lambda * eye(size(H)); % Tikhonov regularization
@@ -126,11 +124,22 @@ function [u, y] = deepc3Opt(lookup, H, u_ini, y_ini)
             'sdpa.maxIteration', 10, ...
             'verbose', 0);
     elseif lower(optimizer_type) == 'o'
-        options = sdpsettings('solver', 'OSQP', ... % Use OSQP solver
-            'verbose', verbose, ...
-            'osqp.max_iter', 30000, ...   % Set maximum iterations
-            'osqp.eps_abs', 1e-5, ...     % Absolute tolerance
-            'warmstart', 0);             % Disable warm start
+        %options = sdpsettings('solver', 'OSQP', ... % Use OSQP solver
+        %    'verbose', verbose, ...
+        %    'osqp.max_iter', 30000, ...   % Set maximum iterations
+        %    'osqp.eps_abs', 1e-5, ...     % Absolute tolerance
+        %    'warmstart', 0);             % Disable warm start
+        options = sdpsettings('solver', 'OSQP', ...
+                  'verbose', verbose, ...             % Detailed solver output
+                  'osqp.max_iter', 30000, ...         % Set maximum iterations
+                  'osqp.eps_abs', 1e-5, ...           % Absolute tolerance
+                  'osqp.eps_rel', 1e-5, ...           % Relative tolerance
+                  'osqp.adaptive_rho', true, ...      % Enable adaptive rho
+                  'osqp.adaptive_rho_interval', 50, ...
+                  'osqp.adaptive_rho_tolerance', 1, ...
+                  'osqp.polish_refine_iter', 2, ...
+                  'osqp.scaling', 10, ...             % Number of scaling iterations
+                  'warmstart', 0);                    % Disable warm start
     elseif lower(optimizer_type) == 'b'
         options = sdpsettings('solver', 'bmibnb', 'verbose', 1);
     else

@@ -4,7 +4,7 @@ function sys = initializeSys(mode, sysname)
             if ismember(sysname, {'test_nonlinear', 'van_der_pol', 'nonlinear_pendulum'})
                 sys = nonlinearSysInit(sysname);
             else
-                sys = systemsDDSF(sysname, 0);
+                sys = systemsDDSF(sysname);
             end
         case 'deepc'
             sys = sysInit(sysname);
