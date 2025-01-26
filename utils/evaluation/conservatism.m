@@ -26,5 +26,6 @@ function c_d = conservatism(y_d, yl_d, lb, ub)
     variance_yl = normalized_variance(yl_d); 
 
     % Conservatism metric
-    c_d = covered_range_percentage / (variance_yl + 1);
+    nc_d = covered_range_percentage / (variance_yl + 1);
+    c_d = 1 - nc_d;
 end

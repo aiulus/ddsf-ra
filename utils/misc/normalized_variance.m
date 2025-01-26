@@ -9,6 +9,6 @@ function sigma_x = normalized_variance(x)
         normalized_data(t) = (x(t) - mu_t) / sigma_t;
     end
 
-    sigma_x = std(normalized_data);
+    sigma_x = var(normalized_data);
 end
 
