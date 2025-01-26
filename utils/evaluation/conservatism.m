@@ -12,18 +12,17 @@ function c_d = conservatism(y_d, yl_d)
     % Bounds of the operational space
     y_min = min(y_d);
     y_max = max(y_d);
+    cut_percentage = 10;
 
     % Ensure signals are compatible
     if size(yl_d) ~= size(y_d)
         error('Original and filtered signals must have the same dimensions.');
     end
 
-    % Constants
-    epsilon = 1e-6; % Small constant to prevent division by zero
-
     full_range = y_max - y_min;
 
-    covered_range = prctile(yl_d, 95) - prctile(yl_d, 5);
+    p = cut_percentage / 2;
+    covered_range = prctile(yl_d, 100 - p) - prctile(yl_d, p);
 
     covered_range_percentage = covered_range / full_range;
 
