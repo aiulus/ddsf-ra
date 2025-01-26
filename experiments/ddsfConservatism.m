@@ -1,6 +1,8 @@
 function conservatism_scores  = ddsfConservatism(filename)
     [descriptions, mode, sysname, sys, dims, T_sim, nruns] = name2params(filename);
     p = dims.p;
+    lb = sys.constraints.Y(1);
+    ub = sys.constraints.Y(2);
     
     plotdata = csv2plotdata(filename, mode, T_sim, dims);
     
@@ -13,7 +15,7 @@ function conservatism_scores  = ddsfConservatism(filename)
         for d=1:p
             yi_d = y_i(:, d, :); yli_d = yl_i(:, d, :);
             yi_d = yi_d(:); yli_d = yli_d(:);
-            ci_d = conservatism(yi_d, yli_d);
+            ci_d = conservatism(yi_d, yli_d, lb, ub);
             c_i(d) = ci_d;
         end
         c_i = mean(c_i);

@@ -1,4 +1,4 @@
-function c_d = conservatism(y_d, yl_d)
+function c_d = conservatism(y_d, yl_d, lb, ub)
     % CONSERVATISM computes the conservatism of a safety filter 
     % using percentile-based range and range-normalized variance.
     %
@@ -9,9 +9,6 @@ function c_d = conservatism(y_d, yl_d)
     % Output:
     %   c_d   - Scalar conservatism metric (0 to 1, where 1 is highly conservative).
 
-    % Bounds of the operational space
-    y_min = min(y_d);
-    y_max = max(y_d);
     cut_percentage = 10;
 
     % Ensure signals are compatible
@@ -19,7 +16,7 @@ function c_d = conservatism(y_d, yl_d)
         error('Original and filtered signals must have the same dimensions.');
     end
 
-    full_range = y_max - y_min;
+    full_range = ub - lb;
 
     p = cut_percentage / 2;
     covered_range = prctile(yl_d, 100 - p) - prctile(yl_d, p);
