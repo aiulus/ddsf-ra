@@ -45,7 +45,7 @@ vals_small = struct( ...
 systype = 'cruise_control';
 
 % #Simulation steps to be performed by (deepcTunerFlex >) runParamDPC.m
-T_sim = 3;
+T_sim = 10;
 
 % Whether the output CSV-file (containing simulation data) should be saved
 % - configured to be true by default in deepcTunerFlex.m

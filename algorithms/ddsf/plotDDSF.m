@@ -4,7 +4,7 @@ function plotDDSF(time, logs, lookup)
     u_hist = logs.u;
     y_hist = logs.y;
     yl_hist = logs.yl;
-    output_dir = prepareOutputDir();
+    output_dir = prepareOutputDir('plots');
 
     % --- Plot Learning Inputs vs Safe Inputs ---        
     figure(1);

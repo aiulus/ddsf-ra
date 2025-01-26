@@ -5,7 +5,7 @@ function gridPlotDDSF(mode, configname, sys, sorted)
             T_sim = size(sorted.u, 3); time = 0:T_sim-1;
             m = sys.dims.m;
     
-            output_dir = prepareOutputDir();
+            output_dir = prepareOutputDir('plots');
     
             plots_per_figure = 3; % Max number of plots per figure
             num_figures = ceil(m / plots_per_figure); % Number of figures needed
@@ -45,7 +45,7 @@ function gridPlotDDSF(mode, configname, sys, sorted)
             T_sim = size(sorted.y, 3); time = 0:T_sim-1;
             p = sys.dims.p;
     
-            output_dir = prepareOutputDir();
+            output_dir = prepareOutputDir('plots');
             plots_per_figure = 3; % Max number of plots per figure
             num_figures = ceil(p / plots_per_figure);
     
@@ -75,7 +75,7 @@ function gridPlotDDSF(mode, configname, sys, sorted)
             T_sim = size(sorted.u, 3); time = 0:T_sim-1;
             m = sys.dims.m;
     
-            output_dir = prepareOutputDir();
+            output_dir = prepareOutputDir('plots');
     
             figure; tiledlayout(m, 1);
     
@@ -95,7 +95,7 @@ function gridPlotDDSF(mode, configname, sys, sorted)
             y_hist = sorted.y; yl_hist = sorted.yl;
             T_sim = size(sorted.y, 3); time = 0:T_sim-1;
             p = sys.dims.p;
-            output_dir = prepareOutputDir();
+            output_dir = prepareOutputDir('plots');
     
             figure; tiledlayout(p, 1);
     
