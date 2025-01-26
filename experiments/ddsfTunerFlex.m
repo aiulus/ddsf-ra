@@ -1,4 +1,4 @@
-function [u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals, systype, T_sim, toggle_save)
+function [u, ul, y, yl, descriptions, filename] = ddsfTunesrFlex(mode, vals, systype, T_sim, toggle_save)
     % DDSF Tuner: A function to optimize parameters for DDSF.
     % 
     % INPUTS:
