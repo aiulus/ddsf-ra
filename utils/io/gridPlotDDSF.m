@@ -59,9 +59,39 @@ function gridPlotDDSF(mode, configname, sys, sorted)
     
                     nexttile; hold on;
                     y_i_hist = y_hist(:, i, :); yl_i_hist = yl_hist(:, i, :);
-    
+
+                    
+                    factor = 3; delta = (factor - 1) / 2;
+                    lb = sys.constraints.Y(i, 1); ub = sys.constraints.Y(i, 2);        
+                    lower_bound = lb - delta .* abs(lb);
+                    upper_bound = ub + delta .* abs(ub);
+
+                    yl_temp = yl_i_hist; % Temporary copy for filtering
+                    out_of_bounds = (yl_temp < lower_bound) | (yl_temp > upper_bound); % Out-of-bound indices
+                    yl_temp(out_of_bounds) = NaN; % Replace out-of-bound values with NaN for plotting
+
                     stairs(time, squeeze(y_i_hist), 'r', 'LineWidth', 1.75, 'DisplayName', sprintf('y[%d]', i));
-                    stairs(time, squeeze(yl_i_hist), 'k:', 'LineWidth', 1.25, 'DisplayName', sprintf('yl[%d]', i));
+                    stairs(time, squeeze(yl_temp), 'k:', 'LineWidth', 1.25, 'DisplayName', sprintf('yl[%d]', i));
+                            
+                     % Add markers for out-of-bound points
+                    if any(out_of_bounds)
+                        % Indices of out-of-bound points
+                        out_of_bounds_idx = find(out_of_bounds);
+            
+                        % Mark the lower bound breaches
+                        below_bounds_idx = out_of_bounds_idx(yl_i_hist(out_of_bounds_idx) < lower_bound);
+                        if ~isempty(below_bounds_idx)
+                            plot(time(below_bounds_idx), lower_bound * ones(size(below_bounds_idx)), ...
+                                'kv', 'MarkerFaceColor', 'r', 'DisplayName', 'Out of Bounds (Below)');
+                        end
+            
+                        % Mark the upper bound breaches
+                        above_bounds_idx = out_of_bounds_idx(yl_i_hist(out_of_bounds_idx) > upper_bound);
+                        if ~isempty(above_bounds_idx)
+                            plot(time(above_bounds_idx), upper_bound * ones(size(above_bounds_idx)), ...
+                                'k^', 'MarkerFaceColor', 'g', 'DisplayName', 'Out of Bounds (Above)');
+                        end
+                    end
     
                     addBounds(time, sys.constraints.Y(i, :), configname);
                     hold off;

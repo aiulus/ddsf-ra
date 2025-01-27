@@ -26,7 +26,6 @@ function plotDDSF(time, logs, lookup)
                 stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
             
                 bounds = sys.constraints.U(i, :);
-
             
                 % Plot boundaries
                 if bounds(1) ~= -inf
@@ -68,10 +67,12 @@ function plotDDSF(time, logs, lookup)
     
             nexttile; hold on;
     
-            % Evaluate dynamic bounds
-            lower_bound = 2 * bounds(1);
-            upper_bound = 2 * bounds(2);
-    
+            % Evaluate dynamic bounds            
+            factor = 3; delta = (factor - 1) / 2;
+            lb = bounds(1); ub = bounds(2);        
+            lower_bound = lb - delta .* abs(lb);
+            upper_bound = ub + delta .* abs(ub);
+
             % Filter out-of-bound values
             yl_temp = yl_hist(i, :); % Temporary copy for filtering
             out_of_bounds = (yl_temp < lower_bound) | (yl_temp > upper_bound); % Out-of-bound indices
