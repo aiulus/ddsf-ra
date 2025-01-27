@@ -1,8 +1,14 @@
-systype = "cruise_control";
+T_sim = 20;
+systype = "damper";
 rng(0, 'twister'); % Set seed and generator
-[mpc_t, mpc_u, mpc_y] = mpcMainF(systype);
-[deepc_t, deepc_u, deepc_y] = deepcMainF(systype);
+
+[mpc_t, mpc_u, mpc_y] = runMPC(systype, T_sim);
+logs = runParamDPC(systype, -1, -1, -1, -1, T_sim);
+[deepc_t, deepc_u, deepc_y] = deal(logs.time, logs.u, logs.y);
+
 plotMPCvsDeePC(systype, mpc_t, mpc_u, mpc_y, deepc_t, deepc_u, deepc_y);
+
+output_dir = prepareOutputDir('plots');
 
 function plotMPCvsDeePC(systype, mpc_t, mpc_u, mpc_y, deepc_t, deepc_u, deepc_y)
     sys = deepc2_systems(systype);
@@ -25,6 +31,7 @@ function plotMPCvsDeePC(systype, mpc_t, mpc_u, mpc_y, deepc_t, deepc_u, deepc_y)
         grid on; legend show; hold off;
     end
     sgtitle("MPC vs. DeePC: Control inputs over time");
+    saveAndClose(output_dir, 'damper-deepc_vs_mpc-outputs');
     
     % Plot inputs
     figure(2);
@@ -49,9 +56,6 @@ function plotMPCvsDeePC(systype, mpc_t, mpc_u, mpc_y, deepc_t, deepc_u, deepc_y)
         grid on; legend show; hold off;
     end
     sgtitle("MPC vs. DeePC: Control inputs over time");
-    figure(1);
-    matlab2tikz('outputs/plots/cc-deepc_vs_mpc-outputs.tex');
-    figure(2);
-    matlab2tikz('outputs/plots/cc-deepc_vs_-inputs.tex');
+    saveAndClose(output_dir, 'damper-deepc_vs_-inputs');
 end
 

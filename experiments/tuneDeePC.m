@@ -10,10 +10,10 @@ mode = 'nt';
 %                        'thermostat', 'cstr'}
 %           - Specifies the type of system to initialize.
 %           - See systems\sysInit.m for details.
-systype = 'damper';
+systype = 'aircraft_pitch';
 
 % #Simulation steps to be performed by (deepcTunerFlex >) runParamDPC.m
-T_sim = 50;
+T_sim = 2;
 
 % Whether the output CSV-file (containing simulation data) should be saved
 % - configured to be true by default in deepcTunerFlex.m

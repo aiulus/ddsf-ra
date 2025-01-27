@@ -24,8 +24,8 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                     hold on;
     
                     % Plot the control input histories
-                    stairs(time, squeeze(u_i_hist), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
-                    stairs(time, squeeze(ul_i_hist), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
+                    stairs(time, squeeze(u_i_hist), 'r', 'LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
+                    stairs(time, squeeze(ul_i_hist), 'k', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
     
                     % Add bounds and grid
                     addBounds(time, sys.constraints.U(i, :), configname);
@@ -60,8 +60,8 @@ function gridPlotDDSF(mode, configname, sys, sorted)
                     nexttile; hold on;
                     y_i_hist = y_hist(:, i, :); yl_i_hist = yl_hist(:, i, :);
     
-                    stairs(time, squeeze(y_i_hist), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
-                    stairs(time, squeeze(yl_i_hist), 'r:', 'LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
+                    stairs(time, squeeze(y_i_hist), 'r', 'LineWidth', 1.75, 'DisplayName', sprintf('y[%d]', i));
+                    stairs(time, squeeze(yl_i_hist), 'k:', 'LineWidth', 1.25, 'DisplayName', sprintf('yl[%d]', i));
     
                     addBounds(time, sys.constraints.Y(i, :), configname);
                     hold off;
