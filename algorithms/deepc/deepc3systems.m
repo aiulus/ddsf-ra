@@ -190,8 +190,8 @@ function sys = deepc3systems(sys_type)
                 's', 2 ... % Sliding length
             );
 
-        %% Case 5: Mass Spring Dampler
-        case 'dampler'
+        %% Case 5: Mass Spring damper
+        case 'damper'
             params = struct( ...
                'dt', 0.1, ... % Sampling time
                 'u_min', -100, ... 

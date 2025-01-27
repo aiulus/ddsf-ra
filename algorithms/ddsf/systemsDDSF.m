@@ -15,7 +15,7 @@
 %                      - 'quadrotor': 6-DOF quadrotor dynamics.
 %                      - 'inverted_pendulum': Cart-pendulum stabilization.
 %                      - 'dc_motor': DC motor electrical-mechanical dynamics.
-%                      - 'dampler': Mass-spring-damper system.
+%                      - 'damper': Mass-spring-damper system.
 %                      - 'thermostat': Room temperature control.
 %                      - 'cstr': Continuous stirred-tank reactor (CSTR).
 %       DISCRETIZE - A boolean indicating whether the system should be
@@ -85,8 +85,8 @@ function sys = systemsDDSF(sys_type)
     
             D = zeros(6, 4);
         
-        %% Example 2: Mass Spring Dampler
-        case 'dampler'
+        %% Example 2: Mass Spring damper
+        case 'damper'
             discretize = false;
             params = struct( ...
                 'dt', 0.1, ... % Sampling time

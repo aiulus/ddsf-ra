@@ -8,7 +8,7 @@
 mode = 'nt';
 
 % systype   -   OPTIONS:
-%               linear: {'quadrotor', 'dampler', 'inverted_pendulum', 'dc_motor', 
+%               linear: {'quadrotor', 'damper', 'inverted_pendulum', 'dc_motor', 
 %                        'cruise_control', 'acc', 'ballNbeam', 'double_pendulum'},
 %               nonlinear: {'test_nonlinear', 'van_der_pol', 'nonlinear_pendulum'}
 %

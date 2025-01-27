@@ -107,8 +107,6 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
             'loss', zeros(2, T_ini + T_sim) ...
         );
     
-    % TODO: Wrap debug statements in if-statements with IO_params.debug
-    
     % Obtain an L-step random control policy
     T_d = run_options.T_d;
     %% Step 3: Receding Horizon Loop
