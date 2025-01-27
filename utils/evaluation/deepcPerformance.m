@@ -36,17 +36,15 @@ function metric = deepcPerformance(sequence, target, tolerance_factor, weights)
 
     % If convergence is never reached, assign the maximum number of steps
     if isnan(convergence_step)
-        convergence_step = size(sequence, 1); % No convergence reached
+        convergence_step = size(sequence, 1);
     end
 
     % Compute final deviation from the target
     final_deviation = norm(sequence(end, :) - target);
 
     % --- Normalize the metrics ---
-    % 1. Normalize convergence speed: lower is better
     speed_score = 1 - (convergence_step / size(sequence, 1)); % Range [0, 1]
 
-    % 2. Normalize final deviation: lower is better
     deviation_score = 1 - (final_deviation / target_norm); % Range [0, 1]
 
     % Clip deviation_score to [0, 1] to avoid negative values

@@ -6,7 +6,6 @@ function y_pred = dataBasedU2Y(u_l, u_ini, y_ini, H_u, H_y)
     if iscell(H_y)
         H_y = cell2mat(H_y); % Convert to a numeric array
     end
-
     
     numcols = size(H_u, 2);    
     p = max(size(y_ini));
@@ -38,4 +37,3 @@ function y_pred = dataBasedU2Y(u_l, u_ini, y_ini, H_u, H_y)
     end
    
 end
-
