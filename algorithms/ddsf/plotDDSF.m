@@ -26,13 +26,14 @@ function plotDDSF(time, logs, lookup)
                 stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
             
                 bounds = sys.constraints.U(i, :);
+
             
                 % Plot boundaries
                 if bounds(1) ~= -inf
-                    plot(time, bounds(1) * ones(size(time)), 'm--', 'DisplayName', 'Lower Bound');
+                    plot(time, bounds(1) * ones(size(time)), 'b', 'LineStyle', '-.', 'DisplayName', 'Lower Bound');
                 end
                 if bounds(2) ~= inf
-                    plot(time, bounds(2) * ones(size(time)), 'm--', 'DisplayName', 'Upper Bound');
+                    plot(time, bounds(2) * ones(size(time)), 'b', 'LineStyle', '--','DisplayName', 'Upper Bound');
                 end
             
                 title(sprintf('Learning vs Safe Input %d', i));
@@ -77,10 +78,10 @@ function plotDDSF(time, logs, lookup)
             yl_temp(out_of_bounds) = NaN; % Replace out-of-bound values with NaN for plotting
             
             % Plot `y_hist`
-            stairs(time, y_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('y[%d]', i));
+            stairs(time, y_hist(i, :), 'b', 'LineWidth', 1.75, 'DisplayName', sprintf('y[%d]', i));
             
             % Plot `yl_hist` with filtered values
-            stairs(time, yl_temp, 'r', 'LineStyle', ':', 'LineWidth', 1.75, 'DisplayName', sprintf('yl[%d]', i));
+            stairs(time, yl_temp, 'r', 'LineStyle', ':', 'LineWidth', 1.25, 'DisplayName', sprintf('yl[%d]', i));
     
             % Add markers for out-of-bound points
             if any(out_of_bounds)

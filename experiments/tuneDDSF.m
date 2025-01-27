@@ -51,7 +51,7 @@ vals_small = struct( ...
     );
 
 % Number of simulation steps to be performed by (ddsfTunerFlex >) runDDSF.m
-T_sim = 2;
+T_sim = 25;
 
 % Whether the output CSV-file (containing simulation data) should be saved
 % - configured to be true by default in ddsfTunerFlex.m

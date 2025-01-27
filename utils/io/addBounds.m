@@ -7,9 +7,9 @@ function addBounds(time, bounds, configname)
     bounds = updateBounds(bounds, factor);
 
     if bounds(1) ~= -inf && abs(bounds(1)) < 1e+8
-        plot(time, bounds(1) * ones(size(time)), 'g--', 'LineWidth', 1.25, 'DisplayName', 'Lower Bound'); 
+        plot(time, bounds(1) * ones(size(time)), 'b', 'LineStyle','-.', 'LineWidth', 1.25, 'DisplayName', 'Lower Bound'); 
     end
     if bounds(2) ~= inf && abs(bounds(2)) < 1e+8
-        plot(time, bounds(2) * ones(size(time)), 'm:', 'LineWidth', 1.25, 'DisplayName', 'Upper Bound'); 
+        plot(time, bounds(2) * ones(size(time)), 'b', 'LineStyle','--','LineWidth', 1.25, 'DisplayName', 'Upper Bound'); 
     end
 end

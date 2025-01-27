@@ -8,7 +8,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     %% Step 1: Configuration
     data_options = struct( ...
         'datagen_mode', 'controlled_random', ... 
-        'scale', 1.25, ... % Constraint relaxation for the learning agent
+        'scale', 3, ... % Constraint relaxation for the learning agent
         'safe', false ... % Set 1/true to ensure the safety of u_d
         );
     
