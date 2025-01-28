@@ -226,7 +226,7 @@ function sys = sysInit(sys_type)
                 (I+m*l^2)/p;
                 0;
                 m*l/p];
-            [Ad, Bd] = simple_discretize(A, B);
+            [Ad, Bd] = simple_discretize(A, B, params.dt);
             Cd = [1 0 0 0;
                 0 0 1 0];
             Dd = [0;
@@ -280,7 +280,7 @@ function sys = sysInit(sys_type)
     
             A = [-b/J K/J; -K/L -R/L];
             B = [0; 1/L];
-            [Ad, Bd] = simple_discretize(A, B);
+            [Ad, Bd] = simple_discretize(A, B, params.dt);
             Cd = [1 0];
             Dd = 0;
     
@@ -515,8 +515,5 @@ function sys = sysInit(sys_type)
     sys.S_f = setEquilibriaDDSF(sys);
 end
     
-function [Ad, Bd] = simple_discretize(A, B)
-    Ad = eye(size(A)) + params.dt * A;
-    Bd = eye(size(b)) + params.dt * B;
-end    
+  
 

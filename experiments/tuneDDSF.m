@@ -16,7 +16,7 @@ mode = 'nt';
 %           -  See algorithms\ddsf\systemsDDSF.m for details.
 %systype = 'nonlinear_pendulum';
 %systype = 'van_der_pol';
-systype = 'quadrotor';
+systype = 'inverted_pendulum';
 
 % Example definition of value ranges, extensive
 vals = struct( ...

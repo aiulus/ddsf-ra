@@ -89,16 +89,17 @@ function sys = systemsDDSF(sys_type)
         case 'damper'
             discretize = false;
             params = struct( ...
-                'dt', 0.1, ... % Sampling time
-                'u_min', -inf, ...
-                'u_max', inf, ...
-                'y_min', -5, ...
-                'y_max', 5, ...
-                'x_ini', [0.5;0.5], ... % y_ini = x_ini(1)
-                'target', 5,...
-                'mass', 1, ...
-                'spring_constant', 1, ...
-                'damping_coeff', 0.2 ...
+                'dt', 1, ... % Sampling time [s]
+                'u_min', 0, ... % U = [0, 100]
+                'u_max', 100, ...
+                'y_min', -10, ... % Y = [-10, 10]
+                'y_max', 10, ...
+                'x_ini', [9;2], ... % [vert. displacement, vert. velocity]
+                'target', 0,... % vertical displacement [m]
+                'mass', 100, ... [kg] 
+                'spring_constant', 1, ... [N/m]
+                'damping_coeff', 0.2, ... [N*s/m]
+                'F', 0 ... [N]
                 );
     
             dt = params.dt;
@@ -107,11 +108,13 @@ function sys = systemsDDSF(sys_type)
             k = params.spring_constant;
     
             % State-space matrices
-            A = [1 dt; -k/m*dt 1 - b/m*dt];
+            A = [1,         dt;
+                (-(k*dt)/m), (1-(b*dt)/m)];
             B = [0; dt/m];
-            C = [1 0];
+            C = [1 0]; % Position tracking
             D = 0;
-    
+   
+
             run_config = struct( ...
                 'T', 49, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
@@ -119,9 +122,9 @@ function sys = systemsDDSF(sys_type)
                 's', 2 ... % Conservatism
                 );
     
-            %% Example 3: Inverted Pendulum
+        %% Example 3: Inverted Pendulum
         case 'inverted_pendulum'
-            discretize = true;
+            discretize = false;
             params = struct( ...
                 'c_mass', 50, ... % Mass of the cart [kg]
                 'p_mass', 2, ... % Mass of the pendulum [kg]
@@ -130,12 +133,12 @@ function sys = systemsDDSF(sys_type)
                 'g', 9.81, ... % Gravity constant [m/s^2]
                 'b', 0.1, ... % Friction [N*s/m]
                 'dt', 0.1, ... % Time step for discretization
-                'y_min', [0;-inf], ... % Positional constraint
-                'y_max', [1.5;inf], ... % Positional constraint
-                'u_min', -inf, ... % Minimum force
-                'u_max', inf, ... % Maximum force
+                'y_min', [0;-pi/6], ... % Positional constraint
+                'y_max', [1.5;pi/6], ... % Positional constraint
+                'u_min', -100, ... % Minimum force
+                'u_max', 100, ... % Maximum force
                 'target', [1.45, NaN], ... % Desired output
-                'x_ini', [0.5; 0; 0; 0], ... % Initial state [x, x_dot, theta, theta_dot]
+                'x_ini', [0.5; 0; 0.087; 0], ... % Initial state [x, x_dot, theta, theta_dot]
                 'state_name', {"Linear Position, Linear Velocity, Angular Position, Angular Velocity"}, ...
                 'input_name', {"Force"}); % Initial velocity [m/s]
     
@@ -150,27 +153,30 @@ function sys = systemsDDSF(sys_type)
     
             p = I*(M+m)+M*m*l^2; % denominator for the A and B matrices
     
-            A = [0      1              0           0;
+            Ac = [0      1              0           0;
                 0 -(I+m*l^2)*b/p  (m^2*g*l^2)/p   0;
                 0      0              0           1;
                 0 -(m*l*b)/p       m*g*l*(M+m)/p  0];
-            B = [     0;
+            Bc = [     0;
                 (I+m*l^2)/p;
                 0;
                 m*l/p];
+            % Discretize the continuous-time system
+            [A, B] = simple_discretize(Ac, Bc, params.dt);
             C = [1 0 0 0;
                 0 0 1 0];
             D = [0;
-                0];
+                0];    
+           
     
             run_config = struct( ...
-                'T', 490, ... % Data length
+                'T', 49, ... % Data length
                 'T_ini', 5, ... % Initial trajectory length
                 'N', 15, ... % Prediction horizon
                 's', 2 ... % Conservatism
                 );
     
-            %% Example 4: DC Motor
+        %% Example 4: DC Motor
         case 'dc_motor'
             discretize = true;
             params = struct( ...
