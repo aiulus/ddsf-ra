@@ -28,10 +28,5 @@ function c_d = conservatism(y_d, yl_d, lb, ub)
     % Conservatism metric
     nc_d = covered_range_percentage / (variance_yl + 1);
     c_d = 1 - nc_d;
-
-    disp('full range: '); disp(full_range);
-    disp('covered range: '); disp(covered_range);
-    disp('cr perc. : '); disp(covered_range_percentage);
-    disp('normalized variance: '); disp(variance_yl);
-    disp('conservatism metric: '); disp(c_d);
+    c_d = max(0, c_d);
 end

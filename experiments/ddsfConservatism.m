@@ -1,4 +1,4 @@
-function conservatism_scores  = ddsfConservatism(filename)
+function [ranked_scores, ranked_configs]  = ddsfConservatism(filename)
     [descriptions, mode, sysname, sys, dims, T_sim, nruns] = name2params(filename);
     p = dims.p;
     plotdata = csv2plotdata(filename, mode, T_sim, dims);
@@ -21,5 +21,7 @@ function conservatism_scores  = ddsfConservatism(filename)
         c_i = mean(c_i);
         conservatism_scores{i} = c_i;
     end
+    [ranked_scores, ranked_configs] = rankScores(conservatism_scores, descriptions);
+    ranked_scores = flipud(ranked_scores);  ranked_configs = flipud(ranked_configs);   
 end
 
