@@ -1,4 +1,4 @@
-# Behavioral Systems Theory in Optimization-Based Control: A Survey
+# Behavioral System Theory in Optimization-Based Control: A Survey
 
 ## Overview
 
@@ -15,11 +15,12 @@ as well as a custom version of **Model Predictive Control (MPC)** that pairs wit
 │   ├── ddpc/                # DeePC implementation
 │   ├── ddsc/                # DDSF implementation
 │   ├── mpc/                 # MPC implementation
-├── experiments/   
+├── experiments/             # Experiments on parameter tuning
 ├── systems/                 # System definitions used by algorithms/mpc and algorithms/deepc
 ├── utils/                   # Helper functions
 │   ├── bst/                 # Functions related to behavioral systems theory
 │   ├── data_handling/       # Functions related to data generation and handling
+│   ├── evaluation/          # Contains functions for evlauating the performance or behavior of implemented algorithms
 │   ├── dynsys/              # Functions related to dynamical systems
 │   ├── io/                  # I/O functions
 │   ├── linalg/              # Algebraic functions
@@ -29,18 +30,6 @@ as well as a custom version of **Model Predictive Control (MPC)** that pairs wit
 └── README.md                # Repository documentation
 
 ```
-
-### Algorithms
-
-- **DDSF: ([1][ddsflink])** Ensures safe operation through system-behavioral filtering of suggested control inputs
-- **DeePC: ([2][deepclink])** System-behavioral predictive control
-
-### Experiments
-- Experiments on parameter tuning and performance comparison
-
-### Utility Functions
-
-### Getting Started
 
 ### Prerequisites
 
@@ -82,6 +71,21 @@ This project is primarily an academic exercise. While I’ve done my best to fai
 
 If you have any feedback or suggestions about this project, please open an [issue](https://github.com/aiulus/ddsf/issues) or contact [aybuke.ulusarslan@tum.de].
 
+## How to Cite This Work
+
+If you wish to use this repository in your work, please cite it as:
+
+```plaintext
+@misc{aiulus2025bst,
+  author       = {Aybüke Ulusarslan},
+  title        = {Behavioral System Theory in Optimization-Based Control: A Survey},
+  year         = {2025},
+  publisher    = {GitHub},
+  journal      = {GitHub repository},
+  howpublished = {\url{https://github.com/aiulus/ddsf}},
+}
+
+```
 
 ## License
 
