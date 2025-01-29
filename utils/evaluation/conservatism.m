@@ -28,5 +28,5 @@ function c_d = conservatism(y_d, yl_d, lb, ub)
     % Conservatism metric
     nc_d = covered_range_percentage / (variance_yl + 1);
     c_d = 1 - nc_d;
-    c_d = max(0, c_d);
+    %c_d = max(0, c_d);
 end

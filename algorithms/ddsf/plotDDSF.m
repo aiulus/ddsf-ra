@@ -20,7 +20,7 @@ function plotDDSF(time, logs, lookup)
                 i = (fig - 1) * plots_per_figure + sub; % Global index for subplot
                 if i > m, break; end % Stop if no more subplots are needed
 
-                nexttile;
+                nexttile; grid on;
                 stairs(time, ul_hist(i, :), 'r', 'LineStyle', ':','LineWidth', 1.75, 'DisplayName', sprintf('ul[%d]', i));
                 hold on;
                 stairs(time, u_hist(i, :), 'b', 'LineWidth', 1.25, 'DisplayName', sprintf('u[%d]', i));
