@@ -1,4 +1,4 @@
-# Behavioral System Theory in Optimization-Based Control: A Survey
+# Behavioral System Theory in Safe Predictive Control
 
 ## Overview
 
@@ -78,7 +78,7 @@ If you wish to use this repository in your work, please cite it as:
 ```plaintext
 @misc{aiulus2025bst,
   author       = {Aybüke Ulusarslan},
-  title        = {Behavioral System Theory in Optimization-Based Control: A Survey},
+  title        = {Behavioral System Theory in Safe Predictive Control},
   year         = {2025},
   publisher    = {GitHub},
   journal      = {GitHub repository},
