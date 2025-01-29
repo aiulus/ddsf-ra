@@ -1,15 +1,16 @@
-% mode  -   Options: {
+%% mode  -   Options: {
 %                       'nt':       vary T_ini and N (prediction horizon) simultaneously,    
 %                       'qr':       vary input (Q) and output (R) cost matrices simultaneously                 
 %                       'mixed':    vary all of the above simulteneously
 %          
-mode = 'nt';
-
-% systype   - Options: {'test', 'example0', 'cruise_control', 'quadrotor', 
+%
+%% systype   - Options: {'test', 'example0', 'cruise_control', 'quadrotor', 
 %                        'inverted_pendulum', 'dc_motor', 'damper', 
 %                        'thermostat', 'cstr'}
 %           - Specifies the type of system to initialize.
 %           - See systems\sysInit.m for details.
+
+mode = 'nt';
 systype = 'aircraft_pitch';
 
 % #Simulation steps to be performed by (deepcTunerFlex >) runParamDPC.m
@@ -19,7 +20,7 @@ T_sim = 2;
 % - configured to be true by default in deepcTunerFlex.m
 toggle_save = 1;
 
-vals = struct( ...
+vals_large = struct( ...
     'NvsTini', [ ... % value range for mode 'nt'
     1 * ones(6, 1), (5:5:30)'; ...
     2 * ones(6, 1), (5:5:30)'; ...
