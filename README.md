@@ -46,7 +46,122 @@ cd ddsf
 ```
 ### Usage
 
-Navigate to one of the folders (/algorithms/ddsf, /algorithms/deepc, /algorithms/mpc, /experiments) and follow the instructions in the respective README sections.
+The repository offers multiple functions and workflows for data-driven safe predictive control. To illustrate, the experiments/tuneDDSF.m script defines the necessary parameters for running the Data-Driven Safety Filter (DDSF) algorithm and passes them to a wrapper that handles multiple configurations. To run DDSF, simply modify the relevant parameters as needed and follow the steps outlined below.
+
+#### 1. Choose the System Type (`systype`)
+The available options are:
+- **Linear systems**: `quadrotor`, `damper`, `inverted_pendulum`, `dc_motor`, `cruise_control`, `acc`, `ballNbeam`, `double_pendulum`
+- **Nonlinear systems**: `test_nonlinear`, `van_der_pol`, `nonlinear_pendulum`
+
+Example:
+```matlab
+systype = 'quadrotor';
+```
+#### 2. Choose the Mode of Execution
+Modify in `tuneDDSF.m`:
+
+```matlab
+mode = '<chosen_mode>';
+```
+##### Available Modes:
+
+| Mode    | Description |
+|---------|------------|
+| `'r'`      | Varies determinant of R (cost matrix). |
+| `'nt'`     | Varies both T_ini (initial trajectory length) and N (prediction horizon). |
+| `'constr'` | Scales the predefined input/output constraints in `systemsDDSF.m`. |
+| `'mixed'`  | Varies all the above simultaneously. |
+| `'single'` | Runs DDSF for a single parameter configuration. |
+
+#### 3. Define the Search Space (Optional)
+
+The repository provides predefined search spaces for DDSF experiments, but users can modify `vals` in `tuneDDSF.m` to customize parameter sweeps.
+
+Use default values (no changes needed) or specify a custom search space:
+
+```matlab
+vals.quadrotor = struct( ...
+    'r', [1, 10, 100, 1000], ... % Custom range for 'r' mode
+    'NvsTini', [2 5; 2 10; 2 15], ... % Custom range for 'nt' mode
+    'constraints', 1, ... % Custom constraint scaling
+    'mixed', struct( ...
+        'nt', [2 5; 2 10; 2 15], ...
+        'constr', 1, ...
+        'R', [1, 10, 100, 1000] ...
+    ) ...
+);
+```
+
+#### 4. Choose Whether to Save Outputs
+To save input/output sequences to a CSV file, modify in tuneDDSF.m:
+
+```matlab
+toggle_save = 1;
+```
+The data will be saved in ddsf/outputs/data/.
+
+#### 5. Running the DDSF Algorithm
+
+##### Grid Search Mode (Parameter Exploration)
+
+For parameter tuning (`mode ≠ 'single'`), already implemented in `tuneDDSF.m`:
+
+```matlab
+[u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals.quadrotor, systype, T_sim, toggle_save);
+```
+###### Outputs
+
+| Variable      | Description |
+|--------------|------------|
+| `u`          | Filtered (safe) inputs. |
+| `ul`         | Suggested (unsafe) inputs before filtering. |
+| `y`          | Filtered (safe) outputs. |
+| `yl`         | Outputs projected from `ul`. |
+| `descriptions` | Description of the test case (parameters used). |
+| `filename`   | Struct with filenames of saved input/output data. |
+
+###### To Visualize Results
+
+```matlab
+batchplot(filename.u);
+batchplot(filename.y);
+```
+Plots are saved under ddsf/outputs/plots/.
+
+##### Single Configuration Mode (mode = 'single')
+For running DDSF with one fixed configuration, already implemented in tuneDDSF.m:
+
+```matlab
+[lookup, time, logs] = runDDSF(systype, T_sim, vals_single);
+```
+
+###### Outputs
+
+| Variable      | Description |
+|--------------|------------|
+| `u`          | Filtered (safe) inputs. |
+| `ul`         | Suggested (unsafe) inputs before filtering. |
+| `y`          | Filtered (safe) outputs. |
+| `yl`         | Outputs projected from `ul`. |
+| `descriptions` | Description of the test case (parameters used). |
+| `filename`   | Struct with filenames of saved input/output data. |
+
+###### To Visualize Results
+
+```matlab
+plotDDSF(time, logs, lookup);
+```
+
+#### Summary of User Actions
+
+| Step | Action                                      | Where to Change  |
+|------|--------------------------------------------|------------------|
+| 1.   | Choose a system type (`systype`).         | `tuneDDSF.m`     |
+| 2.   | Select a mode (`mode`).                   | `tuneDDSF.m`     |
+| 3.   | Customize the search space (`vals`) (optional). | `tuneDDSF.m`     |
+| 4.   | Enable or disable saving (`toggle_save`). | `tuneDDSF.m`     |
+| 5.   | Run the script and analyze results.       | Already implemented |
+
 
 ## References
 
