@@ -1,3 +1,5 @@
+%% TODO: Must use an initial trajectory of length T_ini, 
+%%       Hankel matrices of order (T_ini + 1)
 function y_pred = dataBasedU2Y(u_l, u_ini, y_ini, H_u, H_y)
     if iscell(H_u)
         H_u = cell2mat(H_u); % Convert to a numeric array

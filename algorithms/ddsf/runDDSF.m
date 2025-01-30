@@ -1,6 +1,10 @@
 function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constraints, R, toggle_plot)
     toggle_save = true;
 
+    if nargin < 7
+        toggle_plot = 0;
+    end
+
     % Input signal generation options:
     % {'prbs', 'sinusoid', 'sinusoidal_sweep', 'uniform', 
     % 'custom_uniform', 'controlled_random', 'white_noise'}
@@ -61,8 +65,7 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     end
     % Upscale to correct dimensions
     opt_params.R = opt_params.R * eye(dims.m);
-    
-    
+        
     % Create struct object 'lookup' for central and extensive parameter passing.
     lookup = struct( ...
                     'sys', sys, ...
@@ -86,7 +89,8 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
     [u_d, y_d, ~, ~, ~] = gendataDDSF(lookup); 
     
     [H_u, H_y] = hankelDDSF(u_d, y_d, lookup);
-
+    
+    %% TODO: H_v_2 = construct_hankel(v_d, T_ini + 1)
     H_u_2 = construct_hankel(u_d, 2);
     H_y_2 = construct_hankel(y_d, 2);
      
@@ -135,8 +139,11 @@ function [lookup, time, logs] = runDDSF(systype, T_sim, N, T_ini, scale_constrai
         logs.y(:, t) = y_next;
         % logs.loss(:, t) = loss_t;
 
+
+        %% TODO: if (t - T_ini + 1) >= 1 && T_ini ~= 1, try ... catch ... end; end
+        %%      yl_next = dataBasedU2Y(ul_t, logs.u(:, t- T_ini + 1 : t), logs.y(:, t- T_ini + 1 : t), H_u_2, H_y_2);
         try            
-            yl_next = dataBasedU2Y(ul_t, logs.u(:, t-1),logs.y(:, t-1), H_u_2, H_y_2);
+            yl_next = dataBasedU2Y(ul_t, logs.u(:, t),logs.y(:, t), H_u_2, H_y_2);
             logs.yl(:, t-T_ini) = yl_next;
         catch ME
             fprintf('Failed to execute dataBasedU2Y at time step %d: %s', t-T_ini, ME.message);

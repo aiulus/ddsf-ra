@@ -11,15 +11,21 @@
 %                       'nt':       vary T_ini and N (prediction horizon) simultaneously,
 %                       'constr':   multiply the pre-defined (by systemsDDSF.m)
 %                                   input/output constraints with a scalar,
-%                       'mixed':    vary all of the above simulteneously
+%                       'mixed':    vary all of the above simulteneously,
+%                       'single':   executes the algorithm for a single
+%                                   parameter configuration
 %                     }
-
+%% vals  - Specify parameter configuration
+%
+%% T_sim - # Simulation steps   
+%
+%% toggle_save = 1 will save the input/output sequence to a csv file under
+%%               ddsf/outputs/data
 
 systype = 'quadrotor';
 
-mode = 'mixed';
+mode = 'single';
 
-% Example definition of value ranges, extensive
 vals_large = struct( ...
     'r', 10.^(-8:1:8), ... % value range for mode 'r'
     'NvsTini', [ ... % value range for mode 'nt'
@@ -60,20 +66,29 @@ vals = struct( ...
     );
 
 
-% Number of simulation steps to be performed by (ddsfTunerFlex >) runDDSF.m
+vals_single = struct( ...
+            'N', 5, ...
+            'T_ini', 2, ...
+            'scale_constraints', -1, ... % Equivalent to a << don't care >>
+            'R', 100, ...
+            'toggle_plot', 1 ...
+    );
+
 T_sim = 25;
 
-% Whether the output CSV-file (containing simulation data) should be saved
-% - configured to be true by default in ddsfTunerFlex.m
 toggle_save = 1;
 
-% Run (and save) the experiment with the given parameter configuration
-[u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals.quadrotor, systype, T_sim, toggle_save);
-
-% Extract the full path of the data files
-filename_inputs = filename.u;
-filename_outputs = filename.y;
-
-% Construct (and save) plots from the data files
-batchplot(filename_inputs);
-batchplot(filename_outputs);
+if strcmp(mode, 'single') == 0
+    [u, ul, y, yl, descriptions, filename] = ddsfTunerFlex(mode, vals.quadrotor, systype, T_sim, toggle_save);
+    
+    % Extract the full path of the data files
+    filename_inputs = filename.u;
+    filename_outputs = filename.y;
+    
+    % Construct (and save) plots from the data files
+    batchplot(filename_inputs);
+    batchplot(filename_outputs);
+else
+    [lookup, time, logs] = runDDSF(systype, T_sim, vals_single);
+    plotDDSF(time, logs, lookup);
+end
