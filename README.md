@@ -137,14 +137,13 @@ For running DDSF with one fixed configuration, already implemented in tuneDDSF.m
 
 ###### Outputs
 
-| Variable      | Description |
-|--------------|------------|
-| `u`          | Filtered (safe) inputs. |
-| `ul`         | Suggested (unsafe) inputs before filtering. |
-| `y`          | Filtered (safe) outputs. |
-| `yl`         | Outputs projected from `ul`. |
-| `descriptions` | Description of the test case (parameters used). |
-| `filename`   | Struct with filenames of saved input/output data. |
+## Outputs
+
+| Variable  | Description                              |
+|-----------|------------------------------------------|
+| `lookup`  | DDSF lookup table for system parameters configuration details. |
+| `time`    | Simulation time steps.                  |
+| `logs`    | Logged input/output sequences.          |
 
 ###### To Visualize Results
 
