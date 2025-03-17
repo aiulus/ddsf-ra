@@ -11,7 +11,7 @@
 %           - See systems\sysInit.m for details.
 
 mode = 'nt';
-systype = 'aircraft_pitch';
+systype = 'damper';
 
 % #Simulation steps to be performed by (deepcTunerFlex >) runParamDPC.m
 T_sim = 2;
@@ -20,6 +20,7 @@ T_sim = 2;
 % - configured to be true by default in deepcTunerFlex.m
 toggle_save = 1;
 
+%% Example parameter space initializations
 vals_large = struct( ...
     'NvsTini', [ ... % value range for mode 'nt'
     1 * ones(6, 1), (5:5:30)'; ...
@@ -38,7 +39,8 @@ vals_large = struct( ...
                     ) ...
     );
 
-vals_small = struct( ...
+% DEFAULT
+vals = struct( ...
     'NvsTini', [ ... % value range for mode 'nt'
     2 * ones(6, 1), (5:5:30)'; ...
     5 * ones(5, 1), (10:5:30)'; ...

@@ -1,7 +1,5 @@
 %% systype   -   OPTIONS:
-%               linear: {'quadrotor', 'damper', 'inverted_pendulum', 'dc_motor', 
-%                        'cruise_control', 'acc', 'ballNbeam', 'double_pendulum'},
-%               nonlinear: {'test_nonlinear', 'van_der_pol', 'nonlinear_pendulum'}
+%               linear: {'quadrotor', 'damper', 'inverted_pendulum'}
 %
 %            - Specifies the type of system for which the DDSF is being designed.
 %           -  See algorithms\ddsf\systemsDDSF.m for details.
@@ -26,7 +24,7 @@ systype = 'quadrotor';
 
 mode = 'nt';
 
-% Example parameter search spaces
+%% Example parameter spaces initializations
 vals_large = struct( ...
     'r', 10.^(-8:1:8), ... % value range for mode 'r'
     'NvsTini', [ ... % value range for mode 'nt'
